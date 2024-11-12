@@ -18,11 +18,12 @@ export default function Home() {
   useEffect(() => {
     fetchNumbers()
     const subscription = supabase
-      .channel('numbers')
+      .channel('public:numbers')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'numbers' }, 
         payload => {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           setNumbers((current) => [...current, payload.new as any])
+          console.log("setNumbers ran")
         }
       )
       .subscribe()
@@ -54,6 +55,9 @@ export default function Home() {
 
     if (error) {
       setError('Failed to add number')
+    }
+    else {
+      console.log("added random number", randomNumber);
     }
   }
 
