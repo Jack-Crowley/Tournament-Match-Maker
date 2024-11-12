@@ -1,24 +1,82 @@
+'use client'
 
+import { useEffect, useState } from 'react'
+import { createClient } from '@supabase/supabase-js'
+import { NumberList } from '@/components/NumberList'
+import { Controls } from '@/components/Controls'
+import { Database } from '@/lib/database.types'
 
-// I am not entirely sure what this does...
-// Difference between client and server components
-// Requires research
-'use client';
-
-// How to handle this typescript error?
-//! "Binding element 'handleClick' implicitly has an 'any' type.ts(7031)"
-export function HelloWorld({handleClick}) {
-  return (
-    <div className = "text-center self-center">
-      <button onClick={handleClick}>Hello World!</button>
-    </div>
-  )
-}
-
-const handleHelloWorldClick = () => {
-  alert("TODO: Put something in the database")
-};
+const supabase = createClient<Database>(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+)
 
 export default function Home() {
-  return <HelloWorld handleClick={handleHelloWorldClick}/>
+  const [numbers, setNumbers] = useState<Array<{ id: number; value: number; created_at: string }>>([])
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    fetchNumbers()
+    const subscription = supabase
+      .channel('numbers')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'numbers' }, 
+        payload => {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          setNumbers((current) => [...current, payload.new as any])
+        }
+      )
+      .subscribe()
+
+    return () => {
+      subscription.unsubscribe()
+    }
+  }, [])
+
+  const fetchNumbers = async () => {
+    const { data, error } = await supabase
+      .from('numbers')
+      .select('*')
+      .order('created_at', { ascending: false })
+
+    if (error) {
+      setError('Failed to fetch numbers')
+      return
+    }
+
+    setNumbers(data)
+  }
+
+  const addRandomNumber = async () => {
+    const randomNumber = Math.floor(Math.random() * 100)
+    const { error } = await supabase
+      .from('numbers')
+      .insert([{ value: randomNumber }])
+
+    if (error) {
+      setError('Failed to add number')
+    }
+  }
+
+  const clearNumbers = async () => {
+    const { error } = await supabase
+      .from('numbers')
+      .delete()
+      .neq('id', 0)
+
+    if (error) {
+      setError('Failed to clear numbers')
+      return
+    }
+    
+    setNumbers([])
+  }
+
+  return (
+    <main className="container">
+      <h1 className="title">Simple Plumbing Project</h1>
+      <Controls onAdd={addRandomNumber} onClear={clearNumbers} />
+      {error && <div className="error">{error}</div>}
+      <NumberList numbers={numbers} />
+    </main>
+  )
 }
