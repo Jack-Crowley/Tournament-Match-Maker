@@ -1,17 +1,28 @@
+'use client'
+
+import { useEffect, useState } from 'react'
+import { createClient } from '@supabase/supabase-js'
+import { NumberList } from '@/components/NumberList'
+import { Controls } from '@/components/Controls'
+import { Database } from '@/lib/database.types'
+
+const supabase = createClient<Database>(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+)
+
 export default function Home() {
-<<<<<<< Updated upstream
   const [numbers, setNumbers] = useState<Array<{ id: number; value: number; created_at: string }>>([])
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     fetchNumbers()
     const subscription = supabase
-      .channel('public:numbers')
+      .channel('numbers')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'numbers' }, 
         payload => {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           setNumbers((current) => [...current, payload.new as any])
-          console.log("setNumbers ran")
         }
       )
       .subscribe()
@@ -44,9 +55,6 @@ export default function Home() {
     if (error) {
       setError('Failed to add number')
     }
-    else {
-      console.log("added random number", randomNumber);
-    }
   }
 
   const clearNumbers = async () => {
@@ -63,11 +71,12 @@ export default function Home() {
     setNumbers([])
   }
 
-=======
->>>>>>> Stashed changes
   return (
     <main className="container">
-      <h1 className="title">Dashboard!!!</h1>
+      <h1 className="title">Simple Plumbing Project</h1>
+      <Controls onAdd={addRandomNumber} onClear={clearNumbers} />
+      {error && <div className="error">{error}</div>}
+      <NumberList numbers={numbers} />
     </main>
   )
 }
