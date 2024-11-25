@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/utils/supabase/server'
+import { useAuthentication } from '@/contexts/authenticationContext'
 
 export async function login(formData) {
   const supabase = createClient()

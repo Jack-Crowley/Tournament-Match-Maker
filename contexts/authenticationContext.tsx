@@ -9,6 +9,7 @@ type ClientContextType = {
     client: SupabaseClient;
     session: Session | null;
     authChange: number;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     setAuthChange: any;
 };
 
@@ -18,7 +19,6 @@ export function AuthenticationProvider({ children }: { children: ReactNode }) {
     const [client] = useState<SupabaseClient>(createClient());
     const [session, setSession] = useState<Session | null>(null);
     const [authChange, SetAuthChange] = useState<number>(0)
-    const [admin, setAdmin] = useState<boolean>(false)
     const router = useRouter();
 
     useEffect(() => {
@@ -38,7 +38,7 @@ export function AuthenticationProvider({ children }: { children: ReactNode }) {
 
         fetchSession();
 
-        client.auth.onAuthStateChange((event, session) => {
+        client.auth.onAuthStateChange((event) => {
             fetchSession();
             SetAuthChange(authChange + 1)
             if (event === 'SIGNED_OUT') {
