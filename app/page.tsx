@@ -11,76 +11,121 @@ const supabase = createClient<Database>(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 )
 
-export default function Home() {
-  const [numbers, setNumbers] = useState<Array<{ id: number; value: number; created_at: string }>>([])
-  const [error, setError] = useState<string | null>(null)
+function Home() {
+  // pages/tournament.js
+  return (
+    <div className="min-h-screen bg-base-dark-purple text-white font-sans">
+      {/* Navbar */}
+      <nav className="bg-nav-bar-purple p-4 flex justify-between items-center">
+        <div className="flex space-x-8">
+          <a href="#" className="hover:underline">Home</a>
+          <a href="#" className="hover:underline">Team</a>
+          <a href="#" className="hover:underline">Tournaments</a>
+          <a href="#" className="hover:underline">Rules</a>
+        </div>
+        <div className="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center">
+          <span className="text-lg">👤</span>
+        </div>
+      </nav>
 
-  useEffect(() => {
-    fetchNumbers()
-    const subscription = supabase
-      .channel('public:numbers')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'numbers' }, 
-        payload => {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          setNumbers((current) => [...current, payload.new as any])
-          console.log("setNumbers ran")
-        }
-      )
-      .subscribe()
+      {/* Content Section */}
+      <div className="p-6 grid grid-cols-3 gap-6">
+        {/* Announcements */}
+        <div className="col-span-1 bg-purple-800 rounded-lg p-4">
+          <h2 className="text-lg font-semibold mb-4">Announcements</h2>
+          <ul className="space-y-4">
+            {[...Array(4)].map((_, i) => (
+              <li
+                key={i}
+                className="bg-purple-700 rounded-lg p-3 flex items-center space-x-4"
+              >
+                <div className="w-10 h-10 bg-purple-500 rounded-full flex items-center justify-center">
+                  👤
+                </div>
+                <span>New Announcement!</span>
+              </li>
+            ))}
+          </ul>
+        </div>
 
-    return () => {
-      subscription.unsubscribe()
-    }
-  }, [])
+        {/* Players Section */}
+        <PlayersSection />
+      </div>
+    </div>
+  );
+}
 
-  const fetchNumbers = async () => {
-    const { data, error } = await supabase
-      .from('numbers')
-      .select('*')
-      .order('created_at', { ascending: false })
+function PlayersSection() {
+  const [activeTab, setActiveTab] = useState("Players");
 
-    if (error) {
-      setError('Failed to fetch numbers')
-      return
-    }
-
-    setNumbers(data)
-  }
-
-  const addRandomNumber = async () => {
-    const randomNumber = Math.floor(Math.random() * 100)
-    const { error } = await supabase
-      .from('numbers')
-      .insert([{ value: randomNumber }])
-
-    if (error) {
-      setError('Failed to add number')
-    }
-    else {
-      console.log("added random number", randomNumber);
-    }
-  }
-
-  const clearNumbers = async () => {
-    const { error } = await supabase
-      .from('numbers')
-      .delete()
-      .neq('id', 0)
-
-    if (error) {
-      setError('Failed to clear numbers')
-      return
-    }
-    
-    setNumbers([])
-  }
+  // Placeholder components for Standings and Messages
+  const Standings = () => <p className="text-white">Standings!</p>;
+  const Messages = () => <p className="text-white">Messages!</p>;
 
   return (
-    <main className="container">
-      <h1 className="title">Simple Plumbing Project</h1>
-      <Controls onAdd={addRandomNumber} onClear={clearNumbers} />
-      {error && <div className="error">{error}</div>}
-      <NumberList numbers={numbers} />
-    </main>
-  )
+    <div className="col-span-2 bg-purple-800 rounded-lg p-4">
+      <div className="flex space-x-4 mb-4 border-b border-purple-700">
+        {[
+          { name: "Players", component: "Players" },
+          { name: "Standings", component: "Standings" },
+          { name: "Messages", component: "Messages" },
+        ].map((tab) => (
+          <button
+            key={tab.name}
+            onClick={() => setActiveTab(tab.name)}
+            className={`py-2 px-4 text-white font-semibold border-b-2 ${activeTab === tab.name
+                ? "border-white"
+                : "border-transparent hover:border-purple-500"
+              }`}
+          >
+            {tab.name}
+          </button>
+        ))}
+      </div>
+
+      {/* Tab content */}
+      <div>
+        {activeTab === "Players" && (
+          <div className="overflow-x-auto">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-lg font-semibold">Players</h2>
+              <div className="flex space-x-2">
+                <input
+                  type="text"
+                  placeholder="Search"
+                  className="p-2 rounded bg-purple-700 text-white placeholder-purple-300"
+                />
+                <select className="p-2 bg-purple-700 rounded text-white">
+                  <option>Filters</option>
+                </select>
+              </div>
+            </div>
+            <table className="w-full text-left table-auto">
+              <thead>
+                <tr>
+                  <th className="px-4 py-2">Name</th>
+                  <th className="px-4 py-2">Skill/Rating</th>
+                  <th className="px-4 py-2">Standing</th>
+                </tr>
+              </thead>
+              <tbody>
+                {[...Array(8)].map((_, i) => (
+                  <tr key={i} className="bg-purple-700">
+                    <td className="px-4 py-2">{i + 1}</td>
+                    <td className="px-4 py-2">-</td>
+                    <td className="px-4 py-2">-</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+        {activeTab === "Standings" && <Standings />}
+        {activeTab === "Messages" && <Messages />}
+      </div>
+    </div>
+  );
 }
+
+
+export default Home;
