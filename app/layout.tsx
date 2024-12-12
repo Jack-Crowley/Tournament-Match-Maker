@@ -16,14 +16,14 @@ export default function RootLayout({
       <body className="min-h-screen bg-base-dark-purple text-white font-sans">
         <nav className="pl-8 pr-8 pb-4 pt-10 flex items-center">
           <div className="w-48">
-            <a href="/" className="text-2xl">TMM</a>
+            <a href="/" className="text-3xl">TMM</a>
           </div>
 
           <div className="flex-1 flex justify-center">
             <div className="flex space-x-8">
-              <a href="/teams" className="hover:underline text-xl">Teams</a>
-              <a href="/tournaments" className="hover:underline text-xl">Tournaments</a>
-              <a href="/organizations" className="hover:underline text-xl">Organizations</a>
+              <a href="/teams" className="hover:underline text-2xl font-bold">Teams</a>
+              <a href="/tournaments" className="hover:underline text-2xl font-bold">Tournaments</a>
+              <a href="/organizations" className="hover:underline text-2xl font-bold">Organizations</a>
             </div>
           </div>
 
