@@ -1,7 +1,7 @@
 export default function Home() {
     return (
         <div>
-            <div className="grid grid-cols-3 mt-10 px-20 gap-8">
+            <div className="grid grid-cols-3 mt-10 px-20 gap-8 vert gap-y-16">
                 <div className="w-[75%] h-[200px] ml-[12.5%] bg-[#604BAC] flex flex-col justify-center items-center rounded-md">
                     <div className="h-full flex justify-center items-center">
                         <h1 className="text-white text-[5rem] text-center m-0">+</h1>
