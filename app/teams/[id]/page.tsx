@@ -16,7 +16,7 @@ interface Team {
 const teams: Team[] = [
     {
         id: 1,
-        name: 'Team 1',
+        name: 'Kingly Kings',
         membersCount: 12,
         image: '/team.jpg',
         tournamentsJoined: 5,
@@ -26,7 +26,7 @@ const teams: Team[] = [
     },
     {
         id: 2,
-        name: 'Team 2',
+        name: 'Dynamic Knights',
         membersCount: 8,
         image: '/team.jpg',
         tournamentsJoined: 3,
