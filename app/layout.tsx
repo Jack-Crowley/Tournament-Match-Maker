@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUser } from '@fortawesome/free-solid-svg-icons';
+import Link from "next/link";
 
 export const metadata: Metadata = {
   title: 'Plumbing Project',
@@ -30,9 +31,11 @@ export default function RootLayout({
           </div>
 
           <div className="w-48 flex justify-end">
-          <div className="w-12 h-12 rounded-full flex items-center justify-center hover:bg-[#7e67d2] hover:cursor-pointer">
-                  <FontAwesomeIcon icon={faUser} className="text-white w-6 h-6" />
-                </div>
+          <Link href={"/account"}>
+              <div className="w-12 h-12 rounded-full flex items-center justify-center hover:bg-[#7e67d2] hover:cursor-pointer">
+                <FontAwesomeIcon icon={faUser} className="text-white w-6 h-6" />
+              </div>
+          </Link>
 
           </div>
         </nav>
