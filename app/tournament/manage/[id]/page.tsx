@@ -16,7 +16,7 @@ type TabsProps = {
 const announcements = [
   { id: 1, title: 'New update on tournament rules!', user: 'Admin' },
   { id: 2, title: 'Match times updated', user: 'Admin' },
-  { id: 3, title: 'Join the Discord server for updates!', user: 'Admin' },
+  { id: 3, title: 'Come to the table by the rear door to check in once you arrive!', user: 'Admin' },
   { id: 4, title: 'Sign up deadline approaching!', user: 'Admin' }
 ];
 
