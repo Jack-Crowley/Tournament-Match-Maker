@@ -27,7 +27,7 @@ export default function Home() {
                         objectFit="cover"
                     />
                     <div className="text-2xl bg-[#604BAC] text-white text-center w-full py-2 mt-auto rounded-md z-10">
-                        Organization 1
+                    ProGolf Tournament Association
                     </div>
                 </div>
 
@@ -40,7 +40,7 @@ export default function Home() {
                         objectFit="cover"
                     />
                     <div className="text-2xl bg-[#604BAC] text-white text-center w-full py-2 mt-auto rounded-md z-10">
-                        Organization 2
+                        eSports Championship League
                     </div>
                 </div>
 
@@ -53,20 +53,20 @@ export default function Home() {
                         objectFit="cover"
                     />
                     <div className="text-2xl bg-[#604BAC] text-white text-center w-full py-2 mt-auto rounded-md z-10">
-                        Organization 3
+                        Ultimate Sports Challenge
                     </div>
                 </div>
 
                 {/* Organization Card 4 */}
                 <div className="hover:cursor-pointer w-[75%] h-[250px] ml-[12.5%] bg-gray-200 flex flex-col justify-center items-center rounded-md relative overflow-hidden">
                     <Image
-                        src="/organization4.jpg"
+                        src="/organization4.png"
                         alt="Organization 4"
                         layout="fill"
                         objectFit="cover"
                     />
                     <div className="text-2xl bg-[#604BAC] text-white text-center w-full py-2 mt-auto rounded-md z-10">
-                        Organization 4
+                        Northern Counties Soccer Association
                     </div>
                 </div>
 
