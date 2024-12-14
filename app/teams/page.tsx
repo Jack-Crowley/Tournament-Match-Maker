@@ -24,7 +24,7 @@ export default function Home() {
                         objectFit="cover"
                     />
                     <div className="text-2xl bg-[#604BAC] text-white text-center w-full py-2 mt-auto rounded-md z-10">
-                        Team 1
+                        Golden Strikers
                     </div>
                 </div>
 
@@ -33,7 +33,7 @@ export default function Home() {
                         <h1 className="text-[#595959] text-5xl font-bold text-center">Select Profile Picture</h1>
                     </div>
                     <div className="text-2xl bg-[#604BAC] text-white text-center w-full py-2 mt-auto rounded-md">
-                        Team 2
+                        Blaze United
                     </div>
                 </div>
 
@@ -42,7 +42,7 @@ export default function Home() {
                         <h1 className="text-[#595959] text-5xl font-bold text-center">Select Profile Picture</h1>
                     </div>
                     <div className="text-2xl bg-[#604BAC] text-white text-center w-full py-2 mt-auto rounded-md">
-                        Team 3
+                        Dynasty FC
                     </div>
                 </div>
 
@@ -51,7 +51,7 @@ export default function Home() {
                         <h1 className="text-[#595959] text-5xl font-bold text-center">Select Profile Picture</h1>
                     </div>
                     <div className="text-2xl bg-[#604BAC] text-white text-center w-full py-2 mt-auto rounded-md">
-                        Team 4
+                        Steel Fury
                     </div>
                 </div>
             </div>
