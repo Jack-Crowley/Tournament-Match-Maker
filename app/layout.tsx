@@ -25,7 +25,7 @@ export default function RootLayout({
 
             <div className="flex-1 flex justify-center">
               <div className="flex space-x-8">
-                <a href="/teams/display" className="hover:underline text-2xl font-bold">Teams</a>
+                <a href="/teams" className="hover:underline text-2xl font-bold">Teams</a>
                 <a href="/tournaments" className="hover:underline text-2xl font-bold">Tournaments</a>
                 <a href="/organizations" className="hover:underline text-2xl font-bold">Organizations</a>
               </div>

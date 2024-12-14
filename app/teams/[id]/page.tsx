@@ -16,7 +16,7 @@ interface Team {
 const teams: Team[] = [
     {
         id: 1,
-        name: 'Kingly Kings',
+        name: 'Knightly Knights',
         membersCount: 12,
         image: '/team.jpg',
         tournamentsJoined: 5,
@@ -26,7 +26,7 @@ const teams: Team[] = [
     },
     {
         id: 2,
-        name: 'Dynamic Knights',
+        name: 'Rockeeters',
         membersCount: 8,
         image: '/team.jpg',
         tournamentsJoined: 3,
@@ -36,7 +36,7 @@ const teams: Team[] = [
     },
     {
         id: 3,
-        name: 'Team 3',
+        name: 'Chicago Monkees',
         membersCount: 15,
         image: '/team.jpg',
         tournamentsJoined: 7,
@@ -46,7 +46,7 @@ const teams: Team[] = [
     },
     {
         id: 4,
-        name: 'Team 4',
+        name: 'Blazing Blues',
         membersCount: 10,
         image: '/team.jpg',
         tournamentsJoined: 4,
@@ -79,7 +79,7 @@ export default function TeamDetailsPage({ params }: { params: { id: string } }) 
         return (
             <div className="w-full justify-center text-center text-white p-8">
                 <h1 className="text-4xl font-bold">Team Not Found</h1>
-                <Link href="/teams/display">
+                <Link href="/teams">
                     <button className="mt-8 px-8 py-4 bg-[#ECD4F7] rounded-full text-[#160A3A] font-bold text-xl hover:opacity-90 transition-opacity">
                         Back to Teams
                     </button>
@@ -123,7 +123,7 @@ export default function TeamDetailsPage({ params }: { params: { id: string } }) 
                         <p className="text-5xl font-black mt-4">{team.gamesWon}</p>
                     </div>
                 </div>
-                <Link href="/teams/display">
+                <Link href="/teams">
                     <button className="mt-8 px-8 py-4 bg-[#ECD4F7] rounded-full text-[#160A3A] font-bold text-xl hover:opacity-90 transition-opacity">
                         Back to Teams
                     </button>
