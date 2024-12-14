@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faUser } from '@fortawesome/free-solid-svg-icons';
 
 export const metadata: Metadata = {
   title: 'Plumbing Project',
@@ -28,8 +30,9 @@ export default function RootLayout({
           </div>
 
           <div className="w-48 flex justify-end">
-            <div className="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center">
-              <span className="text-lg">👤</span>
+            <div className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-[#7e67d2] p-5 hover:cursor-pointer">
+              <FontAwesomeIcon icon={faUser} className="text-white w-6 h-6" />
+
             </div>
           </div>
         </nav>
