@@ -30,10 +30,10 @@ export default function RootLayout({
           </div>
 
           <div className="w-48 flex justify-end">
-            <div className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-[#7e67d2] p-5 hover:cursor-pointer">
-              <FontAwesomeIcon icon={faUser} className="text-white w-6 h-6" />
+          <div className="w-12 h-12 rounded-full flex items-center justify-center hover:bg-[#7e67d2] hover:cursor-pointer">
+                  <FontAwesomeIcon icon={faUser} className="text-white w-6 h-6" />
+                </div>
 
-            </div>
           </div>
         </nav>
         <div className="">{children}</div>
