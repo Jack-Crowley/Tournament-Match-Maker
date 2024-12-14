@@ -20,6 +20,7 @@ export default function Account() {
                 John Doe
               </h2>
               <p className="text-lg text-[#ecd4f7]">Joined: January 2024</p>
+              <p className="text-lg text-[#ecd4f7]">john.doe@gmail.com</p>
               <p className="text-lg text-[#FF9CEE]">Location: New York, USA</p>
               <Link href="/account/edit">
                 <button className="mt-4 px-6 py-3 bg-[#604BAC] rounded-full text-[#160A3A] font-bold text-lg hover:opacity-90 transition-opacity w-fit">
