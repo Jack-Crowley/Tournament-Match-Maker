@@ -35,7 +35,7 @@ function Home() {
         </div>
 
         {/* Players Section */}
-        <PlayersSection />
+        <InfoSection />
       </div>
     </div>
   );
@@ -47,7 +47,7 @@ type TabsProps = {
   setActiveTab: (tab: string) => void;
 };
 
-import { Bracket, IRoundProps } from 'react-brackets';
+import { Bracket, IRoundProps, Seed, SeedItem, SeedTeam, IRenderSeedProps } from 'react-brackets';
 
 const rounds: IRoundProps[] = [
   {
@@ -77,8 +77,30 @@ const rounds: IRoundProps[] = [
   },
 ];
 
+const CustomSeed = ({ seed, breakpoint, roundIndex, seedIndex }: IRenderSeedProps) => {
+  // breakpoint passed to Bracket component
+  // to check if mobile view is triggered or not
+
+  // mobileBreakpoint is required to be passed down to a seed
+  return (
+    <Seed mobileBreakpoint={breakpoint} style={{ fontSize: 17 }}>
+      <SeedItem>
+        <div>
+          <SeedTeam style={{ color: '#DADADA' }}>{seed.teams[0]?.name || 'NO TEAM '}</SeedTeam>
+          <SeedTeam>{seed.teams[1]?.name || 'NO TEAM '}</SeedTeam>
+        </div>
+      </SeedItem>
+    </Seed>
+  );
+};
+
 const Standings = () => {
-  return <Bracket rounds={rounds} />;
+  return <Bracket rounds={rounds} renderSeedComponent={CustomSeed} 
+  roundTitleComponent={(title: React.ReactNode, roundIndex: number) => {
+    return <div style={{ textAlign: 'center', color: 'white' }}>{title}</div>;
+  }} 
+  
+  />;
 };
 
 
@@ -125,54 +147,61 @@ function Tabs({ activeTab, setActiveTab }: TabsProps): JSX.Element {
   );
 }
 
-// Main PlayersSection component
-function PlayersSection(): JSX.Element {
+
+
+const Players: React.FC = () => {
+  return (
+    <div className="overflow-x-auto">
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-lg font-semibold">Players</h2>
+        <div className="flex space-x-2">
+          <input
+            type="text"
+            placeholder="Search"
+            className="p-2 rounded bg-purple-700 text-white placeholder-purple-300"
+          />
+          <select className="p-2 bg-purple-700 rounded text-white">
+            <option>Filters</option>
+          </select>
+        </div>
+      </div>
+      <table className="w-full text-left table-auto">
+        <thead>
+          <tr>
+            <th className="px-4 py-2">Name</th>
+            <th className="px-4 py-2">Skill/Rating</th>
+            <th className="px-4 py-2">Standing</th>
+          </tr>
+        </thead>
+        <tbody>
+          {[...Array(8)].map((_, i) => (
+            <tr key={i} className="bg-purple-700">
+              <td className="px-4 py-2">{i + 1}</td>
+              <td className="px-4 py-2">-</td>
+              <td className="px-4 py-2">-</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+};
+
+const InfoSection: React.FC = () => {
   const [activeTab, setActiveTab] = useState<string>("Players");
 
   return (
     <div className="col-span-2 bg-purple-800 rounded-lg p-4">
       <Tabs activeTab={activeTab} setActiveTab={setActiveTab} />
       <div>
-        {activeTab === "Players" && (
-          <div className="overflow-x-auto">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg font-semibold">Players</h2>
-              <div className="flex space-x-2">
-                <input
-                  type="text"
-                  placeholder="Search"
-                  className="p-2 rounded bg-purple-700 text-white placeholder-purple-300"
-                />
-                <select className="p-2 bg-purple-700 rounded text-white">
-                  <option>Filters</option>
-                </select>
-              </div>
-            </div>
-            <table className="w-full text-left table-auto">
-              <thead>
-                <tr>
-                  <th className="px-4 py-2">Name</th>
-                  <th className="px-4 py-2">Skill/Rating</th>
-                  <th className="px-4 py-2">Standing</th>
-                </tr>
-              </thead>
-              <tbody>
-                {[...Array(8)].map((_, i) => (
-                  <tr key={i} className="bg-purple-700">
-                    <td className="px-4 py-2">{i + 1}</td>
-                    <td className="px-4 py-2">-</td>
-                    <td className="px-4 py-2">-</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+        {activeTab === "Players" && <Players />}
         {activeTab === "Standings" && <Standings />}
         {activeTab === "Messages" && <Messages />}
       </div>
     </div>
   );
-}
+};
+
+
 
 export default Home;
