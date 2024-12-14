@@ -31,11 +31,12 @@ export default function RootLayout({
           </div>
 
           <div className="w-48 flex justify-end">
-            <div className="w-12 h-12 rounded-full flex items-center justify-center hover:bg-[#7e67d2] hover:cursor-pointer">
-              <Link href="/account/profile">
+          <Link href={"/account/profile"}>
+              <div className="w-12 h-12 rounded-full flex items-center justify-center hover:bg-[#7e67d2] hover:cursor-pointer">
                 <FontAwesomeIcon icon={faUser} className="text-white w-6 h-6" />
-              </Link>
-            </div>
+              </div>
+          </Link>
+
           </div>
         </nav>
         <div className="">{children}</div>
