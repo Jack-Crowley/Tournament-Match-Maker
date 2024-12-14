@@ -15,12 +15,15 @@ export default function TeamsPage() {
             <div className="w-full">
                 <div className="grid grid-cols-3 gap-8 p-8">
                     <Link href="/teams/create">
-                        <div className="hover:cursor-pointer w-[75%] h-[200px] ml-[12.5%] bg-[#604BAC] flex flex-col justify-center items-center rounded-md">
+                        <div className="hover:cursor-pointer w-[75%] h-[240px] ml-[12.5%] bg-[#604BAC] flex flex-col justify-center items-center rounded-md">
                             <div className="h-full flex justify-center items-center">
                                 <h1 className="text-white text-[5rem] text-center m-0">+</h1>
                             </div>
                             <div className="text-2xl text-white text-center w-full py-2 mt-auto rounded-md">
                                 Create New
+                            </div>
+                            <div className="text-2xl bg-[#604BAC] text-[#604BAC] text-center w-full py-2 z-10">
+                                
                             </div>
                         </div>
                     </Link>
