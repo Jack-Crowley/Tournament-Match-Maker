@@ -14,7 +14,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="min-h-screen bg-base-dark-purple text-white font-sans">
-        <nav className="pl-8 pr-8 pb-4 pt-10 flex items-center">
+        <nav className="pl-8 pr-8 pb-4 pt-10 flex items-center z-20">
           <div className="w-48">
             <a href="/" className="text-3xl">TMM</a>
           </div>

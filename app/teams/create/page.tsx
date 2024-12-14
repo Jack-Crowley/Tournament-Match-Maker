@@ -2,7 +2,7 @@ import Link from "next/link";
 
 export default function CreateTeam() {
     return (
-        <div className="absolute top-0 left-0 w-full h-full flex justify-center items-center">
+        <div className="absolute top-0 left-0 w-full h-full flex justify-center items-center -z-10">
             <div className="w-[90%] max-w-[600px] bg-[#381d68] bg-opacity-90 rounded-lg shadow-2xl p-8 border border-[#604BAC]/30">
                 <h1 className="text-3xl font-bold text-center mb-6 text-[#C2A8F0]">Create a New Team</h1>
                 <form>
