@@ -21,12 +21,12 @@ const announcements = [
 ];
 
 const messages = [
-  { id: 0, role:"TD", user: 'TD: Stacy Keith', text: 'Sorry, we are locked on a tight schedule. Be there or forfeit.' },
-  { id: 1, role:"player", user: 'Stephanie Owen', text: 'Can we reschedule my match?' },
-  { id: 2, role:"player", user: 'Johnathon Casey', text: 'Ready for my next round!' },
-  { id: 3, role:"player", user: 'Dion Powers', text: 'Need more info about the rules.' },
-  { id: 4, role:"player", user: 'Stephanie Owen', text: 'When is the next update?' },
-  { id: 5, role:"player", user: 'Sasha Mcmillan', text: 'Excited for the tournament!' }
+  { id: 0, role: "TD", user: 'TD: Stacy Keith', text: 'Sorry, we are locked on a tight schedule. Be there or forfeit.' },
+  { id: 1, role: "player", user: 'Stephanie Owen', text: 'Can we reschedule my match?' },
+  { id: 2, role: "player", user: 'Johnathon Casey', text: 'Ready for my next round!' },
+  { id: 3, role: "player", user: 'Dion Powers', text: 'Need more info about the rules.' },
+  { id: 4, role: "player", user: 'Stephanie Owen', text: 'When is the next update?' },
+  { id: 5, role: "player", user: 'Sasha Mcmillan', text: 'Excited for the tournament!' }
 ];
 
 const playersList = [
@@ -73,7 +73,7 @@ const getWinner = (seed: { teams: { name: string }[] }, index: number) => {
   if (seed.teams[0].name === 'Jolene Rose' && seed.teams[1].name === 'Sasha Mcmillan') {
     return { name: 'Noone' };
   }
-  
+
   // Alternate the winner between first and second team for other matches
   return index % 2 === 0 ? seed.teams[0] : seed.teams[1];
 };
@@ -113,18 +113,61 @@ const Standings = () => {
   );
 };
 
-// Messages component
 function Messages(): JSX.Element {
+  const [newMessages, setMessages] = useState([
+    { id: 0, role: "TD", user: 'TD: Stacy Keith', text: 'Sorry, we are locked on a tight schedule. Be there or forfeit.' },
+    { id: 1, role: "player", user: 'Stephanie Owen', text: 'Can we reschedule my match?' },
+    { id: 2, role: "player", user: 'Johnathon Casey', text: 'Ready for my next round!' },
+    { id: 3, role: "player", user: 'Dion Powers', text: 'Need more info about the rules.' },
+    { id: 4, role: "player", user: 'Stephanie Owen', text: 'When is the next update?' },
+    { id: 5, role: "player", user: 'Sasha Mcmillan', text: 'Excited for the tournament!' }
+  ]);
+
+  const [newMessage, setNewMessage] = useState('');
+
+
+  const handleSend = () => {
+    if (newMessage.trim()) {
+      const newMessageObj = {
+        id: messages.length, // Unique id based on the current length of messages
+        role: "player", // Default role, you can change this as per your needs
+        user: "John Doe", // Default user, replace it dynamically if needed
+        text: newMessage,
+      };
+      // Add the new message to the existing messages
+      setMessages([newMessageObj, ...messages]);
+      setNewMessage(''); // Clear the input field after sending
+    }
+  };
+
+
   return (
     <div className="text-white">
       <h2 className="text-lg font-semibold mb-4">Messages</h2>
       <div className="bg-[#604BAC] p-4 rounded-lg space-y-4">
-        {messages.map((message) => (
+        {newMessages.map((message) => (
           <div key={message.id} className="p-3 bg-[#7e67d2] rounded-lg">
             <p className={`font-semibold ${message.role == "TD" ? "text-[#dddd4c]" : ""} font-bold`}>{message.user}</p>
             <p className="text-sm">{message.text}</p>
           </div>
         ))}
+      </div>
+
+      {/* Input and Send Button */}
+      <div className="mt-6 flex">
+        <input
+          type="text"
+          placeholder="Type your message..."
+          className="flex-1 px-4 py-2 rounded-l-lg border-2 border-[#3c325f] text-black focus:outline-none border-r-0"
+          value={newMessage}
+          onChange={(e) => setNewMessage(e.target.value)}
+        />
+        <button
+          onClick={handleSend}
+          className="px-4 py-2 bg-[#7e67d2] text-white rounded-r-lg border-2 border-[#3c325f] border-l-4 hover:bg-[#604BAC] focus:outline-none transition duration-200"
+        >
+          Send
+        </button>
       </div>
     </div>
   );
