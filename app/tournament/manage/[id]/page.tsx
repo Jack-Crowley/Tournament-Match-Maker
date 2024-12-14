@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@supabase/supabase-js'
 import { Database } from '@/lib/database.types'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faUser } from '@fortawesome/free-solid-svg-icons';
 
 // const supabase = createClient<Database>(
 //   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -17,16 +19,16 @@ function Home() {
       {/* Content Section */}
       <div className="p-6 grid grid-cols-3 gap-6">
         {/* Announcements */}
-        <div className="col-span-1 bg-purple-800 rounded-lg p-4">
+        <div className="col-span-1 bg-[#604BAC] rounded-lg p-4">
           <h2 className="text-lg font-semibold mb-4">Announcements</h2>
           <ul className="space-y-4">
             {[...Array(4)].map((_, i) => (
               <li
                 key={i}
-                className="bg-purple-700 rounded-lg p-3 flex items-center space-x-4"
+                className="bg-[#7e67d2] rounded-lg p-3 flex items-center space-x-4"
               >
-                <div className="w-10 h-10 bg-purple-500 rounded-full flex items-center justify-center">
-                  👤
+                <div className="w-12 h-12 rounded-full flex items-center justify-center">
+                  <FontAwesomeIcon icon={faUser} className="text-white w-6 h-6" />
                 </div>
                 <span>New Announcement!</span>
               </li>
@@ -109,11 +111,11 @@ function Messages(): JSX.Element {
   return (
     <div className="text-white">
       <h2 className="text-lg font-semibold mb-4">Messages</h2>
-      <div className="bg-purple-700 p-4 rounded-lg space-y-4">
+      <div className="bg-[#604BAC] p-4 rounded-lg space-y-4">
         {[...Array(5)].map((_, i) => (
-          <div key={i} className="p-3 bg-purple-800 rounded-lg">
+          <div key={i} className="p-3 bg-[#7e67d2] rounded-lg">
             <p className="font-semibold">User {i + 1}</p>
-            <p className="text-purple-300 text-sm">This is a placeholder message.</p>
+            <p className="text-sm">This is a placeholder message.</p>
           </div>
         ))}
       </div>
@@ -130,14 +132,14 @@ function Tabs({ activeTab, setActiveTab }: TabsProps): JSX.Element {
   ];
 
   return (
-    <div className="flex space-x-4 mb-4 border-b border-purple-700">
+    <div className="flex space-x-4 mb-4 border-b border-[#7e67d2]">
       {tabs.map((tab) => (
         <button
           key={tab.name}
           onClick={() => setActiveTab(tab.name)}
           className={`py-2 px-4 text-white font-semibold border-b-2 ${activeTab === tab.name
             ? "border-white"
-            : "border-transparent hover:border-purple-500"
+            : "border-transparent hover:border-[#7e67d2]"
             }`}
         >
           {tab.name}
