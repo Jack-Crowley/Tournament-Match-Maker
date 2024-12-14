@@ -18,7 +18,7 @@ const teams: Team[] = [
         id: 1,
         name: 'Knightly Knights',
         membersCount: 12,
-        image: '/team.jpg',
+        image: '/team1.jpg',
         tournamentsJoined: 5,
         tournamentsWon: 2,
         gamesPlayed: 20,
@@ -28,7 +28,7 @@ const teams: Team[] = [
         id: 2,
         name: 'Rockeeters',
         membersCount: 8,
-        image: '/team.jpg',
+        image: '/team2.jpg',
         tournamentsJoined: 3,
         tournamentsWon: 1,
         gamesPlayed: 15,
@@ -38,7 +38,7 @@ const teams: Team[] = [
         id: 3,
         name: 'Chicago Monkees',
         membersCount: 15,
-        image: '/team.jpg',
+        image: '/team3.jpg',
         tournamentsJoined: 7,
         tournamentsWon: 3,
         gamesPlayed: 25,
@@ -48,7 +48,7 @@ const teams: Team[] = [
         id: 4,
         name: 'Blazing Blues',
         membersCount: 10,
-        image: '/team.jpg',
+        image: '/team4.jpg',
         tournamentsJoined: 4,
         tournamentsWon: 2,
         gamesPlayed: 18,
@@ -95,8 +95,8 @@ export default function TeamDetailsPage({ params }: { params: { id: string } }) 
                     <Image
                         src={team.image}
                         alt={`${team.name} banner`}
-                        width={800}
-                        height={400}
+                        width={400}
+                        height={200}
                         className="object-cover"
                     />
                 </div>
