@@ -1,7 +1,9 @@
+// page.tsx
 import { Metadata } from 'next';
 import Link from 'next/link';
 import Image from 'next/image';
 
+// Define Team interface for type safety
 interface Team {
     id: number;
     name: string;
@@ -13,6 +15,7 @@ interface Team {
     gamesWon: number;
 }
 
+// Mock database (replace this with a real API or database query)
 const teams: Team[] = [
     {
         id: 1,
@@ -56,31 +59,23 @@ const teams: Team[] = [
     },
 ];
 
-// Temporary hardcoded data (replace with a real database or API)
-
-// Fetch a single team based on ID
+// Helper function to fetch a team by ID
 const getTeamById = (id: number): Team | undefined => {
     return teams.find((team) => team.id === id);
 };
 
-// Metadata for SEO
-export const generateMetadata = ({ params }: { params: { id: string } }): Metadata => {
-    const team = getTeamById(Number(params.id));
-    return {
-        title: team ? `Details for ${team.name}` : 'Team Not Found',
-    };
-};
-
-// Team Details Page
-export default function TeamDetailsPage({ params }: { params: { id: string } }) {
-    const team = getTeamById(Number(params.id));
+// Default export for the dynamic Team Details page
+export default async function TeamDetailsPage({ params }: { params: Promise<{ id: string }> }) {
+    const {id} = await params;
+    const team = getTeamById(Number(id));
 
     if (!team) {
         return (
-            <div className="w-full justify-center text-center text-white p-8">
-                <h1 className="text-4xl font-bold">Team Not Found</h1>
+            <div className="min-h-screen flex flex-col items-center justify-center bg-gray-900 text-white">
+                <h1 className="text-4xl font-bold mb-4">Team Not Found</h1>
+                <p className="text-lg mb-8">The team you are looking for does not exist or may have been removed.</p>
                 <Link href="/teams">
-                    <button className="mt-8 px-8 py-4 bg-[#ECD4F7] rounded-full text-[#160A3A] font-bold text-xl hover:opacity-90 transition-opacity">
+                    <button className="px-6 py-3 bg-purple-500 text-white rounded-lg text-lg font-bold hover:bg-purple-600 transition">
                         Back to Teams
                     </button>
                 </Link>
@@ -89,46 +84,48 @@ export default function TeamDetailsPage({ params }: { params: { id: string } }) 
     }
 
     return (
-        <div className="w-full justify-center">
-            <div className="min-h-[calc(100vh-160px)] w-full bg-[#160A3A] flex flex-col items-center justify-center p-8 text-white">
-                <div className="relative w-full max-w-4xl flex justify-center rounded-lg overflow-hidden shadow-lg mb-8">
+        <div className="min-h-screen bg-gray-900 text-white flex flex-col items-center">
+            <div className="w-full max-w-4xl p-8">
+                {/* Team banner */}
+                <div className="relative w-full rounded-lg overflow-hidden shadow-lg mb-6">
                     <Image
                         src={team.image}
-                        alt={`${team.name} banner`}
-                        width={400}
-                        height={200}
+                        alt={`Banner for ${team.name}`}
+                        width={800}
+                        height={400}
                         className="object-cover"
+                        priority
                     />
                 </div>
-                <h1 className="text-4xl font-bold mb-8">{team.name}</h1>
-                <div className="grid grid-cols-2 gap-8 text-center w-full max-w-4xl mb-8">
-                    <div className="p-6 bg-[#604BAC] rounded-lg shadow-lg">
-                        <h3 className="text-2xl font-bold">Members</h3>
-                        <p className="text-5xl font-black mt-4">{team.membersCount}</p>
-                    </div>
-                    <div className="p-6 bg-[#604BAC] rounded-lg shadow-lg">
-                        <h3 className="text-2xl font-bold">Tournaments Joined</h3>
-                        <p className="text-5xl font-black mt-4">{team.tournamentsJoined}</p>
-                    </div>
-                    <div className="p-6 bg-[#604BAC] rounded-lg shadow-lg">
-                        <h3 className="text-2xl font-bold">Tournaments Won</h3>
-                        <p className="text-5xl font-black mt-4">{team.tournamentsWon}</p>
-                    </div>
-                    <div className="p-6 bg-[#604BAC] rounded-lg shadow-lg">
-                        <h3 className="text-2xl font-bold">Games Played</h3>
-                        <p className="text-5xl font-black mt-4">{team.gamesPlayed}</p>
-                    </div>
-                    <div className="p-6 bg-[#604BAC] rounded-lg shadow-lg">
-                        <h3 className="text-2xl font-bold">Games Won</h3>
-                        <p className="text-5xl font-black mt-4">{team.gamesWon}</p>
-                    </div>
+                {/* Team name */}
+                <h1 className="text-4xl font-bold text-center mb-8">{team.name}</h1>
+
+                {/* Team stats grid */}
+                <div className="grid grid-cols-2 gap-6">
+                    <StatCard label="Members" value={team.membersCount} />
+                    <StatCard label="Tournaments Joined" value={team.tournamentsJoined} />
+                    <StatCard label="Tournaments Won" value={team.tournamentsWon} />
+                    <StatCard label="Games Played" value={team.gamesPlayed} />
+                    <StatCard label="Games Won" value={team.gamesWon} />
                 </div>
-                <Link href="/teams">
-                    <button className="mt-8 px-8 py-4 bg-[#ECD4F7] rounded-full text-[#160A3A] font-bold text-xl hover:opacity-90 transition-opacity">
-                        Back to Teams
-                    </button>
-                </Link>
+
+                {/* Back to Teams Button */}
+                <div className="text-center mt-8">
+                    <Link href="/teams">
+                        <button className="px-6 py-3 bg-purple-500 text-white rounded-lg text-lg font-bold hover:bg-purple-600 transition">
+                            Back to Teams
+                        </button>
+                    </Link>
+                </div>
             </div>
         </div>
     );
 }
+
+// Helper component for team stats
+const StatCard = ({ label, value }: { label: string; value: number }) => (
+    <div className="bg-purple-700 p-6 rounded-lg shadow-lg text-center">
+        <h3 className="text-xl font-bold mb-2">{label}</h3>
+        <p className="text-4xl font-black">{value}</p>
+    </div>
+);
