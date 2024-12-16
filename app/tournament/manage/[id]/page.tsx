@@ -81,7 +81,7 @@ const getWinner = (seed: { teams: { name: string }[] }, index: number) => {
 // Custom seed component for displaying teams
 const CustomSeed = ({ seed, breakpoint, roundIndex, seedIndex }: IRenderSeedProps) => {
   // Get the winner from the seed based on the index
-  const winner = getWinner(seed, seedIndex);
+  const winner = getWinner(seed as any, seedIndex);
 
   return (
     <Seed mobileBreakpoint={breakpoint} style={{ fontSize: 17 }}>
