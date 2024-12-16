@@ -5,7 +5,7 @@ import { createClient } from '@supabase/supabase-js'
 import { Database } from '@/lib/database.types'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUser } from '@fortawesome/free-solid-svg-icons';
-import { Bracket, IRoundProps, Seed, SeedItem, SeedTeam, IRenderSeedProps } from 'react-brackets';
+import { Bracket, IRoundProps, Seed, SeedItem, SeedTeam, IRenderSeedProps, ISeedProps } from 'react-brackets';
 
 type TabsProps = {
   activeTab: string;
@@ -64,7 +64,7 @@ const rounds = [
   }
 ];
 
-const getWinner = (seed: { teams: { name: string }[] }, index: number) => {
+const getWinner = (seed: ISeedProps, index: number) => {
   // Ensure Player 7 wins in the match where they are involved
   if (seed.teams[0].name === 'Lauren Greene' || seed.teams[1].name === 'Lauren Greene') {
     return { name: 'Lauren Greene' };
@@ -81,7 +81,7 @@ const getWinner = (seed: { teams: { name: string }[] }, index: number) => {
 // Custom seed component for displaying teams
 const CustomSeed = ({ seed, breakpoint, roundIndex, seedIndex }: IRenderSeedProps) => {
   // Get the winner from the seed based on the index
-  const winner = getWinner(seed, seedIndex);
+  const winner = getWinner(seed as any, seedIndex);
 
   return (
     <Seed mobileBreakpoint={breakpoint} style={{ fontSize: 17 }}>
