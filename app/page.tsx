@@ -26,7 +26,7 @@ export default function Home() {
               ))}
               <Link href="/login">
                 <button className="mt-8 px-8 py-4 bg-[#604BAC] rounded-full text-[#160A3A] font-bold text-xl hover:opacity-90 transition-opacity w-fit">
-                  Get Started
+                  Get Started!
                 </button>
               </Link>
             </div>
