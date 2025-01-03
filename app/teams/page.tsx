@@ -1,14 +1,37 @@
+"use client"
+
 import Link from 'next/link';
 import Image from 'next/image';
+import { useEffect, useState } from 'react';
+import { fetchTeams } from '../../lib/teamsService';
+
+export interface Team {
+    id: number;
+    name: string;
+    membersCount: number;
+    image: string;
+    tournamentsJoined: number;
+    tournamentsWon: number;
+    gamesPlayed: number;
+    gamesWon: number;
+}
 
 export default function TeamsPage() {
-    const teams = [
-        { id: 1, name: 'Knightly Knights', membersCount: 12, image: '/team1.jpg' },
-        { id: 2, name: 'Rockeeters', membersCount: 8, image: '/team2.jpg' },
-        { id: 3, name: 'Chicago Monkees', membersCount: 15, image: '/team3.jpg' },
-        { id: 4, name: 'Blazing Blues', membersCount: 10, image: '/team4.jpg' },
+    const [teams, setTeams] = useState<Team[]>([]);
 
-    ];
+    useEffect(() => {
+        const loadTeams = async () => {
+            try {
+                const fetchedTeams = await fetchTeams();
+                setTeams(fetchedTeams);
+            } catch (error) {
+                console.log("could not fetch teams uh oh!");
+                console.error(error);
+            }
+        };
+
+        loadTeams();
+    }, []);
 
     return (
         <div className="w-full justify-center">
@@ -22,9 +45,6 @@ export default function TeamsPage() {
                             <div className="text-2xl text-white text-center w-full py-2 mt-auto rounded-md">
                                 Create New
                             </div>
-                            <div className="text-2xl bg-[#604BAC] text-[#604BAC] text-center w-full py-2 z-10">
-                                
-                            </div>
                         </div>
                     </Link>
 
@@ -33,7 +53,7 @@ export default function TeamsPage() {
                             key={team.id}
                             className="hover:cursor-pointer w-[75%] ml-[12.5%] bg-gray-200 flex flex-col justify-center items-center relative overflow-hidden"
                         >
-                            <Link href={`/teams/${team.id}`} className='w-full'>
+                            <Link href={`/teams/${team.id}`} className="w-full">
                                 <div className="relative w-full h-[200px]">
                                     <Image
                                         src={team.image}
