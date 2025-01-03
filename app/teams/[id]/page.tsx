@@ -1,6 +1,6 @@
 import { Metadata } from 'next';
 import Link from 'next/link';
-import Image from 'next/image';
+import Image from "next/legacy/image";
 import { supabase } from '../../../lib/supabaseClient'; // Adjust the path as per your setup
 
 // Dynamic metadata for the team page
