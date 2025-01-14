@@ -1,7 +1,24 @@
+"use client"
+
 import Image from "next/legacy/image";
 import Link from 'next/link';
+import { createClient } from "@/utils/supabase/client";
+import { useEffect, useState } from "react";
 
 export default function Account() {
+  const supabase = createClient()
+  const [name, setName] = useState(null)
+  const [email, setEmail] = useState(null);
+
+  useEffect(() => {
+    async function load() {
+      setName((await supabase.auth.getUser()).data.user?.user_metadata.name)
+      setEmail((await supabase.auth.getUser()).data.user?.user_metadata.email)
+    }
+
+    load()
+  })
+
   return (
     <div className="w-full justify-center">
       <div className="">
@@ -17,16 +34,17 @@ export default function Account() {
                 className="w-36 h-36 object-cover rounded-full border-4 border-[#604BAC] shadow-lg"
               />
               <h2 className="text-4xl font-black text-white uppercase tracking-wide">
-                John Doe
+                {name ?? "Loading"}
               </h2>
               <p className="text-lg text-[#ecd4f7]">Joined: January 2024</p>
-              <p className="text-lg text-[#ecd4f7]">john.doe@gmail.com</p>
+              <p className="text-lg text-[#ecd4f7]">{email}</p>
               <p className="text-lg text-[#FF9CEE]">Location: New York, USA</p>
               <Link href="/account/edit">
                 <button className="mt-4 px-6 py-3 bg-[#604BAC] rounded-full text-[#160A3A] font-bold text-lg hover:opacity-90 transition-opacity w-fit">
                   Edit Profile
                 </button>
               </Link>
+              <Link href="/api/auth/signout" className="mt-4 px-6 py-3 bg-[#b36969] rounded-full text-[#160A3A] font-bold text-lg hover:opacity-90 transition-opacity w-fit" prefetch={false}>Log Out</Link>
             </div>
           </div>
 
