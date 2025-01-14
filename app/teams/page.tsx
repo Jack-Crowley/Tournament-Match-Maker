@@ -14,6 +14,7 @@ export interface Team {
     tournamentsWon: number;
     gamesPlayed: number;
     gamesWon: number;
+    description: string;
 }
 
 export default function TeamsPage() {
@@ -55,12 +56,12 @@ export default function TeamsPage() {
                         >
                             <Link href={`/teams/${team.id}`} className="w-full">
                                 <div className="relative w-full h-[200px]">
-                                    <Image
-                                        src={team.image}
-                                        alt={`${team.name} image`}
-                                        layout="fill"
-                                        objectFit="cover"
-                                    />
+                                        <Image
+                                            src={team.image.startsWith("/") ? team.image : "/car.jpg"}
+                                            alt={`${team.name} image`}
+                                            layout="fill"
+                                            objectFit="cover"
+                                        />
                                 </div>
                                 <div className="text-2xl bg-[#604BAC] text-white text-center w-full py-2 z-10">
                                     {team.name}
