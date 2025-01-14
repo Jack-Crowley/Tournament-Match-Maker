@@ -1,7 +1,7 @@
 import { Metadata } from 'next';
 import Link from 'next/link';
 import Image from "next/legacy/image";
-import { supabase } from '../../../lib/supabaseClient'; // Adjust the path as per your setup
+import { supabase } from '../../../lib/supabaseClient'; 
 
 // Dynamic metadata for the team page
 export const generateMetadata = async ({ params }: { params: { id: string } }): Promise<Metadata> => {
@@ -44,7 +44,7 @@ export default async function TeamDetailsPage({ params }: { params: { id: string
         {/* Team Banner */}
         <div className="relative w-full rounded-lg overflow-hidden shadow-lg mb-6">
           <Image
-            src={team.image}
+            src={team.image.startsWith("/") ? team.image : "/car.jpg"}
             alt={`Banner for ${team.name}`}
             width={800}
             height={400}
@@ -55,6 +55,8 @@ export default async function TeamDetailsPage({ params }: { params: { id: string
 
         {/* Team Name */}
         <h1 className="text-4xl font-bold text-center mb-8">{team.name}</h1>
+        {/* Team Description */}
+         <p className="text-lg text-center mb-8 text-gray-300">{team.description}</p>
 
         {/* Team Stats */}
         <div className="grid grid-cols-2 gap-6">
