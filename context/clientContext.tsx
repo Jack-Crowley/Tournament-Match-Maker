@@ -5,6 +5,7 @@ import { createClient } from '@/utils/supabase/client'
 import { SupabaseClient, Session } from '@supabase/supabase-js';
 import { useRouter } from 'next/navigation';
 import { faFileShield } from '@fortawesome/free-solid-svg-icons';
+import { usePathname } from 'next/navigation';
 
 type ClientContextType = {
     client: SupabaseClient;
@@ -23,6 +24,7 @@ export function ClientProvider({ children }: { children: ReactNode }) {
     const [authChange, SetAuthChange] = useState<number>(0)
     const [admin, setAdmin] = useState<boolean>(false)
     const router = useRouter();
+    const pathname = usePathname();
 
     useEffect(() => {
         const fetchSession = async () => {
@@ -49,8 +51,8 @@ export function ClientProvider({ children }: { children: ReactNode }) {
             if (event === 'SIGNED_OUT') {
                 console.log(event)
             }
-            if (session && !signedIn) {
-                setSignedIn(true)
+            if (session && !signedIn && pathname === '/login') {
+                setSignedIn(true);
                 router.push('/account');
             }
         });

@@ -1,7 +1,7 @@
 'use client'
 
+import { createClient } from '@/utils/supabase/client'
 import { useEffect, useState } from 'react'
-import { createClient } from '@supabase/supabase-js'
 import { Database } from '@/lib/database.types'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUser } from '@fortawesome/free-solid-svg-icons';
@@ -114,41 +114,112 @@ const Standings = () => {
 };
 
 function Messages(): JSX.Element {
-  const [newMessages, setMessages] = useState([
-    { id: 0, role: "TD", user: 'TD: Stacy Keith', text: 'Sorry, we are locked on a tight schedule. Be there or forfeit.' },
-    { id: 1, role: "player", user: 'Stephanie Owen', text: 'Can we reschedule my match?' },
-    { id: 2, role: "player", user: 'Johnathon Casey', text: 'Ready for my next round!' },
-    { id: 3, role: "player", user: 'Dion Powers', text: 'Need more info about the rules.' },
-    { id: 4, role: "player", user: 'Stephanie Owen', text: 'When is the next update?' },
-    { id: 5, role: "player", user: 'Sasha Mcmillan', text: 'Excited for the tournament!' }
-  ]);
+  const supabase = createClient()
+
+  const [newMessages, setMessages] = useState([]);
+  
+  useEffect(() => {
+    const fetchMessages = async () => {
+      try {
+        // Get the current user
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
+        if (userError) throw userError;
+
+        const userId = user?.id;
+
+        // Fetch messages from the "messages" table
+        const { data: messages, error: messagesError } = await supabase
+          .from('announcements')
+          .select('*');
+
+        if (messagesError) {
+          throw messagesError
+        };
+
+        const transformedMessages = messages.map((message) => ({
+          ...message,
+          seen: message.seen.includes(userId),
+        }));
+
+        // Set messages in state
+        setMessages(transformedMessages as any);
+
+
+        // Add the user's ID to the 'seen' array for all new messages
+        const updates = messages.map(async (message) => {
+          if (!message.seen.includes(userId)) {
+            const updatedSeenArray = [...message.seen, userId];
+
+            // Update the message in the database
+            const { error: updateError } = await supabase
+              .from('announcements')
+              .update({ seen: updatedSeenArray })
+              .eq('id', message.id);
+
+            if (updateError) {
+              console.error(`Failed to update message with ID ${message.id}`, updateError);
+            }
+          }
+        });
+
+        // Wait for all updates to complete
+        await Promise.all(updates);
+      } catch (error) {
+        console.error('Error fetching messages:', error);
+      }
+    };
+
+    fetchMessages();
+  }, []);
+
 
   const [newMessage, setNewMessage] = useState('');
 
 
-  const handleSend = () => {
-    if (newMessage.trim()) {
+  const handleSend = async () => {
+    try {
+      // Get the current user
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError) throw userError;
+
+      const userName = user?.user_metadata.name;
+
+      // Create a new message object
       const newMessageObj = {
-        id: messages.length, // Unique id based on the current length of messages
-        role: "player", // Default role, you can change this as per your needs
-        user: "John Doe", // Default user, replace it dynamically if needed
-        text: newMessage,
+        id: Date.now(), // Temporary ID for local usage
+        sender: userName,
+        message: newMessage,
+        seen: false, // New message is unseen by other users
       };
-      // Add the new message to the existing messages
-      setMessages([newMessageObj, ...messages]);
-      setNewMessage(''); // Clear the input field after sending
+
+      // Update state locally
+      setMessages((prevMessages) : any => [...prevMessages, newMessageObj]);
+
+      // Insert the message into the database
+      const { error: dbError } = await supabase.from("announcements").insert({
+        message: newMessage,
+        sender: userName,
+        seen: [],
+      });
+
+      if (dbError) {
+        console.error("Error saving message to the database:", dbError);
+      } else {
+        setNewMessage("");
+      }
+    } catch (error) {
+      console.error("Error sending message:", error);
     }
   };
-
 
   return (
     <div className="text-white">
       <h2 className="text-lg font-semibold mb-4">Messages</h2>
       <div className="bg-[#604BAC] p-4 rounded-lg space-y-4">
-        {newMessages.map((message) => (
+        {newMessages.map((message : any) => (
           <div key={message.id} className="p-3 bg-[#7e67d2] rounded-lg">
-            <p className={`font-semibold ${message.role == "TD" ? "text-[#dddd4c]" : ""} font-bold`}>{message.user}</p>
-            <p className="text-sm">{message.text}</p>
+            <p className={`font-semibold ${!message.seen ? "text-[#dddd4c]" : ""} font-bold`}>{message.sender}</p>
+            <p className="text-sm">{message.message}</p>
           </div>
         ))}
       </div>
