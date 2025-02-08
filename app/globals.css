@@ -83,3 +83,26 @@ body {
   text-align: center;
   margin: 1rem 0;
 }
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px; /* Thin scrollbar */
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: #7458da; /* Purple thumb */
+  border-radius: 10px;
+  transition: background-color 0.3s ease-in-out;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: #9c7bff; /* Lighter purple on hover */
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background-color: #2E2E2E; /* Darker background track */
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track:hover {
+  background-color: #3C3C3C; /* Slightly lighter track on hover */
+}

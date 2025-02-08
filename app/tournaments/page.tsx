@@ -1,9 +1,156 @@
+"use client"
+
 import Image from "next/legacy/image";
 import Link from "next/link";
+import { motion, AnimatePresence } from "framer-motion";
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faPlusCircle, faChevronDown, faChevronUp } from '@fortawesome/free-solid-svg-icons';
+import { useState, useRef, useEffect, ChangeEvent } from 'react';
+import { useMessage } from '@/context/messageContext';
+
+interface Button {
+    id: string;
+    label: string;
+}
+
+interface Rules {
+    [key: string]: boolean;
+}
+
+const generalRules: { fullName: string, id: string }[] = [
+    { fullName: "Team Tournament", id: "team" },
+    { fullName: "Require Accounts", id: "accounts" }
+]
+
+const buttons: Button[] = [
+    { id: "single", label: "Single Elimination" },
+    { id: "double", label: "Double Elimination" },
+    { id: "round", label: "Round Robin" },
+    { id: "swiss", label: "Swiss System" },
+];
+
+const tournamentRules: { [key: string]: { label: string, key: string }[] } = {
+    "single": [
+        { label: "Custom Rule A", key: "custom-rule-1" },
+        { label: "Custom Rule B", key: "custom-rule-2" },
+    ],
+    "double": [
+        { label: "Custom Rule C", key: "custom-rule-3" },
+        { label: "Custom Rule D", key: "custom-rule-4" },
+    ],
+    "round": [
+        { label: "Custom Rule E", key: "custom-rule-5" },
+        { label: "Custom Rule F", key: "custom-rule-6" },
+    ],
+    "swiss": [
+        { label: "Custom Rule G", key: "custom-rule-7" },
+        { label: "Custom Rule H", key: "custom-rule-8" },
+    ]
+};
 
 export default function Home() {
+    const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+    const [selectedButton, setSelectedButton] = useState<string | null>(null);
+    const [selectedDropdown, setSelectedDropdown] = useState<string | null>(null);
+    const [tournamentName, setTournamentName] = useState<string>('');
+    const [tournamentDescription, setTournamentDescription] = useState<string>('');
+    const [selectedType, setSelectedType] = useState<string | null>(null);
+    const [rules, setRules] = useState<Rules>({});
+    const modalRef = useRef<HTMLDivElement>(null);
+    const { triggerMessage } = useMessage();
+
+    // Disable scrolling on the main site when the modal is open
+    useEffect(() => {
+        if (isModalOpen) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = 'auto';
+        }
+    }, [isModalOpen]);
+
+    const handleClickOutside = (event: MouseEvent) => {
+        if (modalRef.current && !modalRef.current.contains(event.target as Node)) {
+            setIsModalOpen(false);
+        }
+    };
+
+    useEffect(() => {
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, []);
+
+    const Switch = ({ label, ruleKey }: { label: string, ruleKey: string }) => {
+        const [isOn, setIsOn] = useState<boolean>(rules[ruleKey] || false);
+
+        const handleSwitchChange = () => {
+            setIsOn(!isOn); // Toggle the state immediately to trigger animation
+            const newRules = { ...rules, [ruleKey]: !isOn };
+            // setRules(newRules);
+        };
+
+        return (
+            <div className="flex items-center justify-between cursor-pointer">
+                <span className="text-white">{label}</span>
+                <motion.div
+                    className={`w-10 h-6 rounded-full flex items-center p-1 cursor-pointer ${isOn ? "justify-end" : "justify-start"}`}
+                    onClick={() => { handleSwitchChange() }}
+                    initial={false}
+                    animate={{
+                        background: isOn
+                            ? "linear-gradient(45deg, #7458da, #cec5eb)"
+                            : "linear-gradient(45deg, #3A3A3A, #5C5C5C)",
+                    }}
+                    transition={{ duration: 0.3 }}
+                >
+                    <motion.div
+                        className="w-4 h-4 bg-white rounded-full"
+                        layout
+                        transition={{ type: "spring", stiffness: 200, damping: 30 }}
+                    />
+                </motion.div>
+            </div>
+        );
+    };
+
+
+
+
+    // Handle form submission
+    const handleCreateTournament = () => {
+        if (!tournamentName || !selectedType) {
+            triggerMessage('Please select a tournament type and provide a name.', 'red');
+            return;
+        }
+
+        // Create the tournament object to export
+        const tournamentData = {
+            "tournament-type": selectedType,
+            "tournament-name": tournamentName,
+            "tournament-description": tournamentDescription,
+            "general-rule-1": rules["custom-rule-1"] || false,
+            "general-rule-2": rules["custom-rule-2"] || false,
+            "custom-rules": Object.keys(rules).reduce((acc: any, key) => {
+                if (key.startsWith('custom-rule')) {
+                    acc[key] = rules[key];
+                }
+                return acc;
+            }, {}),
+        };
+
+        console.log(tournamentData); // Export this data as needed (e.g., send to backend)
+
+        // Reset the form after submission
+        setTournamentName('');
+        setTournamentDescription('');
+        setSelectedType(null);
+        setRules({});
+        setIsModalOpen(false);
+    };
+
     return (
-        <div>
+        <div className="relative min-h-screen">
             <h1 className="text-[#7458da] font-bold text-3xl ml-20 mt-20">Ongoing Tournaments</h1>
             <div className="grid grid-cols-1 sm:grid-cols-2 px-20 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-3 gap-4 p-6">
                 <div className="card bg-[#604BAC] border-r-8 p-4 border-[#816ad1] max-w-sm rounded overflow-hidden shadow-lg flex flex-col items-center">
@@ -17,51 +164,152 @@ export default function Home() {
                     <div className="px-6 py-4 text-center">
                         <div className="font-bold text-xl mb-2">The Michael Scott Memorial Frisbee Golf Tournament</div>
                         <p className="text-gray-100 text-semibold">
-                            Join us for the inaugural Michael Thompson Memorial Frisbee Golf Tournament! Celebrate the life and legacy of Michael Thompson, a passionate Frisbee golfer whose dedication to the sport inspired many. The tournament will feature challenging courses, friendly competition, and a chance to honor his contributions to the Frisbee golf community.
-                            <br />
-                            <strong>Event Date:</strong> January 15th, 2025
-                            <br />
-                            <strong>Location:</strong> Green Meadows Golf Course
-                            <br />
+                            Join us for the inaugural Michael Thompson Memorial Frisbee Golf Tournament! Celebrate the life and legacy of Michael Thompson, a passionate Frisbee golfer whose dedication to the sport inspired many.
                         </p>
                     </div>
-                    <Link href="/tournament/manage/1" className="inline-flex items-center px-3 py-2 text-sm font-medium text-center text-white bg-[#382460] rounded-lg hover:bg-[#261843] focus:ring-4 focus:outline-none focus:ring-[#412a6e]">
+                    <Link href="/tournament/manage/1" className="inline-flex items-center px-3 py-2 text-sm font-medium text-center text-white bg-[#382460] rounded-lg hover:bg-[#261843]">
                         Read more
-                        <svg className="rtl:rotate-180 w-3.5 h-3.5 ms-2" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 10">
-                            <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M1 5h12m0 0L9 1m4 4L9 9" />
-                        </svg>
                     </Link>
                 </div>
             </div>
-            <h1 className="text-[#7458da] font-bold text-3xl ml-20 mt-5">Previous Tournaments</h1>
-            <div className="grid grid-cols-1 px-20 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-3 gap-4 p-6">
-                <div className="card bg-[#604BAC] border-r-8 p-4 border-[#816ad1] max-w-sm rounded overflow-hidden shadow-lg flex flex-col items-center">
-                    <Image
-                        src="/car.jpg"
-                        width={500}
-                        height={400}
-                        alt="Picture of the author"
-                        className="w-[70%] rounded-2xl"
+
+            {/* Modal Trigger Button */}
+            <motion.div
+                className="fixed bottom-5 right-5 flex items-center gap-2 group"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+            >
+                <motion.div
+                    className="bg-[#604BAC] text-white flex items-center px-3 py-2 rounded-full text-sm font-medium shadow-md cursor-pointer overflow-hidden"
+                    initial={{ width: "3rem" }}
+                    whileHover={{ width: "10rem" }}
+                    transition={{ type: "spring", stiffness: 150 }}
+                    onClick={() => setIsModalOpen(true)}
+                >
+                    <FontAwesomeIcon
+                        icon={faPlusCircle}
+                        className="text-white text-2xl mr-4"
                     />
-                    <div className="px-6 py-4 text-center">
-                        <div className="font-bold text-xl mb-2">5th Annual Matchbox Car Race</div>
-                        <p className="text-gray-100 text-semibold">
-                            Join us for the 5th Annual Matchbox Car Race, a thrilling event where competitors from all ages showcase their custom-built cars. This year’s race promises exciting challenges, new categories, and an even bigger crowd. Whether you're a seasoned racer or a first-timer, the fun is sure to be unforgettable!
-                            <br />
-                            <strong>Event Date:</strong> December 20th, 2024
-                            <br />
-                            <strong>Location:</strong> Central Park Raceway, Downtown
-                            <br />
-                        </p>
-                    </div>
-                    <Link href="/tournament/manage/1" className="inline-flex items-center px-3 py-2 text-sm font-medium text-center text-white bg-[#382460] rounded-lg hover:bg-[#261843] focus:ring-4 focus:outline-none focus:ring-[#412a6e]">
-                        Read more
-                        <svg className="rtl:rotate-180 w-3.5 h-3.5 ms-2" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 10">
-                            <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M1 5h12m0 0L9 1m4 4L9 9" />
-                        </svg>
-                    </Link>
-                </div>
-            </div>
+                    <span className="whitespace-nowrap">Create New</span>
+                </motion.div>
+            </motion.div>
+            {isModalOpen && (
+                <AnimatePresence>
+                    {isModalOpen && (
+                        <motion.div
+                            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                        >
+                            <motion.div
+                                ref={modalRef}
+                                className="bg-[#1E1E1E] p-6 rounded-lg shadow-lg max-w-lg w-full mx-4 overflow-y-auto max-h-[90vh]"
+                                initial={{ scale: 0.9, opacity: 0 }}
+                                animate={{ scale: 1, opacity: 1 }}
+                                exit={{ scale: 0.9, opacity: 0 }}
+                            >
+                                <h2 className="text-xl font-bold mb-4 text-white">Create New Tournament</h2>
+
+                                <div className="grid grid-cols-2 gap-4 mb-6">
+                                    {buttons.map((button) => (
+                                        <motion.button
+                                            key={button.id}
+                                            className={`p-4 rounded-lg text-white text-center ${selectedButton === button.id
+                                                ? "border-2 border-[#7458da]"
+                                                : "bg-[#2C2C2C] hover:bg-[#3C3C3C]"
+                                                }`}
+                                            whileHover={{ scale: 1.05 }}
+                                            whileTap={{ scale: 0.95 }}
+                                            onClick={() => setSelectedButton(button.id)}
+                                        >
+                                            {button.label}
+                                        </motion.button>
+                                    ))}
+                                </div>
+
+                                <div className="mt-10">
+                                    <label className="text-white block text-sm mb-2">Tournament Name</label>
+                                    <input
+                                        type="text"
+                                        value={tournamentName}
+                                        onChange={(e: ChangeEvent<HTMLInputElement>) => setTournamentName(e.target.value)}
+                                        placeholder="Enter tournament name"
+                                        className="w-full mt-0 p-3 bg-[#2a2a2a] m-0 border-b-2 border-[#7458da] text-white focus:outline-none focus:border-[#604BAC]"
+                                    />
+                                </div>
+
+                                <div className="space-y-4 mt-10">
+                                    {generalRules.map(({ fullName, id }) => (
+                                        <Switch key={id} label={fullName} ruleKey={id} />
+                                    ))}
+                                </div>
+
+                                {selectedButton && (
+                                    <div className="mt-10">
+                                        <div
+                                            className={`p-4 rounded-lg text-white cursor-pointer hover:bg-[#3C3C3C] border-b-2 border-[#7458da] ${selectedDropdown === "Dropdown 1" ? "bg-[#2E2E2E]" : "bg-[#3A3A3A]"}`}
+                                            onClick={() => setSelectedDropdown(selectedDropdown === "Dropdown 1" ? null : "Dropdown 1")}
+                                        >
+                                            <div className="flex justify-between items-center">
+                                                <span>Dropdown 1</span>
+                                                <FontAwesomeIcon
+                                                    icon={selectedDropdown === "Dropdown 1" ? faChevronUp : faChevronDown}
+                                                    className="text-white"
+                                                />
+                                            </div>
+                                        </div>
+                                        {selectedDropdown === "Dropdown 1" && (
+                                            <motion.div
+                                                className="space-y-2 mt-2"
+                                                initial={{ opacity: 0, height: 0 }}
+                                                animate={{ opacity: 1, height: "auto" }}
+                                                exit={{ opacity: 0, height: 0 }}
+                                                transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                                            >
+                                                {tournamentRules[selectedButton].map(({ label, key }) => (
+                                                    <Switch key={key} label={label} ruleKey={key} />
+                                                ))}
+                                            </motion.div>
+                                        )}
+                                    </div>
+                                )}
+
+                                <div className="space-y-2">
+
+                                    <div className="mt-10">
+                                        <label className="text-white block text-sm mb-2">Tournament Description</label>
+                                        <textarea
+                                            value={tournamentDescription}
+                                            onChange={(e: ChangeEvent<HTMLTextAreaElement>) => setTournamentDescription(e.target.value)}
+                                            placeholder="Enter tournament description"
+                                            className="w-full p-3 bg-[#2a2a2a] border-b-2 border-[#7458da] text-white focus:outline-none focus:border-[#604BAC]"
+                                            rows={2}
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="mt-8 space-y-4">
+                                    <button
+                                        className="w-full bg-[#7458da] text-white px-4 py-2 rounded-lg hover:bg-[#604BAC] transition-colors"
+                                        onClick={handleCreateTournament}
+                                    >
+                                        Create Tournament
+                                    </button>
+                                    <button
+                                        className="w-full bg-[#2C2C2C] text-white px-4 py-2 rounded-lg hover:bg-[#3C3C3C] transition-colors"
+                                        onClick={() => setIsModalOpen(false)}
+                                    >
+                                        Cancel
+                                    </button>
+                                </div>
+                            </motion.div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+            )}
+
         </div>
     );
 }
