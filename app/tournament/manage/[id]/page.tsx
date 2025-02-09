@@ -5,7 +5,6 @@ import { useEffect, useState } from 'react'
 import { Database } from '@/lib/database.types'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUser } from '@fortawesome/free-solid-svg-icons';
-import { Bracket, IRoundProps, Seed, SeedItem, SeedTeam, IRenderSeedProps, ISeedProps } from 'react-brackets';
 
 type TabsProps = {
   activeTab: string;
