@@ -1,6 +1,5 @@
 "use client"
 
-import type { Metadata } from "next";
 import { usePathname } from 'next/navigation';
 import "./globals.css";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';

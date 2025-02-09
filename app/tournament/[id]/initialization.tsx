@@ -1,19 +1,13 @@
 "use client"
 
-import Image from "next/legacy/image";
-import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPlusCircle, faChevronDown, faChevronUp, faCopy, faQrcode } from '@fortawesome/free-solid-svg-icons';
+import { faCopy } from '@fortawesome/free-solid-svg-icons';
 import { useState, useRef, useEffect, ChangeEvent } from 'react';
 import { useMessage } from '@/context/messageContext';
-import { useClient } from "@/context/clientContext";
 import { createClient } from "@/utils/supabase/client";
-import { useRouter } from 'next/navigation';
 import QRCode from "react-qr-code";
-import { use } from 'react';
 import { useParams } from 'next/navigation';
-import { div, span } from "framer-motion/client";
 
 interface Player {
     id: string;
@@ -36,7 +30,6 @@ interface Tournament {
 }
 
 export default function Initialization() {
-    const client = useClient()
     const supabase = createClient()
     const [tournament, setTournament] = useState<Tournament | null>(null);
     const [joinLink, setJoinLink] = useState<null | string>(null);
@@ -48,14 +41,12 @@ export default function Initialization() {
     const [isMaxPlayersModalOpen, setIsMaxPlayersModalOpen] = useState<boolean>(false);
     const [isSkillModalOpen, setIsSkillModalOpen] = useState<boolean>(false);
     const [isRulesModalOpen, setIsRulesModalOpen] = useState<boolean>(false);
-    const [allowPlayers, setAllowPlayers] = useState<boolean>();
 
     const modalRef = useRef<HTMLDivElement>(null);
     const { triggerMessage } = useMessage();
-    const router = useRouter();
 
-    const paramsPromise = useParams();
-    const id = paramsPromise.id
+    const params = useParams();
+    const id = params.id
 
     useEffect(() => {
         const fetchTournament = async () => {
@@ -70,7 +61,6 @@ export default function Initialization() {
             } else {
                 setTournament(data);
                 setJoinLink(window.location.href + "?join=" + data.join_code)
-                setAllowPlayers(data.allow_join)
             }
         };
 
@@ -89,7 +79,7 @@ export default function Initialization() {
 
         fetchTournament();
         fetchPlayers();
-    }, [id]);
+    }, [id, supabase, triggerMessage]);
 
     const handleAllowJoinToggle = async () => {
         if (!tournament) return;
@@ -103,9 +93,6 @@ export default function Initialization() {
             triggerMessage("Error updating tournament: " + error.message, "red");
         } else {
             setTournament({ ...tournament, allow_join: !tournament.allow_join });
-            setTimeout(() => {
-                setAllowPlayers(tournament.allow_join)
-            }, 500)
         }
     };
 
@@ -135,12 +122,12 @@ export default function Initialization() {
             } else if (tournament) {
                 setColumnNameChange((tournament as any)[columnName]);
             }
-        }, [tournament, type, columnName]);
+        }, [type, columnName]);
 
         const handleSave = async () => {
             if (!tournament) return;
 
-            let update: any = {};
+            const update: any = {};
 
             if (type === 'string' || type === 'number') {
                 update[columnName] = columnNameChange;

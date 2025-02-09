@@ -70,7 +70,7 @@ export default function JoinTournament() {
         }
 
         fetchData();
-    }, [tournamentId, client]);
+    }, [tournamentId, client, supabase, triggerMessage]);
 
     const handleSkillChange = (index: number, value: string) => {
         const updatedSkillFields = [...skillFields];
@@ -97,7 +97,7 @@ export default function JoinTournament() {
             update["player_name"] = name
         }
 
-        const { data, error } = await supabase
+        const { error } = await supabase
             .from('tournament_players')
             .insert([
                 update

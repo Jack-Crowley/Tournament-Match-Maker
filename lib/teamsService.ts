@@ -38,7 +38,7 @@ export const addTeam = async (team: Team): Promise<Team | null> => {
  */
 export const fetchTeamById = async (id: number): Promise<Team | null> => {
   try {
-    const { data, error, status } = await supabase
+    const { data, error } = await supabase
       .from('teams')
       .select('*')
       .eq('id', id)

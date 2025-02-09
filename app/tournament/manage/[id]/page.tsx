@@ -2,10 +2,9 @@
 
 import { createClient } from '@/utils/supabase/client'
 import { useEffect, useState } from 'react'
-import { Database } from '@/lib/database.types'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUser } from '@fortawesome/free-solid-svg-icons';
-import { Bracket, IRoundProps, Seed, SeedItem, SeedTeam, IRenderSeedProps, ISeedProps } from 'react-brackets';
+// import { Bracket, IRoundProps, Seed, SeedItem, SeedTeam, IRenderSeedProps, ISeedProps } from 'react-brackets';
 
 type TabsProps = {
   activeTab: string;
@@ -20,15 +19,6 @@ const announcements = [
   { id: 4, title: 'Sign up deadline approaching!', user: 'Admin' }
 ];
 
-const messages = [
-  { id: 0, role: "TD", user: 'TD: Stacy Keith', text: 'Sorry, we are locked on a tight schedule. Be there or forfeit.' },
-  { id: 1, role: "player", user: 'Stephanie Owen', text: 'Can we reschedule my match?' },
-  { id: 2, role: "player", user: 'Johnathon Casey', text: 'Ready for my next round!' },
-  { id: 3, role: "player", user: 'Dion Powers', text: 'Need more info about the rules.' },
-  { id: 4, role: "player", user: 'Stephanie Owen', text: 'When is the next update?' },
-  { id: 5, role: "player", user: 'Sasha Mcmillan', text: 'Excited for the tournament!' }
-];
-
 const playersList = [
   { id: 1, name: 'Jolene Rose', skill: 'Expert', standing: 3 },
   { id: 2, name: 'Stephanie Owen', skill: 'Advanced', standing: 5 },
@@ -39,76 +29,53 @@ const playersList = [
   { id: 7, name: 'Lauren Greene', skill: 'Intermediate', standing: 1 },
   { id: 8, name: 'Dion Powers', skill: 'Beginner', standing: 5 }
 ];
-const rounds = [
-  {
-    title: 'Round one',
-    seeds: [
-      { id: 1, date: '2024-12-13', teams: [{ name: 'Jolene Rose' }, { name: 'Stephanie Owen' }] },
-      { id: 2, date: '2024-12-13', teams: [{ name: 'Shelia Lynn' }, { name: 'Sasha Mcmillan' }] },
-      { id: 3, date: '2024-12-13', teams: [{ name: 'Roscoe Rodriguez' }, { name: 'Johnathon Casey' }] },
-      { id: 4, date: '2024-12-13', teams: [{ name: 'Lauren Greene' }, { name: 'Dion Powers' }] }
-    ]
-  },
-  {
-    title: 'Round two',
-    seeds: [
-      { id: 5, date: '2024-12-14', teams: [{ name: 'Jolene Rose' }, { name: 'Sasha Mcmillan' }] },
-      { id: 6, date: '2024-12-14', teams: [{ name: 'Roscoe Rodriguez' }, { name: 'Lauren Greene' }] }
-    ]
-  },
-  {
-    title: 'Round three',
-    seeds: [
-      { id: 8, date: '2024-12-21', teams: [{ name: '' }, { name: 'Lauren Greene' }] },
-    ]
-  }
-];
 
-const getWinner = (seed: ISeedProps, index: number) => {
-  // Ensure Player 7 wins in the match where they are involved
-  if (seed.teams[0].name === 'Lauren Greene' || seed.teams[1].name === 'Lauren Greene') {
-    return { name: 'Lauren Greene' };
-  }
+// const getWinner = (seed: any, index: number) => {
+//   // Ensure Player 7 wins in the match where they are involved
+//   if (seed.teams[0].name === 'Lauren Greene' || seed.teams[1].name === 'Lauren Greene') {
+//     return { name: 'Lauren Greene' };
+//   }
 
-  if (seed.teams[0].name === 'Jolene Rose' && seed.teams[1].name === 'Sasha Mcmillan') {
-    return { name: 'Noone' };
-  }
+//   if (seed.teams[0].name === 'Jolene Rose' && seed.teams[1].name === 'Sasha Mcmillan') {
+//     return { name: 'Noone' };
+//   }
 
-  // Alternate the winner between first and second team for other matches
-  return index % 2 === 0 ? seed.teams[0] : seed.teams[1];
-};
+//   // Alternate the winner between first and second team for other matches
+//   return index % 2 === 0 ? seed.teams[0] : seed.teams[1];
+// };
 
-// Custom seed component for displaying teams
-const CustomSeed = ({ seed, breakpoint, roundIndex, seedIndex }: IRenderSeedProps) => {
-  // Get the winner from the seed based on the index
-  const winner = getWinner(seed as any, seedIndex);
+// // Custom seed component for displaying teams
+// const CustomSeed = ({ seed, breakpoint, roundIndex, seedIndex }: any) => {
+//   // Get the winner from the seed based on the index
+//   const winner = getWinner(seed as any, seedIndex);
 
-  return (
-    <Seed mobileBreakpoint={breakpoint} style={{ fontSize: 17 }}>
-      <SeedItem>
-        <div>
-          <SeedTeam style={{ color: winner?.name === seed.teams[0]?.name || (seed.teams[0]?.name == "Jolene Rose" && seed.teams[1]?.name == "Sasha Mcmillan") ? 'white' : '#aaaaaa' }}>
-            {seed.teams[0]?.name || 'NO TEAM'}
-          </SeedTeam>
-          <SeedTeam style={{ color: winner?.name === seed.teams[1]?.name || (seed.teams[0]?.name == "Jolene Rose" && seed.teams[1]?.name == "Sasha Mcmillan") ? 'white' : '#aaaaaa' }}>
-            {seed.teams[1]?.name || 'NO TEAM'}
-          </SeedTeam>
-        </div>
-      </SeedItem>
-    </Seed>
-  );
-};
+//   return (
+//     <div></div>
+//     // <Seed mobileBreakpoint={breakpoint} style={{ fontSize: 17 }}>
+//     //   <SeedItem>
+//     //     <div>
+//     //       <SeedTeam style={{ color: winner?.name === seed.teams[0]?.name || (seed.teams[0]?.name == "Jolene Rose" && seed.teams[1]?.name == "Sasha Mcmillan") ? 'white' : '#aaaaaa' }}>
+//     //         {seed.teams[0]?.name || 'NO TEAM'}
+//     //       </SeedTeam>
+//     //       <SeedTeam style={{ color: winner?.name === seed.teams[1]?.name || (seed.teams[0]?.name == "Jolene Rose" && seed.teams[1]?.name == "Sasha Mcmillan") ? 'white' : '#aaaaaa' }}>
+//     //         {seed.teams[1]?.name || 'NO TEAM'}
+//     //       </SeedTeam>
+//     //     </div>
+//     //   </SeedItem>
+//     // </Seed>
+//   );
+// };
 
 const Standings = () => {
   return (
     <div className="flex justify-center items-center min-h-[300px]">
-      <Bracket
+      {/* <Bracket
         rounds={rounds}
         renderSeedComponent={CustomSeed}
         roundTitleComponent={(title: React.ReactNode, roundIndex: number) => (
           <div style={{ textAlign: 'center', color: 'white' }}>{title}</div>
         )}
-      />
+      /> */}
     </div>
   );
 };
@@ -170,7 +137,7 @@ function Messages(): JSX.Element {
     };
 
     fetchMessages();
-  }, []);
+  });
 
 
   const [newMessage, setNewMessage] = useState('');

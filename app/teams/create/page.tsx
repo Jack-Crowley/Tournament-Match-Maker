@@ -1,8 +1,7 @@
 'use client'
 import { useState } from "react";
 import Link from "next/link";
-import { addTeam, fetchTeamById } from "../../../lib/teamsService";
-import { supabase } from "../../../lib/supabaseClient";
+import { addTeam } from "../../../lib/teamsService";
 import { useRouter } from "next/navigation";
 
 export default function CreateTeam() {
@@ -54,7 +53,7 @@ export default function CreateTeam() {
         };
 
         try {
-            const result = await addTeam(newTeam);
+            await addTeam(newTeam);
         }
         catch (error) {
             console.error("Error creating team:", error);

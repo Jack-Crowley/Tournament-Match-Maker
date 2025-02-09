@@ -7,7 +7,6 @@ import { useEffect, useState } from "react";
 import { SignUpToProceedScreen } from "@/components/sign-up-anonymous";
 import { useClient } from "@/context/clientContext";
 import { SpinningLoader } from "@/components/loading";
-import { div } from "framer-motion/client";
 
 export default function Account() {
   const supabase = createClient()
@@ -19,7 +18,9 @@ export default function Account() {
 
   useEffect(() => {
     async function load() {
-      let anony = client.session?.user.is_anonymous!
+      const anony = client.session?.user.is_anonymous
+
+      if (!anony) return;
 
       setAnonymous(anony)
 
@@ -29,6 +30,8 @@ export default function Account() {
       }
 
       setLoading(false)
+
+      return;
     }
 
     load()

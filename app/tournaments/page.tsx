@@ -68,7 +68,7 @@ export default function Home() {
     const router = useRouter();
 
     useEffect(() => {
-        let startRules = {}
+        const startRules = {}
 
         generalRules.forEach(async (rule) => {
             (startRules as any)[rule.id] = false;
@@ -104,7 +104,7 @@ export default function Home() {
 
         const handleSwitchChange = () => {
             setIsOn(!isOn);
-            let newRules = rules;
+            const newRules = rules;
             (newRules as any)[ruleKey] = !isOn;
 
             setTimeout(() => {
@@ -182,7 +182,7 @@ export default function Home() {
             setTournamentName('');
             setTournamentDescription('');
             setSelectedType(null);
-            let startRules = {}
+            const startRules = {}
 
             generalRules.forEach(async (rule) => {
                 (startRules as any)[rule.id] = false;
