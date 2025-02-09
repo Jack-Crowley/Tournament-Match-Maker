@@ -17,7 +17,8 @@ import { div, span } from "framer-motion/client";
 
 interface Player {
     id: string;
-    name: string;
+    player_name: string;
+    member_id?: string;
     skills: { [key: string]: string };
 }
 
@@ -453,10 +454,10 @@ export default function Initialization() {
 
                         <div className="mb-6 mt-16">
                             <h2 className="text-[#604BAC] font-bold text-2xl mb-4">Registered Players</h2>
-                            <table className="w-full text-white bg-[#160A3A] rounded-lg shadow-lg">
+                            <table className="w-full bg-[#2b1668] rounded-lg shadow-lg">
                                 <thead className="bg-[#4F33B3]">
                                     <tr>
-                                        <th className="p-3 text-left">Name</th>
+                                        <th className="p-3 text-left text-white">Name</th>
                                         {tournament?.skill_fields.map((skill, index) => (
                                             <th key={index} className="p-3 text-left">{skill}</th>
                                         ))}
@@ -464,10 +465,10 @@ export default function Initialization() {
                                 </thead>
                                 <tbody>
                                     {players.map((player) => (
-                                        <tr key={player.id} className="hover:bg-[#4F33B3]">
-                                            <td className="p-3">{player.name}</td>
+                                        <tr key={player.id} className="hover:bg-[#392479] transition-colors duration-50 cursor-pointer">
+                                            <td className={`p-3 ${player.member_id ? "text-white" : "text-[#aaa]"}`}>{player.player_name}</td>
                                             {tournament?.skill_fields.map((skill, index) => (
-                                                <td key={index} className="p-3">{player.skills[skill]}</td>
+                                                <td key={index} className="p-3">{player.skills[skill] ? player.skills[skill] : "N/A"}</td>
                                             ))}
                                         </tr>
                                     ))}

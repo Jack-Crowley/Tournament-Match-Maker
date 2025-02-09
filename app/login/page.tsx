@@ -5,10 +5,13 @@ import { Auth } from '@supabase/auth-ui-react';
 import { ThemeSupa } from '@supabase/auth-ui-shared';
 import { createClient } from '@/utils/supabase/client';
 import ReCAPTCHA from 'react-google-recaptcha';
+import {useRouter} from 'next/navigation';
 
 const LoginPage = () => {
   const supabase = createClient();
   const [captchaValue, setCaptchaValue] = useState<string | null>(null);
+
+  const router = useRouter();
 
   const handleAnonymousSignIn = async () => {
     if (!captchaValue) {
@@ -20,6 +23,7 @@ const LoginPage = () => {
     if (error) {
       console.error('Error signing in anonymously:', error.message);
     } else {
+      router.push("/")
       console.log('Signed in anonymously');
     }
   };
