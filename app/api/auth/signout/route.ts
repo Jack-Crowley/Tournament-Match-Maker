@@ -1,9 +1,9 @@
-import { createClient } from '@/utils/supabase/server'
+import { createServer } from '@/utils/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { type NextRequest, NextResponse } from 'next/server'
 
 export async function GET(req: NextRequest) {
-  const supabase = createClient()
+  const supabase = createServer()
 
   const {
     data: { user },
