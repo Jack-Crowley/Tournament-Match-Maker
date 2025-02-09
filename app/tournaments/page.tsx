@@ -7,6 +7,11 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlusCircle, faChevronDown, faChevronUp } from '@fortawesome/free-solid-svg-icons';
 import { useState, useRef, useEffect, ChangeEvent } from 'react';
 import { useMessage } from '@/context/messageContext';
+import { button } from "framer-motion/client";
+import { useClient } from "@/context/clientContext";
+import { createClient } from "@/utils/supabase/client";
+import { useRouter } from 'next/navigation';
+
 
 interface Button {
     id: string;
@@ -18,8 +23,8 @@ interface Rules {
 }
 
 const generalRules: { fullName: string, id: string }[] = [
+    { fullName: "Require Accounts", id: "accounts" },
     { fullName: "Team Tournament", id: "team" },
-    { fullName: "Require Accounts", id: "accounts" }
 ]
 
 const buttons: Button[] = [
@@ -49,6 +54,8 @@ const tournamentRules: { [key: string]: { label: string, key: string }[] } = {
 };
 
 export default function Home() {
+    const client = useClient()
+    const supabase = createClient()
     const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
     const [selectedButton, setSelectedButton] = useState<string | null>(null);
     const [selectedDropdown, setSelectedDropdown] = useState<string | null>(null);
@@ -58,8 +65,19 @@ export default function Home() {
     const [rules, setRules] = useState<Rules>({});
     const modalRef = useRef<HTMLDivElement>(null);
     const { triggerMessage } = useMessage();
+    const router = useRouter();
 
-    // Disable scrolling on the main site when the modal is open
+    useEffect(() => {
+        let startRules = {}
+
+        generalRules.forEach(async (rule) => {
+            (startRules as any)[rule.id] = false;
+        })
+
+        setRules(startRules)
+    }, [])
+
+
     useEffect(() => {
         if (isModalOpen) {
             document.body.style.overflow = 'hidden';
@@ -85,9 +103,13 @@ export default function Home() {
         const [isOn, setIsOn] = useState<boolean>(rules[ruleKey] || false);
 
         const handleSwitchChange = () => {
-            setIsOn(!isOn); // Toggle the state immediately to trigger animation
-            const newRules = { ...rules, [ruleKey]: !isOn };
-            // setRules(newRules);
+            setIsOn(!isOn);
+            let newRules = rules;
+            (newRules as any)[ruleKey] = !isOn;
+
+            setTimeout(() => {
+                setRules(newRules);
+            }, 500)
         };
 
         return (
@@ -117,20 +139,16 @@ export default function Home() {
 
 
 
-    // Handle form submission
-    const handleCreateTournament = () => {
-        if (!tournamentName || !selectedType) {
+    const handleCreateTournament = async () => {
+        if (!tournamentName || !button) {
             triggerMessage('Please select a tournament type and provide a name.', 'red');
             return;
         }
 
-        // Create the tournament object to export
         const tournamentData = {
             "tournament-type": selectedType,
             "tournament-name": tournamentName,
             "tournament-description": tournamentDescription,
-            "general-rule-1": rules["custom-rule-1"] || false,
-            "general-rule-2": rules["custom-rule-2"] || false,
             "custom-rules": Object.keys(rules).reduce((acc: any, key) => {
                 if (key.startsWith('custom-rule')) {
                     acc[key] = rules[key];
@@ -139,14 +157,48 @@ export default function Home() {
             }, {}),
         };
 
-        console.log(tournamentData); // Export this data as needed (e.g., send to backend)
+        generalRules.forEach((elm) => {
+            (tournamentData as any)[elm.id] = rules[elm.id]
+        })
 
-        // Reset the form after submission
-        setTournamentName('');
-        setTournamentDescription('');
-        setSelectedType(null);
-        setRules({});
-        setIsModalOpen(false);
+        const InsertData = {
+            name: tournamentData["tournament-name"],
+            description: tournamentData["tournament-description"],
+            owner: client.session?.user.id,
+            custom_rules: tournamentData["custom-rules"],
+            status: 'initialization',
+            ...((tournamentData as any).team !== null && { team_tournament: (tournamentData as any).team }),
+            ...((tournamentData as any).account !== null && { require_account: (tournamentData as any).account })
+        }
+        
+        const { data, error } = await supabase
+            .from('tournaments')
+            .insert(InsertData)
+            .select();
+
+        if (error) {
+            triggerMessage("Error inserting tournament data: "+error.message, "red");
+        } else {
+            setTournamentName('');
+            setTournamentDescription('');
+            setSelectedType(null);
+            let startRules = {}
+
+            generalRules.forEach(async (rule) => {
+                (startRules as any)[rule.id] = false;
+            })
+
+            setRules(startRules)
+            setIsModalOpen(false);
+            triggerMessage("Tournament successfully inserted, starting redirect!", "green");
+
+
+            setTimeout(() => {
+                router.push(`/tournament/${(data![0] as any).id}`);
+            }, 1200)
+        }
+
+        
     };
 
     return (
@@ -253,7 +305,7 @@ export default function Home() {
                                             onClick={() => setSelectedDropdown(selectedDropdown === "Dropdown 1" ? null : "Dropdown 1")}
                                         >
                                             <div className="flex justify-between items-center">
-                                                <span>Dropdown 1</span>
+                                                <span>Custom Rules</span>
                                                 <FontAwesomeIcon
                                                     icon={selectedDropdown === "Dropdown 1" ? faChevronUp : faChevronDown}
                                                     className="text-white"
