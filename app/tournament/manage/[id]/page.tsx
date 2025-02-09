@@ -2,7 +2,6 @@
 
 import { createClient } from '@/utils/supabase/client'
 import { useEffect, useState } from 'react'
-import { Database } from '@/lib/database.types'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUser } from '@fortawesome/free-solid-svg-icons';
 
@@ -20,15 +19,6 @@ const announcements = [
   { id: 2, title: 'Match times updated', user: 'Admin' },
   { id: 3, title: 'Come to the table by the rear door to check in once you arrive!', user: 'Admin' },
   { id: 4, title: 'Sign up deadline approaching!', user: 'Admin' }
-];
-
-const messages = [
-  { id: 0, role: "TD", user: 'TD: Stacy Keith', text: 'Sorry, we are locked on a tight schedule. Be there or forfeit.' },
-  { id: 1, role: "player", user: 'Stephanie Owen', text: 'Can we reschedule my match?' },
-  { id: 2, role: "player", user: 'Johnathon Casey', text: 'Ready for my next round!' },
-  { id: 3, role: "player", user: 'Dion Powers', text: 'Need more info about the rules.' },
-  { id: 4, role: "player", user: 'Stephanie Owen', text: 'When is the next update?' },
-  { id: 5, role: "player", user: 'Sasha Mcmillan', text: 'Excited for the tournament!' }
 ];
 
 const playersList = [
