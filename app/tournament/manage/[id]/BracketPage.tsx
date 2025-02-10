@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import {
   DBTournament,
   // DBTournamentPlayer,
@@ -34,31 +34,65 @@ export default function BracketPage() {
   // Keep a bracket reference for ongoing operations
   const bracketRef = useRef<SingleEliminationBracket | null>(null);
 
-  const runCoinTossForRound = (round: number) => {
+  const incrementWins = useCallback((playerId: number) => {
+    setPlayerWins((prev) => {
+      const prevData = prev[playerId];
+      if (!prevData) return prev; // safety
+      return {
+        ...prev,
+        [playerId]: {
+          ...prevData,
+          wins: prevData.wins + 1,
+        },
+      };
+    });
+  }, []);
+
+  const refreshMatches = useCallback(() => {
     const bracket = bracketRef.current;
     if (!bracket) return;
+    const bracketMatches = bracket.matches;
+    const matchDisplays: MatchDisplay[] = bracketMatches.map((m) => ({
+      id: m.id,
+      round: m.round,
+      p1Name: m.player1?.player_name ?? "Bye",
+      p1Elo: m.player1?.skills?.ELO ?? 0,
+      p2Name: m.player2?.player_name ?? "Bye",
+      p2Elo: m.player2?.skills?.ELO ?? 0,
+      winner: m.winner ? m.winner.player_name : "TBD",
+    }));
+    setMatches(matchDisplays);
+  }, []);
 
-    // gather matches for this round
-    const roundMatches = bracket.matches.filter((m) => m.round === round);
 
-    roundMatches.forEach((m) => {
-      // Skip if there's already a winner
-      if (m.winner) return;
+  const runCoinTossForRound = useCallback(
+    (round: number) => {
+      const bracket = bracketRef.current;
+      if (!bracket) return;
 
-      if (!m.player1) return;
-      if (!m.player2) {
-        // Automatic pass
-        bracket.enterResult(m.id, m.player1.id);
-        incrementWins(m.player1.id);
-      } else {
-        // coin toss
-        const winnerId = m.player1.skills.ELO > m.player2.skills.ELO ? m.player1.id : m.player2.id;
-        bracket.enterResult(m.id, winnerId);
-        incrementWins(winnerId);
-      }
-    });
-    refreshMatches();
-  };
+      // gather matches for this round
+      const roundMatches = bracket.matches.filter((m) => m.round === round);
+
+      roundMatches.forEach((m) => {
+        // Skip if there's already a winner
+        if (m.winner) return;
+
+        if (!m.player1) return;
+        if (!m.player2) {
+          // Automatic pass
+          bracket.enterResult(m.id, m.player1.id);
+          incrementWins(m.player1.id);
+        } else {
+          // coin toss
+          const winnerId = m.player1.skills.ELO > m.player2.skills.ELO ? m.player1.id : m.player2.id;
+          bracket.enterResult(m.id, winnerId);
+          incrementWins(winnerId);
+        }
+      });
+      refreshMatches();
+    },
+    [bracketRef, incrementWins, refreshMatches]
+  );
 
   useEffect(() => {
     const myTournament: DBTournament = {
@@ -95,36 +129,7 @@ export default function BracketPage() {
   }, [runCoinTossForRound]);
 
   // Increments the player's win count
-  const incrementWins = (playerId: number) => {
-    setPlayerWins((prev) => {
-      const prevData = prev[playerId];
-      if (!prevData) return prev; // safety
-      return {
-        ...prev,
-        [playerId]: {
-          ...prevData,
-          wins: prevData.wins + 1,
-        },
-      };
-    });
-  };
 
-  // Refreshes the displayed matches array from bracket
-  const refreshMatches = () => {
-    const bracket = bracketRef.current;
-    if (!bracket) return;
-    const bracketMatches = bracket.matches;
-    const matchDisplays: MatchDisplay[] = bracketMatches.map((m) => ({
-      id: m.id,
-      round: m.round,
-      p1Name: m.player1?.player_name ?? "Bye",
-      p1Elo: m.player1?.skills?.ELO ?? 0,
-      p2Name: m.player2?.player_name ?? "Bye",
-      p2Elo: m.player2?.skills?.ELO ?? 0,
-      winner: m.winner ? m.winner.player_name : "TBD",
-    }));
-    setMatches(matchDisplays);
-  };
 
   // Button: Move to next round
   const handleNextRound = () => {
