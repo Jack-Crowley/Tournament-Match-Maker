@@ -20,8 +20,6 @@ export default function Account() {
     async function load() {
       const anony = client.session?.user.is_anonymous
 
-      if (!anony) return;
-
       setAnonymous(anony)
 
       if (!anony) {
