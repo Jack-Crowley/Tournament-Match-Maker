@@ -87,14 +87,14 @@ export default function JoinTournament() {
             return acc;
         }, {} as { [key: string]: string });
 
+        const id = client.session?.user.id
+
         const update : any = {
             tournament_id: tournamentId,
+            member_uuid: id,
+            player_name: name,
             skills: skills,
             is_anonymous: anonymous,
-        }
-
-        if (anonymous) {
-            update["player_name"] = name
         }
 
         const { error } = await supabase

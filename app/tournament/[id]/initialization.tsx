@@ -8,6 +8,8 @@ import { useMessage } from '@/context/messageContext';
 import { createClient } from "@/utils/supabase/client";
 import QRCode from "react-qr-code";
 import { useParams } from 'next/navigation';
+import { useClient } from "@/context/clientContext";
+import { SpinningLoader } from "@/components/loading";
 
 interface Player {
     id: string;
@@ -26,12 +28,16 @@ interface Tournament {
     location: string;
     max_players: number | null;
     time: string;
+    owner: string;
     skill_fields: string[];
 }
 
 export default function Initialization() {
     const supabase = createClient()
+    const client = useClient()
     const [tournament, setTournament] = useState<Tournament | null>(null);
+    const [director, setDirector] = useState<boolean>(false);
+    const [loading, setLoading] = useState<boolean>(true);
     const [joinLink, setJoinLink] = useState<null | string>(null);
     const [players, setPlayers] = useState<Player[]>([]);
     const [isTournamentNameModelOpen, setIsTournamentNameModelOpen] = useState<boolean>(false);
@@ -49,7 +55,7 @@ export default function Initialization() {
     const id = params.id
 
     useEffect(() => {
-        const fetchTournament = async () => {
+        const fetchData = async () => {
             const { data, error } = await supabase
                 .from('tournaments')
                 .select('*')
@@ -62,23 +68,28 @@ export default function Initialization() {
                 setTournament(data);
                 setJoinLink(window.location.href + "?join=" + data.join_code)
             }
-        };
 
-        const fetchPlayers = async () => {
-            const { data, error } = await supabase
+            const { data: data1, error: error1 } = await supabase
                 .from('tournament_players')
                 .select('*')
                 .eq('tournament_id', id);
 
-            if (error) {
-                triggerMessage("Error fetching players data: " + error.message, "red");
+            if (error1) {
+                triggerMessage("Error fetching players data: " + error1.message, "red");
             } else {
-                setPlayers(data);
+                setPlayers(data1);
             }
+
+            const uuid = client.session?.user.id
+
+            if (data && uuid == data.owner) {
+                setDirector(true)
+            }
+
+            setLoading(false)
         };
 
-        fetchTournament();
-        fetchPlayers();
+        fetchData();
     }, [id, supabase, triggerMessage]);
 
     const handleAllowJoinToggle = async () => {
@@ -337,149 +348,165 @@ export default function Initialization() {
 
     return (
         <div className="relative min-h-screen p-6">
-            {tournament && (
+            {loading ? (
+                <SpinningLoader />
+            ) : (
                 <div>
-                    <h1 className="text-[#7458da] mt-8 font-bold text-3xl mb-6 text-center">{tournament?.name}</h1>
+                    {tournament && (
+                        <div>
+                            <h1 className="text-[#7458da] mt-8 font-bold text-3xl mb-6 text-center">{tournament?.name}</h1>
 
-                    {tournament.description && (
-                        <div className="mb-1">
-                            {tournament.description}
-                        </div>
-                    )}
+                            {tournament.description && (
+                                <div className="mb-1">
+                                    {tournament.description}
+                                </div>
+                            )}
 
-                    {tournament.location && (
-                        <div className="mb-1">
-                            Location: {tournament.location}
-                        </div>
-                    )}
+                            {tournament.location && (
+                                <div className="mb-1">
+                                    Location: {tournament.location}
+                                </div>
+                            )}
 
-                    {tournament.start_time && (
-                        <div className="mb-1">
-                            <strong>Start Time:</strong> {new Date(tournament.start_time).toLocaleString('en-US', { timeZone: 'UTC' })}
-                        </div>
-                    )}
+                            {tournament.start_time && (
+                                <div className="mb-1">
+                                    <strong>Start Time:</strong> {new Date(tournament.start_time).toLocaleString('en-US', { timeZone: 'UTC' })}
+                                </div>
+                            )}
 
-                    {tournament.end_time && (
-                        <div className="mb-1">
-                            <strong>End Time:</strong> {new Date(tournament.end_time).toLocaleString('en-US', { timeZone: 'UTC' })}
-                        </div>
-                    )}
+                            {tournament.end_time && (
+                                <div className="mb-1">
+                                    <strong>End Time:</strong> {new Date(tournament.end_time).toLocaleString('en-US', { timeZone: 'UTC' })}
+                                </div>
+                            )}
 
-                    <div className="flex space-x-4 mt-4">
-                        <Button onClick={() => setIsTournamentNameModelOpen(true)}>{(tournament as any)["name"] == undefined ? "Add" : "Edit"} Tournament Name</Button>
-                        <Button onClick={() => setIsDescriptionModelOpen(true)}>{(tournament as any)["description"] == undefined ? "Add" : "Edit"} Description</Button>
-                        <Button onClick={() => setIsLocationModalOpen(true)}>{(tournament as any)["location"] == undefined ? "Add" : "Edit"} Location</Button>
-                        <Button onClick={() => setIsTimeModalOpen(true)}>{(tournament as any)["start_time"] == undefined ? "Add" : "Edit"} Time</Button>
-                    </div>
+                            {director && (
+                                <div className="flex space-x-4 mt-4">
+                                    <Button onClick={() => setIsTournamentNameModelOpen(true)}>{(tournament as any)["name"] == undefined ? "Add" : "Edit"} Tournament Name</Button>
+                                    <Button onClick={() => setIsDescriptionModelOpen(true)}>{(tournament as any)["description"] == undefined ? "Add" : "Edit"} Description</Button>
+                                    <Button onClick={() => setIsLocationModalOpen(true)}>{(tournament as any)["location"] == undefined ? "Add" : "Edit"} Location</Button>
+                                    <Button onClick={() => setIsTimeModalOpen(true)}>{(tournament as any)["start_time"] == undefined ? "Add" : "Edit"} Time</Button>
+                                </div>
+                            )}
 
-                    <h1 className="text-[#7458da] mt-16 font-bold text-2xl mb-2">Player Joining</h1>
+                            {director && (
+                                <div>
+                                    <h1 className="text-[#7458da] mt-16 font-bold text-2xl mb-2">Player Joining</h1>
 
-                    {tournament.max_players && (
-                        <div className="mb-1">
-                            Maximum Players: {tournament.max_players}
-                        </div>
-                    )}
+                                    {tournament.max_players && (
+                                        <div className="mb-1">
+                                            Maximum Players: {tournament.max_players}
+                                        </div>
+                                    )}
 
-                    <div className="mb-6">
-                        <div className="flex items-center">
-                            <span className="text-white mr-2">Allow People to Join</span>
-                            <motion.div
-                                className={`w-10 h-6 rounded-full flex items-center p-1 cursor-pointer ${tournament?.allow_join ? "justify-end" : "justify-start"}`}
-                                onClick={handleAllowJoinToggle}
-                                initial={false}
-                                animate={{
-                                    background: tournament?.allow_join
-                                        ? "linear-gradient(45deg, #7458da, #cec5eb)"
-                                        : "linear-gradient(45deg, #3A3A3A, #5C5C5C)",
-                                }}
-                                transition={{ duration: 0.3 }}
-                            >
-                                <motion.div
-                                    className="w-4 h-4 bg-white rounded-full"
-                                    layout
-                                    transition={{ type: "spring", stiffness: 200, damping: 30 }}
-                                />
-                            </motion.div>
-                        </div>
-                    </div>
-
-                    {joinLink && tournament.allow_join && (
-                        <div className="mb-6">
-                            <label className="text-white block text-sm mb-2">Join Code/URL</label>
-                            <div className="flex items-center">
-                                <input
-                                    type="text"
-                                    value={joinLink}
-                                    readOnly
-                                    className="w-full p-3 bg-[#2a2a2a] border-b-2 border-[#7458da] text-white focus:outline-none focus:border-[#604BAC]"
-                                />
-                                <Button onClick={handleCopyUrl}>
-                                    <FontAwesomeIcon icon={faCopy} />
-                                </Button>
-                            </div>
-                        </div>
-                    )}
-
-                    {joinLink && tournament.allow_join && (
-                        <div className="mb-6">
-                            <label className="text-white block text-sm mb-2">QR Code</label>
-                            <div className="p-4 bg-[#a968b942] rounded-lg w-fit">
-                                <QRCode value={joinLink} size={128} />
-                            </div>
-                        </div>
-                    )}
-
-                    <div className="flex space-x-4">
-                        <Button onClick={() => setIsMaxPlayersModalOpen(true)}>{(tournament as any)["max_players"] == undefined ? "Add" : "Edit"} Maximum Players</Button>
-                        <Button onClick={() => setIsSkillModalOpen(true)}>{(tournament as any)["skill_levels"] == undefined ? "Add" : "Edit"} Skill Levels</Button>
-                        <Button onClick={() => setIsRulesModalOpen(true)}>{(tournament as any)["rules"] == undefined ? "Add" : "Edit"} Rule set</Button>
-                    </div>
+                                    <div className="mb-6">
+                                        <div className="flex items-center">
+                                            <span className="text-white mr-2">Allow People to Join</span>
+                                            <motion.div
+                                                className={`w-10 h-6 rounded-full flex items-center p-1 cursor-pointer ${tournament?.allow_join ? "justify-end" : "justify-start"}`}
+                                                onClick={handleAllowJoinToggle}
+                                                initial={false}
+                                                animate={{
+                                                    background: tournament?.allow_join
+                                                        ? "linear-gradient(45deg, #7458da, #cec5eb)"
+                                                        : "linear-gradient(45deg, #3A3A3A, #5C5C5C)",
+                                                }}
+                                                transition={{ duration: 0.3 }}
+                                            >
+                                                <motion.div
+                                                    className="w-4 h-4 bg-white rounded-full"
+                                                    layout
+                                                    transition={{ type: "spring", stiffness: 200, damping: 30 }}
+                                                />
+                                            </motion.div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
 
 
-                    {players.length > 0 && (
+                            {joinLink && tournament.allow_join && (
+                                <div className="mb-6">
+                                    <label className="text-white block text-sm mb-2">Join Code/URL</label>
+                                    <div className="flex items-center">
+                                        <input
+                                            type="text"
+                                            value={joinLink}
+                                            readOnly
+                                            className="w-full p-3 bg-[#2a2a2a] border-b-2 border-[#7458da] text-white focus:outline-none focus:border-[#604BAC]"
+                                        />
+                                        <Button onClick={handleCopyUrl}>
+                                            <FontAwesomeIcon icon={faCopy} />
+                                        </Button>
+                                    </div>
+                                </div>
+                            )}
+
+                            {joinLink && tournament.allow_join && (
+                                <div className="mb-6">
+                                    <label className="text-white block text-sm mb-2">QR Code</label>
+                                    <div className="p-4 bg-[#a968b942] rounded-lg w-fit">
+                                        <QRCode value={joinLink} size={128} />
+                                    </div>
+                                </div>
+                            )}
+
+                            {director && (
+                                <div className="flex space-x-4">
+                                    <Button onClick={() => setIsMaxPlayersModalOpen(true)}>{(tournament as any)["max_players"] == undefined ? "Add" : "Edit"} Maximum Players</Button>
+                                    <Button onClick={() => setIsSkillModalOpen(true)}>{(tournament as any)["skill_levels"] == undefined ? "Add" : "Edit"} Skill Levels</Button>
+                                    <Button onClick={() => setIsRulesModalOpen(true)}>{(tournament as any)["rules"] == undefined ? "Add" : "Edit"} Rule set</Button>
+                                </div>
+                            )}
+
+                            {players.length > 0 && (
 
 
-                        <div className="mb-6 mt-16">
-                            <h2 className="text-[#604BAC] font-bold text-2xl mb-4">Registered Players</h2>
-                            <table className="w-full bg-[#2b1668] rounded-lg shadow-lg">
-                                <thead className="bg-[#4F33B3]">
-                                    <tr>
-                                        <th className="p-3 text-left text-white">Name</th>
-                                        {tournament?.skill_fields.map((skill, index) => (
-                                            <th key={index} className="p-3 text-left">{skill}</th>
-                                        ))}
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {players.map((player) => (
-                                        <tr key={player.id} className="hover:bg-[#392479] transition-colors duration-50 cursor-pointer">
-                                            <td className={`p-3 ${player.member_id ? "text-white" : "text-[#aaa]"}`}>{player.player_name}</td>
-                                            {tournament?.skill_fields.map((skill, index) => (
-                                                <td key={index} className="p-3">{player.skills[skill] ? player.skills[skill] : "N/A"}</td>
+                                <div className="mb-6 mt-16">
+                                    <h2 className="text-[#604BAC] font-bold text-2xl mb-4">Registered Players</h2>
+                                    <table className="w-full bg-[#2b1668] rounded-lg shadow-lg">
+                                        <thead className="bg-[#4F33B3]">
+                                            <tr>
+                                                <th className="p-3 text-left text-white">Name</th>
+                                                {tournament?.skill_fields.map((skill, index) => (
+                                                    <th key={index} className="p-3 text-left">{skill}</th>
+                                                ))}
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {players.map((player) => (
+                                                <tr key={player.id} className="hover:bg-[#392479] transition-colors duration-50 cursor-pointer">
+                                                    <td className={`p-3 ${player.member_id ? "text-white" : "text-[#aaa]"}`}>{player.player_name}</td>
+                                                    {tournament?.skill_fields.map((skill, index) => (
+                                                        <td key={index} className="p-3">{player.skills[skill] ? player.skills[skill] : "N/A"}</td>
+                                                    ))}
+                                                </tr>
                                             ))}
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            )}
+
+                            {players.length == 0 && (
+                                <h2 className="text-[#604BAC] font-bold text-2xl mb-4 mt-12">No Registered Players</h2>
+                            )}
+
+
+
+
+                            <Modal isOpen={isTournamentNameModelOpen} columnName="name" displayName="Tournament Name" type="string" onClose={() => setIsTournamentNameModelOpen(false)} />
+                            <Modal isOpen={isDescriptionModelOpen} columnName="description" displayName="Description" type="string" onClose={() => setIsDescriptionModelOpen(false)} />
+                            <Modal isOpen={isLocationModalOpen} columnName="location" displayName="Location" type="string" onClose={() => setIsLocationModalOpen(false)} />
+                            <Modal isOpen={isTimeModalOpen} columnName="start_time" displayName="Time" type="time" onClose={() => setIsTimeModalOpen(false)} />
+                            <Modal isOpen={isMaxPlayersModalOpen} columnName="max_players" displayName="Maximum Players" type="number" onClose={() => setIsMaxPlayersModalOpen(false)} />
+                            <Modal isOpen={isSkillModalOpen} columnName="skill_fields" displayName="Skill Levels" type="array" onClose={() => setIsSkillModalOpen(false)} />
+                            <Modal isOpen={isRulesModalOpen} textareas={true} columnName="rules" displayName="Rule set" type="array" onClose={() => setIsRulesModalOpen(false)} />
                         </div>
                     )}
-
-                    {players.length == 0 && (
-                        <h2 className="text-[#604BAC] font-bold text-2xl mb-4 mt-12">No Registered Players</h2>
-                    )}
-
-
-
-
-                    <Modal isOpen={isTournamentNameModelOpen} columnName="name" displayName="Tournament Name" type="string" onClose={() => setIsTournamentNameModelOpen(false)} />
-                    <Modal isOpen={isDescriptionModelOpen} columnName="description" displayName="Description" type="string" onClose={() => setIsDescriptionModelOpen(false)} />
-                    <Modal isOpen={isLocationModalOpen} columnName="location" displayName="Location" type="string" onClose={() => setIsLocationModalOpen(false)} />
-                    <Modal isOpen={isTimeModalOpen} columnName="start_time" displayName="Time" type="time" onClose={() => setIsTimeModalOpen(false)} />
-                    <Modal isOpen={isMaxPlayersModalOpen} columnName="max_players" displayName="Maximum Players" type="number" onClose={() => setIsMaxPlayersModalOpen(false)} />
-                    <Modal isOpen={isSkillModalOpen} columnName="skill_fields" displayName="Skill Levels" type="array" onClose={() => setIsSkillModalOpen(false)} />
-                    <Modal isOpen={isRulesModalOpen} textareas={true} columnName="rules" displayName="Rule set" type="array" onClose={() => setIsRulesModalOpen(false)} />
                 </div>
             )}
+
+
 
         </div>
     );
