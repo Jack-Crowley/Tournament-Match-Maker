@@ -18,7 +18,11 @@ export default function Account() {
 
   useEffect(() => {
     async function load() {
-      const anony = client.session?.user.is_anonymous
+      let anony = client.session?.user.is_anonymous
+
+      if (!anony) {
+        anony = false;
+      };
 
       setAnonymous(anony)
 
