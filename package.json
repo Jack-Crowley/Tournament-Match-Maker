@@ -12,6 +12,7 @@
     "@fortawesome/fontawesome-svg-core": "^6.7.2",
     "@fortawesome/free-solid-svg-icons": "^6.7.2",
     "@fortawesome/react-fontawesome": "^0.2.2",
+    "@g-loot/react-tournament-brackets": "^1.0.31-rc",
     "@supabase/auth-ui-react": "^0.4.7",
     "@supabase/auth-ui-shared": "^0.1.8",
     "@supabase/ssr": "^0.5.2",
@@ -22,6 +23,7 @@
     "react-dom": "^18.2.0",
     "react-google-recaptcha": "^3.1.0",
     "react-qr-code": "^2.0.15",
+    "react-tournament-bracket": "^0.2.4",
     "tailwindcss": "^3.4.14",
     "tournament-match-maker": "file:"
   },
