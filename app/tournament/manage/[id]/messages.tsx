@@ -59,7 +59,7 @@ export default function Messages(): JSX.Element {
         };
 
         fetchMessages();
-    }, []);
+    });
 
 
     const [newMessage, setNewMessage] = useState('');

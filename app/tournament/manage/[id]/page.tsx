@@ -1,7 +1,6 @@
 'use client'
 
-import { createClient } from '@/utils/supabase/client'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUser } from '@fortawesome/free-solid-svg-icons';
 
@@ -31,30 +30,30 @@ const playersList = [
   { id: 7, name: 'Lauren Greene', skill: 'Intermediate', standing: 1 },
   { id: 8, name: 'Dion Powers', skill: 'Beginner', standing: 5 }
 ];
-const rounds = [
-  {
-    title: 'Round one',
-    seeds: [
-      { id: 1, date: '2024-12-13', teams: [{ name: 'Jolene Rose' }, { name: 'Stephanie Owen' }] },
-      { id: 2, date: '2024-12-13', teams: [{ name: 'Shelia Lynn' }, { name: 'Sasha Mcmillan' }] },
-      { id: 3, date: '2024-12-13', teams: [{ name: 'Roscoe Rodriguez' }, { name: 'Johnathon Casey' }] },
-      { id: 4, date: '2024-12-13', teams: [{ name: 'Lauren Greene' }, { name: 'Dion Powers' }] }
-    ]
-  },
-  {
-    title: 'Round two',
-    seeds: [
-      { id: 5, date: '2024-12-14', teams: [{ name: 'Jolene Rose' }, { name: 'Sasha Mcmillan' }] },
-      { id: 6, date: '2024-12-14', teams: [{ name: 'Roscoe Rodriguez' }, { name: 'Lauren Greene' }] }
-    ]
-  },
-  {
-    title: 'Round three',
-    seeds: [
-      { id: 8, date: '2024-12-21', teams: [{ name: '' }, { name: 'Lauren Greene' }] },
-    ]
-  }
-];
+// const rounds = [
+//   {
+//     title: 'Round one',
+//     seeds: [
+//       { id: 1, date: '2024-12-13', teams: [{ name: 'Jolene Rose' }, { name: 'Stephanie Owen' }] },
+//       { id: 2, date: '2024-12-13', teams: [{ name: 'Shelia Lynn' }, { name: 'Sasha Mcmillan' }] },
+//       { id: 3, date: '2024-12-13', teams: [{ name: 'Roscoe Rodriguez' }, { name: 'Johnathon Casey' }] },
+//       { id: 4, date: '2024-12-13', teams: [{ name: 'Lauren Greene' }, { name: 'Dion Powers' }] }
+//     ]
+//   },
+//   {
+//     title: 'Round two',
+//     seeds: [
+//       { id: 5, date: '2024-12-14', teams: [{ name: 'Jolene Rose' }, { name: 'Sasha Mcmillan' }] },
+//       { id: 6, date: '2024-12-14', teams: [{ name: 'Roscoe Rodriguez' }, { name: 'Lauren Greene' }] }
+//     ]
+//   },
+//   {
+//     title: 'Round three',
+//     seeds: [
+//       { id: 8, date: '2024-12-21', teams: [{ name: '' }, { name: 'Lauren Greene' }] },
+//     ]
+//   }
+// ];
 
 
 // Tabs component

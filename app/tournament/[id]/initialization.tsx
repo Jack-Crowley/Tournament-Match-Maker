@@ -90,7 +90,7 @@ export default function Initialization() {
         };
 
         fetchData();
-    }, [id, supabase, triggerMessage]);
+    }, [id, supabase, triggerMessage, client]);
 
     const handleAllowJoinToggle = async () => {
         if (!tournament) return;

@@ -1,13 +1,12 @@
 "use client"
 
-import Image from "next/legacy/image";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlusCircle, faChevronDown, faChevronUp } from '@fortawesome/free-solid-svg-icons';
 import { useState, useRef, useEffect, ChangeEvent } from 'react';
 import { useMessage } from '@/context/messageContext';
-import { button, div, h1 } from "framer-motion/client";
+import { button } from "framer-motion/client";
 import { useClient } from "@/context/clientContext";
 import { createClient } from "@/utils/supabase/client";
 import { useRouter } from 'next/navigation';
@@ -80,7 +79,7 @@ export default function Home() {
         setRules(startRules)
 
         async function loadTournamentData() {
-            let id = client.session?.user.id;
+            const id = client.session?.user.id;
 
             if (id == undefined) {
                 setLoading(false)
@@ -103,7 +102,7 @@ export default function Home() {
 
                 const tournamentDetails = [];
 
-                for (let tournamentId of tournamentIds) {
+                for (const tournamentId of tournamentIds) {
                     const { data: tournament, error: fetchError } = await supabase
                         .from('tournaments')
                         .select('*')
@@ -128,7 +127,7 @@ export default function Home() {
 
         }
         loadTournamentData()
-    }, [client])
+    }, [client, supabase, triggerMessage])
 
 
     useEffect(() => {
