@@ -5,7 +5,7 @@ import { Auth } from '@supabase/auth-ui-react';
 import { ThemeSupa } from '@supabase/auth-ui-shared';
 import { createClient } from '@/utils/supabase/client';
 import ReCAPTCHA from 'react-google-recaptcha';
-import {useRouter} from 'next/navigation';
+import { useRouter } from 'next/navigation';
 
 const LoginPage = () => {
   const supabase = createClient();
@@ -29,10 +29,9 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="w-full h-screen flex justify-center items-center bg-[#160A3A]">
-      <div className="w-full max-w-4xl p-8 bg-[#604BAC] rounded-lg shadow-lg flex">
-        {/* Left Side - Regular Login */}
-        <div className="w-1/2 pr-4">
+    <div className="w-full min-h-screen flex justify-center items-center bg-[#160A3A] p-4">
+      <div className="w-full max-w-4xl p-8 bg-[#604BAC] rounded-lg shadow-lg flex flex-col md:flex-row">
+        <div className="w-full md:w-1/2 md:pr-4 mb-8 md:mb-0">
           <h1 className="text-3xl font-extrabold text-center text-[#ffffff] mb-6">Log in</h1>
 
           <Auth
@@ -57,8 +56,7 @@ const LoginPage = () => {
           />
         </div>
 
-        {/* Right Side - Anonymous Login */}
-        <div className="w-1/2 pl-4 border-l border-[#31216b]">
+        <div className="w-full md:w-1/2 md:pl-4 md:border-l md:border-[#31216b] mt-6 md:mt-0">
           <h1 className="text-3xl font-extrabold text-center text-[#ffffff] mb-6">Or Sign In Anonymously</h1>
 
           <div className="mt-6 flex justify-center">
