@@ -57,7 +57,8 @@ export default function Home() {
     const client = useClient()
     const supabase = createClient()
     const [loading, setLoading] = useState<boolean>(true);
-    const [tournaments, setTournaments] = useState<any[]>([]);
+    const [organizingTournaments, setOrganizingTournaments] = useState<any[]>([]);
+    const [playingTournaments, setPlayingTournaments] = useState<any[]>([]);
     const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
     const [selectedButton, setSelectedButton] = useState<string | null>(null);
     const [selectedDropdown, setSelectedDropdown] = useState<string | null>(null);
@@ -86,30 +87,39 @@ export default function Home() {
                 return;
             };
 
-            console.log(id)
+            const { data: organizingTournaments, error: organizingError } = await supabase
+                .from('tournaments')
+                .select('*')
+                .eq('owner', id);
 
-            const { data, error } = await supabase
+            let owningIds = []
+
+            if (organizingTournaments) {
+                owningIds = organizingTournaments.map(record => record.id);
+                setOrganizingTournaments(organizingTournaments)
+            }
+
+
+            const { data: playingData, error: playingError } = await supabase
                 .from('tournament_players')
                 .select('tournament_id')
                 .eq('member_uuid', id);
 
-            console.log(data)
-
-            if (error) {
-                triggerMessage("Error fetching player data: " + error.message, "red");
+            if (playingError || organizingError) {
+                triggerMessage("Error fetching player data", "red");
             } else {
-                const tournamentIds = data.map(record => record.tournament_id);
+                const tournamentIds = [...new Set(playingData.map(record => record.tournament_id))];
 
                 const tournamentDetails = [];
 
                 for (const tournamentId of tournamentIds) {
+                    if (owningIds.includes(tournamentId)) continue;
+
                     const { data: tournament, error: fetchError } = await supabase
                         .from('tournaments')
                         .select('*')
                         .eq('id', tournamentId)
                         .single();
-
-                    console.log(tournament)
 
                     if (fetchError) {
                         console.error("Error fetching tournament with id:", tournamentId, fetchError);
@@ -120,7 +130,7 @@ export default function Home() {
 
                 console.log(tournamentDetails)
 
-                setTournaments(tournamentDetails)
+                setPlayingTournaments(tournamentDetails)
             }
 
             setLoading(false)
@@ -259,7 +269,7 @@ export default function Home() {
                 <SpinningLoader />
             ) : (
                 <div>
-                    {tournaments.length == 0 ? (
+                    {playingTournaments.length == 0 && organizingTournaments.length == 0 ? (
                         <div>
                             <h1 className="2xl text-center text-white">No Registered Tournaments</h1>
 
@@ -288,22 +298,49 @@ export default function Home() {
 
                     ) : (
                         <div>
-                            <h1 className="text-[#7458da] font-bold text-3xl ml-20 mt-20">Ongoing Tournaments</h1>
-                            {tournaments.map((tournament) => (
-                                <div key={tournament.id} className="grid grid-cols-1 sm:grid-cols-2 px-20 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-3 gap-4 p-6">
-                                    <div className="card bg-[#604BAC] border-r-8 p-4 border-[#816ad1] max-w-sm rounded overflow-hidden shadow-lg flex flex-col items-center">
-                                        <div className="px-6 py-4 text-center">
-                                            <div className="font-bold text-xl mb-2">{tournament.name}</div>
-                                            <p className="text-gray-100 text-semibold">
-                                                {tournament.description}
-                                            </p>
-                                        </div>
-                                        <Link href={`/tournament/${tournament.id}`} className="inline-flex items-center px-3 py-2 text-sm font-medium text-center text-white bg-[#382460] rounded-lg hover:bg-[#261843]">
-                                            Read more
-                                        </Link>
+                            {organizingTournaments.length > 0 && (
+                                <div>
+                                    <h1 className="text-[#7458da] font-bold text-3xl ml-20 mt-20">Organize Tournaments</h1>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 px-20 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-3 gap-4 p-6">
+                                        {organizingTournaments.map((tournament) => (
+                                            <div key={tournament.id} className="card bg-[#604BAC] border-r-8 p-4 border-[#816ad1] max-w-sm rounded overflow-hidden shadow-lg flex flex-col items-center">
+                                                <div className="px-6 py-4 text-center">
+                                                    <div className="font-bold text-xl mb-2">{tournament.name}</div>
+                                                    <p className="text-gray-100 text-semibold">
+                                                        {tournament.description}
+                                                    </p>
+                                                </div>
+                                                <Link href={`/tournament/${tournament.id}`} className="inline-flex items-center px-3 py-2 text-sm font-medium text-center text-white bg-[#382460] rounded-lg hover:bg-[#261843]">
+                                                    Read more
+                                                </Link>
+                                            </div>
+                                        ))}
                                     </div>
+
                                 </div>
-                            ))}
+                            )}
+
+                            {playingTournaments.length > 0 && (
+                                <div>
+                                    <h1 className="text-[#7458da] font-bold text-3xl ml-20 mt-20">Playing Tournaments</h1>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 px-20 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-3 gap-4 p-6">
+                                        {playingTournaments.map((tournament) => (
+                                            <div key={tournament.id} className="card bg-[#604BAC] border-r-8 p-4 border-[#816ad1] max-w-sm rounded overflow-hidden shadow-lg flex flex-col items-center">
+                                                <div className="px-6 py-4 text-center">
+                                                    <div className="font-bold text-xl mb-2">{tournament.name}</div>
+                                                    <p className="text-gray-100 text-semibold">
+                                                        {tournament.description}
+                                                    </p>
+                                                </div>
+                                                <Link href={`/tournament/${tournament.id}`} className="inline-flex items-center px-3 py-2 text-sm font-medium text-center text-white bg-[#382460] rounded-lg hover:bg-[#261843]">
+                                                    Read more
+                                                </Link>
+                                            </div>
+                                        ))}
+                                    </div>
+
+                                </div>
+                            )}
 
 
                             <motion.div
