@@ -53,6 +53,7 @@ const LoginPage = () => {
               },
             }}
             theme="dark"
+            redirectTo={`${window.location.origin}/auth/callback`}
           />
         </div>
 
