@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
+import { SpinningLoader } from "@/components/loading";
 
 export default function AuthCallback() {
     const supabase = createClient()
@@ -18,11 +19,9 @@ export default function AuthCallback() {
             }
         }
         checkAuth();
-    }, [router]);
+    }, [router, supabase.auth]);
 
     return (
-        <div style={{ textAlign: "center", marginTop: "50px" }}>
-            <h2>Processing login...</h2>
-        </div>
+        <SpinningLoader text="Processing Login..."/>
     );
 }
