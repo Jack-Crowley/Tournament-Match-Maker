@@ -2,15 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-
-:root {
-  --background: #1a1a1a;
-  --text: #ffffff;
-  --primary: #646cff;
-  --secondary: #535bf2;
-  --accent: #747bff;
-}
-
 @font-face {
   font-family: 'GeistVF';
   src: url('/fonts/GeistVF.woff') format('woff');
@@ -30,83 +21,6 @@ html {
 }
 
 body {
-  background-color: var(--background);
-  color: var(--text);
   font-family: system-ui, -apple-system, sans-serif;
   min-height: 100vh;
-}
-
-.container {
-  max-width: 800px;
-  margin: 0 auto;
-  padding: 2rem;
-}
-
-.title {
-  text-align: center;
-  margin-bottom: 2rem;
-}
-
-.button-container {
-  display: flex;
-  gap: 1rem;
-  justify-content: center;
-  margin-bottom: 2rem;
-}
-
-.button {
-  background-color: var(--primary);
-  border: none;
-  color: var(--text);
-  padding: 0.8rem 1.5rem;
-  border-radius: 0.5rem;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-.button:hover {
-  background-color: var(--secondary);
-}
-
-.numbers-container {
-  background-color: rgba(255, 255, 255, 0.1);
-  padding: 1.5rem;
-  border-radius: 0.5rem;
-  min-height: 200px;
-}
-
-.number-item {
-  display: flex;
-  justify-content: space-between;
-  padding: 0.5rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.error {
-  color: #ff6b6b;
-  text-align: center;
-  margin: 1rem 0;
-}
-
-.custom-scrollbar::-webkit-scrollbar {
-  width: 8px; /* Thin scrollbar */
-}
-
-.custom-scrollbar::-webkit-scrollbar-thumb {
-  background-color: #7458da; /* Purple thumb */
-  border-radius: 10px;
-  transition: background-color 0.3s ease-in-out;
-}
-
-.custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background-color: #9c7bff; /* Lighter purple on hover */
-}
-
-.custom-scrollbar::-webkit-scrollbar-track {
-  background-color: #2E2E2E; /* Darker background track */
-  border-radius: 10px;
-}
-
-.custom-scrollbar::-webkit-scrollbar-track:hover {
-  background-color: #3C3C3C; /* Slightly lighter track on hover */
 }

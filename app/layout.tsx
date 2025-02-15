@@ -16,7 +16,7 @@ export default function RootLayout({
   return (
     <ClientProvider>
       <html lang="en">
-        <body className="min-h-screen bg-base-dark-purple text-white font-sans">
+        <body className="min-h-screen bg-background text-white font-sans">
           <MessageProvider>
             {pathname != "/login" && (
               <Navbar/>

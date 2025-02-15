@@ -66,6 +66,7 @@ export default function Initialization() {
                 triggerMessage("Error fetching tournament data: " + error.message, "red");
             } else {
                 setTournament(data);
+
                 setJoinLink(window.location.href + "?join=" + data.join_code)
             }
 
@@ -115,19 +116,38 @@ export default function Initialization() {
     };
 
     const Modal = ({ isOpen, onClose, columnName, type, displayName, textareas = false }: { displayName: string; isOpen: boolean; onClose: () => void; columnName: string; type: string; textareas?: boolean; }) => {
-        const [columnNameChange, setColumnNameChange] = useState<string>();
-        const [startTimeNameChange, setStartTimeChange] = useState<string>();
-        const [endTimeChange, setEndTimeChange] = useState<string>();
+        const [columnNameChange, setColumnNameChange] = useState<string>('');
+        const [startTimeNameChange, setStartTimeChange] = useState<string>('');
+        const [endTimeChange, setEndTimeChange] = useState<string>('');
         const [arrayItems, setArrayItems] = useState<string[]>([]);
         const [newItem, setNewItem] = useState<string>('');
 
         useEffect(() => {
             if (type === "time" && tournament) {
-                const startTime = new Date(tournament["start_time"]);
-                const endTime = new Date(tournament["end_time"]);
+                let startTime : Date | string = new Date(tournament["start_time"]);
+                let endTime : Date | string = new Date(tournament["end_time"]);
 
-                setStartTimeChange(startTime.toISOString().slice(0, 16));
-                setEndTimeChange(endTime.toISOString().slice(0, 16));
+                if (!startTime || startTime < new Date()) {
+                    startTime=new Date()
+                    startTime.setMinutes(startTime.getMinutes()-startTime.getTimezoneOffset())
+                    setStartTimeChange(startTime.toISOString().slice(0, 16))
+                }
+                else {
+                    startTime=new Date()
+                    startTime.setMinutes(startTime.getMinutes()-new Date().getTimezoneOffset())
+                    setStartTimeChange(startTime.toISOString().slice(0, 16));
+                }
+
+                if (!endTime || endTime < new Date()) {
+                    endTime=new Date()
+                    endTime.setMinutes(endTime.getMinutes()-endTime.getTimezoneOffset()+60)
+                    setEndTimeChange(endTime.toISOString().slice(0, 16))
+                }
+                else {
+                    endTime.setMinutes(endTime.getMinutes()-new Date().getTimezoneOffset())
+                    setEndTimeChange(endTime.toISOString().slice(0, 16));
+                }
+
             } else if (tournament && type === "array") {
                 setArrayItems((tournament as any)[columnName] || []);
             } else if (tournament) {
@@ -144,10 +164,12 @@ export default function Initialization() {
                 update[columnName] = columnNameChange;
             } else if (type === 'time') {
                 const startDate = new Date(startTimeNameChange!);
+                startDate.setMinutes(startDate.getMinutes()+new Date().getTimezoneOffset())
                 const endDate = new Date(endTimeChange!);
+                endDate.setMinutes(endDate.getMinutes()+new Date().getTimezoneOffset())
 
-                const utcStartTime = new Date(startDate.getTime() - startDate.getTimezoneOffset() * 60000).toISOString();
-                const utcEndTime = new Date(endDate.getTime() - endDate.getTimezoneOffset() * 60000).toISOString();
+                const utcStartTime = new Date(startDate.getTime()).toISOString();
+                const utcEndTime = new Date(endDate.getTime()).toISOString();
 
                 update["start_time"] = utcStartTime;
                 update["end_time"] = utcEndTime;
@@ -346,6 +368,12 @@ export default function Initialization() {
         };
     }, [isTournamentNameModelOpen, isDescriptionModelOpen, isLocationModalOpen, isTimeModalOpen, isMaxPlayersModalOpen, isSkillModalOpen, isRulesModalOpen]);
 
+    const TimezoneConversion = (date : string) => {
+        const d = new Date(date)
+        d.setMinutes(d.getMinutes()-new Date().getTimezoneOffset())
+        return d
+    }
+
     return (
         <div className="relative min-h-screen p-6">
             {loading ? (
@@ -370,13 +398,13 @@ export default function Initialization() {
 
                             {tournament.start_time && (
                                 <div className="mb-1">
-                                    <strong>Start Time:</strong> {new Date(tournament.start_time).toLocaleString('en-US', { timeZone: 'UTC' })}
+                                    <strong>Start Time:</strong> {TimezoneConversion(tournament.start_time).toLocaleString('en-US')}
                                 </div>
                             )}
 
                             {tournament.end_time && (
                                 <div className="mb-1">
-                                    <strong>End Time:</strong> {new Date(tournament.end_time).toLocaleString('en-US', { timeZone: 'UTC' })}
+                                    <strong>End Time:</strong> {TimezoneConversion(tournament.end_time).toLocaleString('en-US')}
                                 </div>
                             )}
 
