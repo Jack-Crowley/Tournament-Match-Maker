@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
@@ -6,100 +6,53 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlusCircle, faChevronDown, faChevronUp } from '@fortawesome/free-solid-svg-icons';
 import { useState, useRef, useEffect, ChangeEvent } from 'react';
 import { useMessage } from '@/context/messageContext';
-import { button } from "framer-motion/client";
 import { useClient } from "@/context/clientContext";
 import { createClient } from "@/utils/supabase/client";
 import { useRouter } from 'next/navigation';
 import { SpinningLoader } from "@/components/loading";
-
-
-interface Button {
-    id: string;
-    label: string;
-}
-
-interface Rules {
-    [key: string]: boolean;
-}
-
-const generalRules: { fullName: string, id: string }[] = [
-    { fullName: "Require Accounts", id: "accounts" },
-    { fullName: "Team Tournament", id: "team" },
-]
-
-const buttons: Button[] = [
-    { id: "single", label: "Single Elimination" },
-    { id: "double", label: "Double Elimination" },
-    { id: "round", label: "Round Robin" },
-    { id: "swiss", label: "Swiss System" },
-];
-
-const tournamentRules: { [key: string]: { label: string, key: string }[] } = {
-    "single": [
-        { label: "Custom Rule A", key: "custom-rule-1" },
-        { label: "Custom Rule B", key: "custom-rule-2" },
-    ],
-    "double": [
-        { label: "Custom Rule C", key: "custom-rule-3" },
-        { label: "Custom Rule D", key: "custom-rule-4" },
-    ],
-    "round": [
-        { label: "Custom Rule E", key: "custom-rule-5" },
-        { label: "Custom Rule F", key: "custom-rule-6" },
-    ],
-    "swiss": [
-        { label: "Custom Rule G", key: "custom-rule-7" },
-        { label: "Custom Rule H", key: "custom-rule-8" },
-    ]
-};
+import { CreateTournament } from "@/components/modals/createTournament";
 
 export default function Home() {
-    const client = useClient()
-    const supabase = createClient()
+    const client = useClient();
+    const supabase = createClient();
     const [loading, setLoading] = useState<boolean>(true);
     const [organizingTournaments, setOrganizingTournaments] = useState<any[]>([]);
     const [playingTournaments, setPlayingTournaments] = useState<any[]>([]);
+    const [invitations, setInvitations] = useState<any[]>([]);
     const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
-    const [selectedButton, setSelectedButton] = useState<string | null>(null);
-    const [selectedDropdown, setSelectedDropdown] = useState<string | null>(null);
-    const [tournamentName, setTournamentName] = useState<string>('');
-    const [tournamentDescription, setTournamentDescription] = useState<string>('');
-    const [selectedType, setSelectedType] = useState<string | null>(null);
-    const [rules, setRules] = useState<Rules>({});
+    const [activeTab, setActiveTab] = useState<string>("organizing");
     const modalRef = useRef<HTMLDivElement>(null);
     const { triggerMessage } = useMessage();
     const router = useRouter();
 
+    const tabs = [
+        { id: "organizing", label: "Organizing" },
+        { id: "playing", label: "Playing" },
+        { id: "invitations", label: "Invitations" },
+    ];
+
     useEffect(() => {
-        const startRules = {}
-
-        generalRules.forEach(async (rule) => {
-            (startRules as any)[rule.id] = false;
-        })
-
-        setRules(startRules)
-
         async function loadTournamentData() {
             const id = client.session?.user.id;
 
             if (id == undefined) {
-                setLoading(false)
+                setLoading(false);
                 return;
-            };
+            }
 
+            // Fetch organizing tournaments
             const { data: organizingTournaments, error: organizingError } = await supabase
                 .from('tournaments')
                 .select('*')
                 .eq('owner', id);
 
-            let owningIds = []
-
+            let owningIds = [];
             if (organizingTournaments) {
                 owningIds = organizingTournaments.map(record => record.id);
-                setOrganizingTournaments(organizingTournaments)
+                setOrganizingTournaments(organizingTournaments);
             }
 
-
+            // Fetch playing tournaments
             const { data: playingData, error: playingError } = await supabase
                 .from('tournament_players')
                 .select('tournament_id')
@@ -111,7 +64,6 @@ export default function Home() {
                 const tournamentIds = [...new Set(playingData.map(record => record.tournament_id))];
 
                 const tournamentDetails = [];
-
                 for (const tournamentId of tournamentIds) {
                     if (owningIds.includes(tournamentId)) continue;
 
@@ -128,25 +80,47 @@ export default function Home() {
                     }
                 }
 
-                console.log(tournamentDetails)
-
-                setPlayingTournaments(tournamentDetails)
+                setPlayingTournaments(tournamentDetails);
             }
 
-            setLoading(false)
+            // Fetch invitations
+            const { data: invitationsData, error: invitationsError } = await supabase
+                .from('tournament_organizers')
+                .select('tournament_id, permission_level, accepted')
+                .eq('member_uuid', id)
+                .eq('accepted', false);
 
+            if (invitationsError) {
+                triggerMessage("Error fetching invitations", "red");
+            } else {
+                const tournamentDetails = await Promise.all(
+                    invitationsData.map(async (invitation) => {
+                        const { data: tournament, error: tournamentError } = await supabase
+                            .from('tournaments')
+                            .select('*')
+                            .eq('id', invitation.tournament_id)
+                            .single();
+
+                        if (tournamentError) {
+                            console.error("Error fetching tournament:", tournamentError);
+                            return null;
+                        }
+
+                        return {
+                            ...tournament,
+                            permission_level: invitation.permission_level,
+                        };
+                    })
+                );
+
+                setInvitations(tournamentDetails.filter((tournament) => tournament !== null));
+            }
+
+            setLoading(false);
         }
-        loadTournamentData()
-    }, [client, supabase, triggerMessage])
 
-
-    useEffect(() => {
-        if (isModalOpen) {
-            document.body.style.overflow = 'hidden';
-        } else {
-            document.body.style.overflow = 'auto';
-        }
-    }, [isModalOpen]);
+        loadTournamentData();
+    }, [client, supabase, triggerMessage]);
 
     const handleClickOutside = (event: MouseEvent) => {
         if (modalRef.current && !modalRef.current.contains(event.target as Node)) {
@@ -161,106 +135,42 @@ export default function Home() {
         };
     }, []);
 
-    const Switch = ({ label, ruleKey }: { label: string, ruleKey: string }) => {
-        const [isOn, setIsOn] = useState<boolean>(rules[ruleKey] || false);
+    const handleAcceptInvitation = async (tournamentId: string) => {
+        const id = client.session?.user.id;
 
-        const handleSwitchChange = () => {
-            setIsOn(!isOn);
-            const newRules = rules;
-            (newRules as any)[ruleKey] = !isOn;
+        if (!id) return;
 
-            setTimeout(() => {
-                setRules(newRules);
-            }, 500)
-        };
+        // Update the invitation to mark it as accepted
+        const { error: updateError } = await supabase
+            .from('tournament_organizers')
+            .update({ accepted: true })
+            .eq('tournament_id', tournamentId)
+            .eq('member_uuid', id);
 
-        return (
-            <div className="flex items-center justify-between cursor-pointer">
-                <span className="text-white">{label}</span>
-                <motion.div
-                    className={`w-10 h-6 rounded-full flex items-center p-1 cursor-pointer ${isOn ? "justify-end" : "justify-start"}`}
-                    onClick={() => { handleSwitchChange() }}
-                    initial={false}
-                    animate={{
-                        background: isOn
-                            ? "linear-gradient(45deg, #7458da, #cec5eb)"
-                            : "linear-gradient(45deg, #3A3A3A, #5C5C5C)",
-                    }}
-                    transition={{ duration: 0.3 }}
-                >
-                    <motion.div
-                        className="w-4 h-4 bg-white rounded-full"
-                        layout
-                        transition={{ type: "spring", stiffness: 200, damping: 30 }}
-                    />
-                </motion.div>
-            </div>
-        );
-    };
-
-
-
-
-    const handleCreateTournament = async () => {
-        if (!tournamentName || !button) {
-            triggerMessage('Please select a tournament type and provide a name.', 'red');
+        if (updateError) {
+            triggerMessage("Error accepting invitation", "red");
             return;
         }
 
-        const tournamentData = {
-            "tournament-type": selectedType,
-            "tournament-name": tournamentName,
-            "tournament-description": tournamentDescription,
-            "custom-rules": Object.keys(rules).reduce((acc: any, key) => {
-                if (key.startsWith('custom-rule')) {
-                    acc[key] = rules[key];
-                }
-                return acc;
-            }, {}),
-        };
-
-        generalRules.forEach((elm) => {
-            (tournamentData as any)[elm.id] = rules[elm.id]
-        })
-
-        const InsertData = {
-            name: tournamentData["tournament-name"],
-            description: tournamentData["tournament-description"],
-            owner: client.session?.user.id,
-            custom_rules: tournamentData["custom-rules"],
-            status: 'initialization',
-            ...((tournamentData as any).team !== null && { team_tournament: (tournamentData as any).team }),
-            ...((tournamentData as any).account !== null && { require_account: (tournamentData as any).account })
-        }
-
-        const { data, error } = await supabase
+        // Fetch the tournament details
+        const { data: tournament, error: tournamentError } = await supabase
             .from('tournaments')
-            .insert(InsertData)
-            .select();
+            .select('*')
+            .eq('id', tournamentId)
+            .single();
 
-        if (error) {
-            triggerMessage("Error inserting tournament data: " + error.message, "red");
-        } else {
-            setTournamentName('');
-            setTournamentDescription('');
-            setSelectedType(null);
-            const startRules = {}
-
-            generalRules.forEach(async (rule) => {
-                (startRules as any)[rule.id] = false;
-            })
-
-            setRules(startRules)
-            setIsModalOpen(false);
-            triggerMessage("Tournament successfully inserted, starting redirect!", "green");
-
-
-            setTimeout(() => {
-                router.push(`/tournament/${(data![0] as any).id}`);
-            }, 1200)
+        if (tournamentError) {
+            triggerMessage("Error fetching tournament details", "red");
+            return;
         }
 
+        // Add the tournament to the organizing tournaments list
+        setOrganizingTournaments((prev) => [...prev, tournament]);
 
+        // Remove the invitation from the invitations list
+        setInvitations((prev) => prev.filter((invitation) => invitation.id !== tournamentId));
+
+        triggerMessage("Invitation accepted successfully!", "green");
     };
 
     return (
@@ -269,224 +179,145 @@ export default function Home() {
                 <SpinningLoader />
             ) : (
                 <div>
-                    {playingTournaments.length == 0 && organizingTournaments.length == 0 ? (
-                        <div>
-                            <h1 className="2xl text-center text-white">No Registered Tournaments</h1>
-
-                            <motion.div
-                                className="fixed bottom-5 right-5 flex items-center gap-2 group"
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ duration: 0.3 }}
-                            >
-                                <motion.div
-                                    className="bg-[#604BAC] text-white flex items-center px-3 py-2 rounded-full text-sm font-medium shadow-md cursor-pointer overflow-hidden"
-                                    initial={{ width: "3rem" }}
-                                    whileHover={{ width: "10rem" }}
-                                    transition={{ type: "spring", stiffness: 150 }}
-                                    onClick={() => setIsModalOpen(true)}
+                    <div className="flex justify-center mt-20">
+                        <div className="tabs flex justify-center space-x-8 border-b-2 border-[#604BAC] pb-2">
+                            {tabs.map((tab) => (
+                                <button
+                                    key={tab.id}
+                                    className={`relative px-4 py-2 text-lg font-semibold ${activeTab === tab.id
+                                        ? "text-[#7458da]"
+                                        : "text-gray-400 hover:text-[#7458da]"
+                                        }`}
+                                    onClick={() => setActiveTab(tab.id)}
                                 >
-                                    <FontAwesomeIcon
-                                        icon={faPlusCircle}
-                                        className="text-white text-2xl mr-4"
-                                    />
-                                    <span className="whitespace-nowrap">Create New</span>
-                                </motion.div>
-                            </motion.div>
+                                    {tab.label}
+                                    {activeTab === tab.id && (
+                                        <motion.div
+                                            className="absolute bottom-0 left-0 right-0 h-1 bg-[#7458da]"
+                                            layoutId="underline"
+                                            transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                                        />
+                                    )}
+                                </button>
+                            ))}
                         </div>
+                    </div>
 
-
-                    ) : (
-                        <div>
-                            {organizingTournaments.length > 0 && (
+                    <AnimatePresence mode="wait">
+                        <motion.div
+                            key={activeTab}
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -20 }}
+                            transition={{ duration: 0.3 }}
+                        >
+                            {activeTab === "organizing" && (
                                 <div>
-                                    <h1 className="text-[#7458da] font-bold text-3xl ml-20 mt-20">Organize Tournaments</h1>
+                                    <h1 className="text-[#7458da] font-bold text-3xl ml-20 mt-10">Organizing Tournaments</h1>
                                     <div className="grid grid-cols-1 sm:grid-cols-2 px-20 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-3 gap-4 p-6">
-                                        {organizingTournaments.map((tournament) => (
-                                            <div key={tournament.id} className="card bg-[#604BAC] border-r-8 p-4 border-[#816ad1] max-w-sm rounded overflow-hidden shadow-lg flex flex-col items-center">
-                                                <div className="px-6 py-4 text-center">
-                                                    <div className="font-bold text-xl mb-2">{tournament.name}</div>
-                                                    <p className="text-gray-100 text-semibold">
-                                                        {tournament.description}
-                                                    </p>
-                                                </div>
-                                                <Link href={`/tournament/${tournament.id}`} className="inline-flex items-center px-3 py-2 text-sm font-medium text-center text-white bg-[#382460] rounded-lg hover:bg-[#261843]">
-                                                    Read more
-                                                </Link>
-                                            </div>
-                                        ))}
-                                    </div>
-
-                                </div>
-                            )}
-
-                            {playingTournaments.length > 0 && (
-                                <div>
-                                    <h1 className="text-[#7458da] font-bold text-3xl ml-20 mt-20">Playing Tournaments</h1>
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 px-20 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-3 gap-4 p-6">
-                                        {playingTournaments.map((tournament) => (
-                                            <div key={tournament.id} className="card bg-[#604BAC] border-r-8 p-4 border-[#816ad1] max-w-sm rounded overflow-hidden shadow-lg flex flex-col items-center">
-                                                <div className="px-6 py-4 text-center">
-                                                    <div className="font-bold text-xl mb-2">{tournament.name}</div>
-                                                    <p className="text-gray-100 text-semibold">
-                                                        {tournament.description}
-                                                    </p>
-                                                </div>
-                                                <Link href={`/tournament/${tournament.id}`} className="inline-flex items-center px-3 py-2 text-sm font-medium text-center text-white bg-[#382460] rounded-lg hover:bg-[#261843]">
-                                                    Read more
-                                                </Link>
-                                            </div>
-                                        ))}
-                                    </div>
-
-                                </div>
-                            )}
-
-
-                            <motion.div
-                                className="fixed bottom-5 right-5 flex items-center gap-2 group"
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ duration: 0.3 }}
-                            >
-                                <motion.div
-                                    className="bg-[#604BAC] text-white flex items-center px-3 py-2 rounded-full text-sm font-medium shadow-md cursor-pointer overflow-hidden"
-                                    initial={{ width: "3rem" }}
-                                    whileHover={{ width: "10rem" }}
-                                    transition={{ type: "spring", stiffness: 150 }}
-                                    onClick={() => setIsModalOpen(true)}
-                                >
-                                    <FontAwesomeIcon
-                                        icon={faPlusCircle}
-                                        className="text-white text-2xl mr-4"
-                                    />
-                                    <span className="whitespace-nowrap">Create New</span>
-                                </motion.div>
-                            </motion.div>
-
-                        </div>
-                    )}
-
-                    {isModalOpen && (
-                        <AnimatePresence>
-                            {isModalOpen && (
-                                <motion.div
-                                    className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
-                                    initial={{ opacity: 0 }}
-                                    animate={{ opacity: 1 }}
-                                    exit={{ opacity: 0 }}
-                                >
-                                    <motion.div
-                                        ref={modalRef}
-                                        className="bg-[#1E1E1E] p-6 rounded-lg shadow-lg max-w-lg w-full mx-4 overflow-y-auto max-h-[90vh]"
-                                        initial={{ scale: 0.9, opacity: 0 }}
-                                        animate={{ scale: 1, opacity: 1 }}
-                                        exit={{ scale: 0.9, opacity: 0 }}
-                                    >
-                                        <h2 className="text-xl font-bold mb-4 text-white">Create New Tournament</h2>
-
-                                        <div className="grid grid-cols-2 gap-4 mb-6">
-                                            {buttons.map((button) => (
-                                                <motion.button
-                                                    key={button.id}
-                                                    className={`p-4 rounded-lg text-white text-center ${selectedButton === button.id
-                                                        ? "border-2 border-[#7458da]"
-                                                        : "bg-[#2C2C2C] hover:bg-[#3C3C3C]"
-                                                        }`}
-                                                    whileHover={{ scale: 1.05 }}
-                                                    whileTap={{ scale: 0.95 }}
-                                                    onClick={() => setSelectedButton(button.id)}
-                                                >
-                                                    {button.label}
-                                                </motion.button>
-                                            ))}
-                                        </div>
-
-                                        <div className="mt-10">
-                                            <label className="text-white block text-sm mb-2">Tournament Name</label>
-                                            <input
-                                                type="text"
-                                                value={tournamentName}
-                                                onChange={(e: ChangeEvent<HTMLInputElement>) => setTournamentName(e.target.value)}
-                                                placeholder="Enter tournament name"
-                                                className="w-full mt-0 p-3 bg-[#2a2a2a] m-0 border-b-2 border-[#7458da] text-white focus:outline-none focus:border-[#604BAC]"
-                                            />
-                                        </div>
-
-                                        <div className="space-y-4 mt-10">
-                                            {generalRules.map(({ fullName, id }) => (
-                                                <Switch key={id} label={fullName} ruleKey={id} />
-                                            ))}
-                                        </div>
-
-                                        {selectedButton && (
-                                            <div className="mt-10">
-                                                <div
-                                                    className={`p-4 rounded-lg text-white cursor-pointer hover:bg-[#3C3C3C] border-b-2 border-[#7458da] ${selectedDropdown === "Dropdown 1" ? "bg-[#2E2E2E]" : "bg-[#3A3A3A]"}`}
-                                                    onClick={() => setSelectedDropdown(selectedDropdown === "Dropdown 1" ? null : "Dropdown 1")}
-                                                >
-                                                    <div className="flex justify-between items-center">
-                                                        <span>Custom Rules</span>
-                                                        <FontAwesomeIcon
-                                                            icon={selectedDropdown === "Dropdown 1" ? faChevronUp : faChevronDown}
-                                                            className="text-white"
-                                                        />
+                                        {organizingTournaments.length > 0 ? (
+                                            organizingTournaments.map((tournament) => (
+                                                <div key={tournament.id} className="card bg-[#604BAC] border-r-8 p-4 border-[#816ad1] max-w-sm rounded overflow-hidden shadow-lg flex flex-col items-center">
+                                                    <div className="px-6 py-4 text-center">
+                                                        <div className="font-bold text-xl mb-2">{tournament.name}</div>
+                                                        <p className="text-gray-100 text-semibold">
+                                                            {tournament.description}
+                                                        </p>
                                                     </div>
+                                                    <Link href={`/tournament/${tournament.id}`} className="inline-flex items-center px-3 py-2 text-sm font-medium text-center text-white bg-[#382460] rounded-lg hover:bg-[#261843]">
+                                                        Read more
+                                                    </Link>
                                                 </div>
-                                                {selectedDropdown === "Dropdown 1" && (
-                                                    <motion.div
-                                                        className="space-y-2 mt-2"
-                                                        initial={{ opacity: 0, height: 0 }}
-                                                        animate={{ opacity: 1, height: "auto" }}
-                                                        exit={{ opacity: 0, height: 0 }}
-                                                        transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                                                    >
-                                                        {tournamentRules[selectedButton].map(({ label, key }) => (
-                                                            <Switch key={key} label={label} ruleKey={key} />
-                                                        ))}
-                                                    </motion.div>
-                                                )}
-                                            </div>
+                                            ))
+                                        ) : (
+                                            <p className="text-white text-center">You are not organizing any tournaments.</p>
                                         )}
-
-                                        <div className="space-y-2">
-
-                                            <div className="mt-10">
-                                                <label className="text-white block text-sm mb-2">Tournament Description</label>
-                                                <textarea
-                                                    value={tournamentDescription}
-                                                    onChange={(e: ChangeEvent<HTMLTextAreaElement>) => setTournamentDescription(e.target.value)}
-                                                    placeholder="Enter tournament description"
-                                                    className="w-full p-3 bg-[#2a2a2a] border-b-2 border-[#7458da] text-white focus:outline-none focus:border-[#604BAC]"
-                                                    rows={2}
-                                                />
-                                            </div>
-                                        </div>
-
-                                        <div className="mt-8 space-y-4">
-                                            <button
-                                                className="w-full bg-[#7458da] text-white px-4 py-2 rounded-lg hover:bg-[#604BAC] transition-colors"
-                                                onClick={handleCreateTournament}
-                                            >
-                                                Create Tournament
-                                            </button>
-                                            <button
-                                                className="w-full bg-[#2C2C2C] text-white px-4 py-2 rounded-lg hover:bg-[#3C3C3C] transition-colors"
-                                                onClick={() => setIsModalOpen(false)}
-                                            >
-                                                Cancel
-                                            </button>
-                                        </div>
-                                    </motion.div>
-                                </motion.div>
+                                    </div>
+                                </div>
                             )}
-                        </AnimatePresence>
-                    )}
 
+                            {activeTab === "playing" && (
+                                <div>
+                                    <h1 className="text-[#7458da] font-bold text-3xl ml-20 mt-10">Playing Tournaments</h1>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 px-20 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-3 gap-4 p-6">
+                                        {playingTournaments.length > 0 ? (
+                                            playingTournaments.map((tournament) => (
+                                                <div key={tournament.id} className="card bg-[#604BAC] border-r-8 p-4 border-[#816ad1] max-w-sm rounded overflow-hidden shadow-lg flex flex-col items-center">
+                                                    <div className="px-6 py-4 text-center">
+                                                        <div className="font-bold text-xl mb-2">{tournament.name}</div>
+                                                        <p className="text-gray-100 text-semibold">
+                                                            {tournament.description}
+                                                        </p>
+                                                    </div>
+                                                    <Link href={`/tournament/${tournament.id}`} className="inline-flex items-center px-3 py-2 text-sm font-medium text-center text-white bg-[#382460] rounded-lg hover:bg-[#261843]">
+                                                        Read more
+                                                    </Link>
+                                                </div>
+                                            ))
+                                        ) : (
+                                            <p className="text-white text-center">You are not playing in any tournaments.</p>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+
+                            {activeTab === "invitations" && (
+                                <div>
+                                    <h1 className="text-[#7458da] font-bold text-3xl ml-20 mt-10">Invitations</h1>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 px-20 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-3 gap-4 p-6">
+                                        {invitations.length > 0 ? (
+                                            invitations.map((invitation) => (
+                                                <div key={invitation.id} className="card bg-[#604BAC] border-r-8 p-4 border-[#816ad1] max-w-sm rounded overflow-hidden shadow-lg flex flex-col items-center">
+                                                    <div className="px-6 py-4 text-center">
+                                                        <div className="font-bold text-xl mb-2">{invitation.name}</div>
+                                                        <p className="text-gray-100 text-semibold">
+                                                            {invitation.description}
+                                                        </p>
+                                                        <p className="text-gray-100 text-semibold mt-2">
+                                                            Permission: {invitation.permission_level}
+                                                        </p>
+                                                    </div>
+                                                    <button
+                                                        onClick={() => handleAcceptInvitation(invitation.id)}
+                                                        className="inline-flex items-center px-3 py-2 text-sm font-medium text-center text-white bg-[#382460] rounded-lg hover:bg-[#261843]"
+                                                    >
+                                                        Accept Invitation
+                                                    </button>
+                                                </div>
+                                            ))
+                                        ) : (
+                                            <p className="text-white text-center">You currently have no invitations.</p>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+                        </motion.div>
+                    </AnimatePresence>
+
+                    <motion.div
+                        className="fixed bottom-5 right-5 flex items-center gap-2 group"
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.3 }}
+                    >
+                        <motion.div
+                            className="bg-[#604BAC] text-white flex items-center px-3 py-2 rounded-full text-sm font-medium shadow-md cursor-pointer overflow-hidden"
+                            initial={{ width: "3rem" }}
+                            whileHover={{ width: "10rem" }}
+                            transition={{ type: "spring", stiffness: 150 }}
+                            onClick={() => setIsModalOpen(true)}
+                        >
+                            <FontAwesomeIcon
+                                icon={faPlusCircle}
+                                className="text-white text-2xl mr-4"
+                            />
+                            <span className="whitespace-nowrap">Create New</span>
+                        </motion.div>
+                    </motion.div>
                 </div>
             )}
 
-
+            <CreateTournament isModalOpen={isModalOpen} setIsModalOpen={setIsModalOpen} ref={modalRef} />
         </div>
     );
 }

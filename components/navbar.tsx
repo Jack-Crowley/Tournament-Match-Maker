@@ -40,7 +40,7 @@ const Navbar = () => {
   };
 
   return (
-    <nav className="pl-8 pr-8 pb-4 pt-10 flex items-center z-20 relative">
+    <nav id="navbar" className="pl-8 pr-8 pb-4 pt-10 flex items-center z-20 relative">
       <div className="w-48">
         <Link href="/" className="text-3xl">
           TMM
