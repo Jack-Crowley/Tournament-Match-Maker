@@ -162,6 +162,30 @@ export default function Initialization() {
         return d;
     };
 
+    const handleStartTournament = async () => {
+        if (!tournament) return;
+
+        try {
+            const response = await fetch('/api/tournament/start', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ tournament_id: tournament.id }),
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                triggerMessage(result.message, "green");
+            } else {
+                triggerMessage(result.error, "red");
+            }
+        } catch (error) {
+            triggerMessage("An error occurred while starting the tournament", "red");
+        }
+    };
+
     return (
         <div className="relative min-h-screen mt-10 mx-8 p-6 text-white" style={{ backgroundColor: "#160A3A" }}>
             {loading ? (
@@ -335,6 +359,16 @@ export default function Initialization() {
                                 <h2 className="text-[#604BAC] font-bold text-2xl mb-4 mt-12 text-center">No Registered Players</h2>
                             )}
 
+                            {director && (
+                                <div className="flex justify-center mt-8">
+                                    <button
+                                        className="bg-[#7458da] text-white px-6 py-3 rounded-lg hover:bg-[#604BAC] transition-colors"
+                                        onClick={handleStartTournament}
+                                    >
+                                        Start Tournament
+                                    </button>
+                                </div>
+                            )}
 
                             <TournamentModal
                                 isOpen={isTournamentEditModalOpen}
