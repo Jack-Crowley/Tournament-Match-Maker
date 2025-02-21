@@ -31,6 +31,19 @@ export interface DBTournamentPlayer {
     skills: any; // JSON, e.g. { ELO: number }
 }
 
+export interface Bracket {
+    tournament: DBTournament;
+    players: DBTournamentPlayer[];
+    matches: DBMatch[];
+    seedPlayers(): void;
+    generateBracket(): DBMatch[];
+    enterResult(matchId: string, winnerId: number): void;
+    nextRound(): DBMatch[];
+    isEliminated(playerId: number): boolean;
+    removePlayer(playerId: number): void;
+    addPlayer(player: DBTournamentPlayer): void;
+}
+
 export interface DBMatch {
     id: string;
     round: number;
