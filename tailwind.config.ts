@@ -9,11 +9,14 @@ export default {
   theme: {
     extend: {
       colors: {
-        background: "var(--background)",
-        foreground: "var(--foreground)",
-        'base-dark-purple': '#160A3A',
-        'nav-bar-purple': "#604BAC",
-        "dark-purple-1": "#4F33B3",
+        background: '#160A3A',
+        primary: '#9c7bff',
+        secondary: '#604BAC',
+        accent: '#4F33B3',
+        highlight: '#7458da',
+        soft: '#7864c0',
+        dark: '#160A3A',
+        deep: '#31216b',
       },
     },
   },

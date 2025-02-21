@@ -89,6 +89,12 @@ export default function JoinTournament() {
 
         const id = client.session?.user.id
 
+        const {data:previousTournaments, error:tournamentPlayersError} = await supabase
+            .from('tournament_players')
+            .select('*')
+            .eq("tournament_id", tournamentId)
+            .eq("member_uuid", id)
+
         const update : any = {
             tournament_id: tournamentId,
             member_uuid: id,
