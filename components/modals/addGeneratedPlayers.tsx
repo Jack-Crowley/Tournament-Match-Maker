@@ -3,7 +3,6 @@
 import { useMessage } from "@/context/messageContext";
 import { Tournament } from "@/types/tournamentTypes";
 import { createClient } from "@/utils/supabase/client";
-import { randomUUID } from "crypto";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChangeEvent, useState } from "react";
 import { v4 as uuidv4 } from 'uuid';

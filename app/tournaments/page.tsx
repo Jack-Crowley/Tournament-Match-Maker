@@ -8,7 +8,6 @@ import { useState, useRef, useEffect } from 'react';
 import { useMessage } from '@/context/messageContext';
 import { useClient } from "@/context/clientContext";
 import { createClient } from "@/utils/supabase/client";
-import { useRouter } from 'next/navigation';
 import { Tournament } from "@/types/tournamentTypes";
 import { SpinningLoader } from "@/components/loading";
 import { CreateTournament } from "@/components/modals/createTournament";
@@ -24,7 +23,6 @@ export default function Home() {
     const [activeTab, setActiveTab] = useState<string>("organizing");
     const modalRef = useRef<HTMLDivElement>(null);
     const { triggerMessage } = useMessage();
-    const router = useRouter();
 
     const tabs = [
         { id: "organizing", label: "Organizing" },

@@ -1,14 +1,16 @@
 import React from 'react';
 import { motion } from 'framer-motion';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faTimes } from '@fortawesome/free-solid-svg-icons';
 
 interface MessagePopupProps {
   color: 'green' | 'red' | 'blue' | 'yellow';
   children: React.ReactNode;
   index: number;
+  onClose: () => void;
 }
 
-export const MessagePopup: React.FC<MessagePopupProps> = ({ color, children, index }) => {
-  // Tailwind-compatible colors
+export const MessagePopup: React.FC<MessagePopupProps> = ({ color, children, index, onClose }) => {
   const colorsBorder = {
     green: 'border-green-300',
     red: 'border-red-300',
@@ -34,7 +36,15 @@ export const MessagePopup: React.FC<MessagePopupProps> = ({ color, children, ind
       exit={{ opacity: 0, y: -100 }}
       transition={{ duration: 0.5 }}
     >
-      <h1 className="text-lg font-medium">{children}</h1>
+      <div className="flex justify-between items-center">
+        <h1 className="text-lg font-medium">{children}</h1>
+        <button
+          onClick={onClose}
+          className="text-white hover:text-gray-200"
+        >
+          <FontAwesomeIcon icon={faTimes} />
+        </button>
+      </div>
     </motion.div>
   );
 };

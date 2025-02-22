@@ -1,4 +1,4 @@
-import { useState, useEffect, ChangeEvent } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { createClient } from "@/utils/supabase/client";
 import { useMessage } from '@/context/messageContext';
@@ -39,7 +39,7 @@ export const PlayerModal = ({ isOpen, onClose, playerForModal, tournament }: { p
         };
 
         checkAndSetPlayer();
-    }, [playerForModal]);
+    }, [playerForModal, supabase, triggerMessage]);
 
 
     return (

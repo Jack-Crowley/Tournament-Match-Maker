@@ -1,9 +1,9 @@
 "use client";
 
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCopy, faEye, faTrash, faGear } from '@fortawesome/free-solid-svg-icons';
-import { useState, useRef, useEffect, ChangeEvent } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useMessage } from '@/context/messageContext';
 import { createClient } from "@/utils/supabase/client";
 import QRCode from "react-qr-code";
@@ -183,7 +183,7 @@ export default function Initialization() {
             } else {
                 triggerMessage(result.error, "red");
             }
-        } catch (error) {
+        } catch {
             triggerMessage("An error occurred while starting the tournament", "red");
         }
     };

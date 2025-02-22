@@ -46,7 +46,7 @@ const BracketCreator = ({ roundIndex, matchIndex, bracket }: { roundIndex: numbe
     if (elementRef.current) {
       setBox(elementRef.current.getBoundingClientRect());
     }
-  }, [elementRef.current]);
+  }, []);
 
   return (
     <div>
@@ -105,17 +105,6 @@ const BracketCreator = ({ roundIndex, matchIndex, bracket }: { roundIndex: numbe
 };
 
 const TournamentBracket = ({ bracket }: { bracket: Bracket }) => {
-  const elementRef = useRef<HTMLDivElement | null>(null);
-  const [box, setBox] = useState<DOMRect | null>(null);
-  const lastRound = bracket.rounds[bracket.rounds.length - 1];
-  const lastMatch = lastRound.matches[lastRound.matches.length - 1];
-
-  useEffect(() => {
-    if (elementRef.current) {
-      setBox(elementRef.current.getBoundingClientRect());
-    }
-  }, [elementRef.current]);
-
   return (
     <div className="mt-[50px] ml-[8%] h-[89vh]">
       <BracketCreator roundIndex={bracket.rounds.length - 1} matchIndex={0} bracket={bracket} />
