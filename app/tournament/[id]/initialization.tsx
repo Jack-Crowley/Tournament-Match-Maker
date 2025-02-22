@@ -14,6 +14,7 @@ import { Tournament } from "@/types/tournamentTypes";
 import { Player } from "@/types/playerTypes";
 import { TournamentModal } from "@/components/modals/tournamentEditModal";
 import { PlayerModal } from "@/components/modals/editPlayersModal";
+import { AddPlaceholderPlayersModal } from "@/components/modals/addGeneratedPlayers";
 
 export default function Initialization() {
     const supabase = createClient();
@@ -26,6 +27,8 @@ export default function Initialization() {
     const [isTournamentEditModalOpen, setIsTournamentEditModalOpen] = useState<boolean>(false);
     const [contextMenu, setContextMenu] = useState<any>(null);
     const modalRef = useRef<HTMLDivElement>(null);
+
+    const [isPlaceholderPlayersModalOpen, setIsPlaceholderPlayersModalOpen] = useState<boolean>(false);
 
     const [playerForModal, setPlayerForModal] = useState<null | Player>();
     const [isPlayerModalOpen, setPlayerModalOpen] = useState<boolean>(false);
@@ -100,10 +103,11 @@ export default function Initialization() {
 
         const navbar = document.getElementById("navbar"); // Assuming your navbar has this ID
         const navbarHeight = navbar ? navbar.offsetHeight : 0;
+        console.log(navbarHeight)
 
         setContextMenu({
             x: event.pageX,
-            y: event.pageY - navbarHeight,
+            y: event.pageY - navbarHeight*1.5,
             player,
         });
 
@@ -314,7 +318,7 @@ export default function Initialization() {
                                                     className={`hover:bg-highlight ${playerForModal && playerForModal.id == player.id ? "bg-[#604BAC]" : ""} transition-colors duration-50 cursor-pointer`}
                                                     onContextMenu={(e) => handleRightClick(e, player)}
                                                 >
-                                                    <td className={`p-3 ${player.member_id ? "text-white" : "text-[#aaa]"}`}>{player.player_name}</td>
+                                                    <td className={`p-3 ${player.anonymous ? "text-white" : "text-[#c8c8c8]"}`}>{player.player_name}</td>
                                                     {tournament?.skill_fields.map((skill, index) => (
                                                         <td key={index} className="p-3">{player.skills[skill] ? player.skills[skill] : "N/A"}</td>
                                                     ))}
@@ -323,7 +327,6 @@ export default function Initialization() {
                                         </tbody>
                                     </table>
 
-                                    {/* Context Menu */}
                                     {contextMenu && (
                                         <motion.ul
                                             className="absolute block bg-[#2b1668] text-white shadow-lg rounded-lg w-40"
@@ -360,7 +363,13 @@ export default function Initialization() {
                             )}
 
                             {director && (
-                                <div className="flex justify-center mt-8">
+                                <div className="flex justify-center mt-8 space-x-4">
+                                    <button
+                                        className="bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 transition-colors"
+                                        onClick={() => {setIsPlaceholderPlayersModalOpen(true)}}
+                                    >
+                                        Add Placeholder Players
+                                    </button>
                                     <button
                                         className="bg-[#7458da] text-white px-6 py-3 rounded-lg hover:bg-[#604BAC] transition-colors"
                                         onClick={handleStartTournament}
@@ -376,6 +385,7 @@ export default function Initialization() {
                                 tournament={tournament}
                                 setTournament={setTournament}
                             />
+                            <AddPlaceholderPlayersModal isOpen={isPlaceholderPlayersModalOpen} setOpen={setIsPlaceholderPlayersModalOpen} tournament={tournament}/>
                             {playerForModal && (
                                 <PlayerModal
                                     isOpen={isPlayerModalOpen}

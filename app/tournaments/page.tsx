@@ -10,6 +10,8 @@ import { useClient } from "@/context/clientContext";
 import { createClient } from "@/utils/supabase/client";
 import { useRouter } from 'next/navigation';
 import { Tournament } from "@/types/tournamentTypes";
+import { SpinningLoader } from "@/components/loading";
+import { CreateTournament } from "@/components/modals/createTournament";
 
 export default function Home() {
     const client = useClient();
@@ -181,29 +183,32 @@ export default function Home() {
                         <motion.div
                             key={tournament.id}
                             whileHover={{ scale: 1.01 }}
-                            className="p-6 shadow-[#382c3e] hover:cursor-pointer rounded-lg shadow-lg hover:shadow-3xl transition-all bg-gradient-to-r from-secondary to-accent"
+                            className="p-6 shadow-[#382c3e] hover:cursor-pointer rounded-lg shadow-lg hover:shadow-3xl transition-all bg-gradient-to-r from-highlight to-accent"
                         >
-                            <div className="flex justify-between items-center">
-                                <div>
-                                    <h2 className="text-xl font-bold text-white">{tournament.name}</h2>
-                                    <p className="text-gray-200">{tournament.description}</p>
+                            <Link
+                                href={`/tournament/${tournament.id}`}>
+                                <div className="flex justify-between items-center">
+                                    <div>
+                                        <h2 className="text-xl font-bold text-white">{tournament.name}</h2>
+                                        <p className="text-gray-200">{tournament.description}</p>
+                                    </div>
+                                    {onAction ? (
+                                        <button
+                                            onClick={() => onAction(tournament.id)}
+                                            className="px-4 py-2 bg-deep text-white rounded-lg hover:bg-highlight transition-colors transform"
+                                        >
+                                            {actionLabel}
+                                        </button>
+                                    ) : (
+                                        <Link
+                                            href={`/tournament/${tournament.id}`}
+                                            className="px-4 py-2 bg-deep text-white rounded-lg hover:bg-highlight transition-colors transform"
+                                        >
+                                            {actionLabel}
+                                        </Link>
+                                    )}
                                 </div>
-                                {onAction ? (
-                                    <button
-                                        onClick={() => onAction(tournament.id)}
-                                        className="px-4 py-2 bg-deep text-white rounded-lg hover:bg-highlight transition-colors transform"
-                                    >
-                                        {actionLabel}
-                                    </button>
-                                ) : (
-                                    <Link
-                                        href={`/tournament/${tournament.id}`}
-                                        className="px-4 py-2 bg-deep text-white rounded-lg hover:bg-highlight transition-colors transform"
-                                    >
-                                        {actionLabel}
-                                    </Link>
-                                )}
-                            </div>
+                            </Link>
                         </motion.div>
                     ))
                 ) : (
@@ -216,9 +221,7 @@ export default function Home() {
     return (
         <div className="relative min-h-screen bg-background">
             {loading ? (
-                <div className="flex justify-center items-center min-h-screen">
-                    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-highlight"></div>
-                </div>
+                <SpinningLoader></SpinningLoader>
             ) : (
                 <div>
                     {/* Tabs */}
@@ -228,8 +231,8 @@ export default function Home() {
                                 <button
                                     key={tab.id}
                                     className={`px-6 py-3 text-lg font-semibold rounded-lg transition-all transform ${activeTab === tab.id
-                                            ? "bg-highlight text-white shadow-md"
-                                            : "bg-background text-gray-400 hover:bg-highlight hover:text-white"
+                                        ? "bg-highlight text-white shadow-md"
+                                        : "bg-background text-gray-400 hover:bg-highlight hover:text-white"
                                         }`}
                                     onClick={() => setActiveTab(tab.id)}
                                 >
@@ -239,7 +242,6 @@ export default function Home() {
                         </div>
                     </div>
 
-                    {/* Content */}
                     <AnimatePresence mode="wait">
                         <motion.div
                             key={activeTab}
@@ -286,65 +288,29 @@ export default function Home() {
                     </AnimatePresence>
 
                     <motion.div
-                        className="fixed bottom-5 right-5"
+                        className="fixed bottom-8 right-8 flex items-center gap-3 group" // Increased bottom, right, and gap
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.3 }}
                     >
-                        <button
+                        <motion.div
+                            className="bg-[#43386e] text-white flex items-center px-4 py-3 rounded-full text-lg font-medium shadow-md cursor-pointer overflow-hidden"
+                            initial={{ width: "3.9rem" }} 
+                            whileHover={{ width: "12rem" }} 
+                            transition={{ type: "spring", stiffness: 150 }}
                             onClick={() => setIsModalOpen(true)}
-                            className="flex items-center px-4 py-2 bg-gradient-to-r from-highlight to-accent text-white rounded-lg shadow-lg hover:shadow-xl transition-all transform"
                         >
-                            <FontAwesomeIcon icon={faPlusCircle} className="mr-2" />
-                            Create New
-                        </button>
+                            <FontAwesomeIcon
+                                icon={faPlusCircle}
+                                className="text-white text-3xl mr-4" 
+                            />
+                            <span className="whitespace-nowrap">Create New</span>
+                        </motion.div>
                     </motion.div>
                 </div>
             )}
 
-            <AnimatePresence>
-                {isModalOpen && (
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center"
-                    >
-                        <motion.div
-                            ref={modalRef}
-                            initial={{ scale: 0.8 }}
-                            animate={{ scale: 1 }}
-                            exit={{ scale: 0.8 }}
-                            className="bg-gradient-to-r from-secondary to-accent p-8 rounded-lg shadow-2xl w-11/12 max-w-md"
-                        >
-                            <h2 className="text-xl font-bold text-white mb-4">Create Tournament</h2>
-                            <input
-                                type="text"
-                                placeholder="Tournament Name"
-                                className="w-full p-2 mb-4 bg-background text-white rounded-lg"
-                            />
-                            <textarea
-                                placeholder="Tournament Description"
-                                className="w-full p-2 mb-4 bg-background text-white rounded-lg"
-                            />
-                            <div className="flex justify-end space-x-4">
-                                <button
-                                    onClick={() => setIsModalOpen(false)}
-                                    className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    onClick={() => { }}
-                                    className="px-4 py-2 bg-highlight text-white rounded-lg hover:bg-accent"
-                                >
-                                    Create
-                                </button>
-                            </div>
-                        </motion.div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
+            <CreateTournament isModalOpen={isModalOpen} setIsModalOpen={setIsModalOpen} ref={modalRef} />
         </div>
     );
 }

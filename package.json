@@ -25,7 +25,8 @@
     "react-qr-code": "^2.0.15",
     "react-tournament-bracket": "^0.2.4",
     "tailwindcss": "^3.4.14",
-    "tournament-match-maker": "file:"
+    "tournament-match-maker": "file:",
+    "uuid": "^11.1.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.18.0",
