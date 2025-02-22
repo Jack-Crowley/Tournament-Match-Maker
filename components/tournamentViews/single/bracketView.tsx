@@ -8,9 +8,9 @@ const MatchupElement = ({ round, match, bracket }: { round: number, match: numbe
   const matchup = bracket.rounds[round].matches[match];
 
   return (
-    <div className={`flex justify-center items-center flex-shrink-0`}>
+    <div className={`flex justify-center items-center flex-shrink-0 z-10`}>
       <motion.div
-        className="w-40 bg-secondary rounded-lg shadow-lg overflow-hidden hover:cursor-pointer"
+        className="w-40 bg-secondary rounded-lg shadow-lg overflow-hidden z-10 hover:cursor-pointer"
         whileHover={{ scale: 1.05 }}
         transition={{ type: "spring", stiffness: 300 }}
       >
