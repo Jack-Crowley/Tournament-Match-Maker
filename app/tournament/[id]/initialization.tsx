@@ -15,6 +15,7 @@ import { Player } from "@/types/playerTypes";
 import { TournamentModal } from "@/components/modals/tournamentEditModal";
 import { PlayerModal } from "@/components/modals/editPlayersModal";
 import { AddPlaceholderPlayersModal } from "@/components/modals/addGeneratedPlayers";
+import { Checkbox } from "@/components/checkbox";
 
 export default function Initialization() {
     const supabase = createClient();
@@ -27,14 +28,11 @@ export default function Initialization() {
     const [isTournamentEditModalOpen, setIsTournamentEditModalOpen] = useState<boolean>(false);
     const [contextMenu, setContextMenu] = useState<any>(null);
     const modalRef = useRef<HTMLDivElement>(null);
-
+    const [selectedPlayers, setSelectedPlayers] = useState<Set<string>>(new Set());
     const [isPlaceholderPlayersModalOpen, setIsPlaceholderPlayersModalOpen] = useState<boolean>(false);
-
     const [playerForModal, setPlayerForModal] = useState<null | Player>();
     const [isPlayerModalOpen, setPlayerModalOpen] = useState<boolean>(false);
-
     const { triggerMessage } = useMessage();
-
     const params = useParams();
     const id = params.id;
 
@@ -107,7 +105,7 @@ export default function Initialization() {
 
         setContextMenu({
             x: event.pageX,
-            y: event.pageY - navbarHeight*1.5,
+            y: event.pageY - navbarHeight * 1.5,
             player,
         });
 
@@ -187,6 +185,36 @@ export default function Initialization() {
             }
         } catch (error) {
             triggerMessage("An error occurred while starting the tournament", "red");
+        }
+    };
+
+    const handleSelectPlayer = (playerId: string) => {
+        const newSelectedPlayers = new Set(selectedPlayers);
+        if (newSelectedPlayers.has(playerId)) {
+            newSelectedPlayers.delete(playerId);
+        } else {
+            newSelectedPlayers.add(playerId);
+        }
+        setSelectedPlayers(newSelectedPlayers);
+    };
+
+    const handleBulkDelete = async () => {
+        if (selectedPlayers.size === 0) {
+            triggerMessage("No players selected", "red");
+            return;
+        }
+
+        const { error } = await supabase
+            .from('tournament_players')
+            .delete()
+            .in('id', Array.from(selectedPlayers));
+
+        if (error) {
+            triggerMessage("Error deleting players", "red");
+        } else {
+            triggerMessage("Players deleted successfully", "green");
+            setPlayers(players.filter(player => !selectedPlayers.has(player.id)));
+            setSelectedPlayers(new Set());
         }
     };
 
@@ -302,9 +330,20 @@ export default function Initialization() {
                             {players.length > 0 && (
                                 <div className="mb-6 mt-16" onClick={handleCloseMenu}>
                                     <h2 className="text-[#7458da] font-bold text-2xl mb-4 text-center">Registered Players</h2>
+
                                     <table className="w-full max-w-4xl mx-auto bg-deep rounded-lg shadow-lg">
                                         <thead className="bg-[#7458da]">
                                             <tr>
+                                                <th className="p-3 text-left text-white">
+                                                    <Checkbox deep={true} checked={selectedPlayers.size === players.length} onChange={() => {
+                                                        if (selectedPlayers.size != players.length) {
+                                                            setSelectedPlayers(new Set(players.map(player => player.id)));
+                                                        } else {
+                                                            setSelectedPlayers(new Set());
+                                                        }
+                                                    }} />
+                                                </th>
+
                                                 <th className="p-3 text-left text-white">Name</th>
                                                 {tournament?.skill_fields.map((skill, index) => (
                                                     <th key={index} className="p-3 text-left text-white">{skill}</th>
@@ -315,9 +354,15 @@ export default function Initialization() {
                                             {players.map((player) => (
                                                 <tr
                                                     key={player.id}
-                                                    className={`hover:bg-highlight ${playerForModal && playerForModal.id == player.id ? "bg-[#604BAC]" : ""} transition-colors duration-50 cursor-pointer`}
+                                                    className={`hover:bg-secondary ${playerForModal && playerForModal.id == player.id ? "bg-[#604BAC]" : ""} transition-colors duration-50 cursor-pointer`}
                                                     onContextMenu={(e) => handleRightClick(e, player)}
                                                 >
+                                                    <td className="p-3">
+                                                        <Checkbox
+                                                            checked={selectedPlayers.has(player.id)}
+                                                            onChange={() => handleSelectPlayer(player.id)}
+                                                        />
+                                                    </td>
                                                     <td className={`p-3 ${player.anonymous ? "text-white" : "text-[#c8c8c8]"}`}>{player.player_name}</td>
                                                     {tournament?.skill_fields.map((skill, index) => (
                                                         <td key={index} className="p-3">{player.skills[skill] ? player.skills[skill] : "N/A"}</td>
@@ -326,6 +371,16 @@ export default function Initialization() {
                                             ))}
                                         </tbody>
                                     </table>
+                                    {selectedPlayers.size > 0 && (
+                                        <div className="m-4 flex w-full mt-4 justify-center">
+                                            <button
+                                                className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors"
+                                                onClick={handleBulkDelete}
+                                            >
+                                                Delete Selected
+                                            </button>
+                                        </div>
+                                    )}
 
                                     {contextMenu && (
                                         <motion.ul
@@ -366,7 +421,7 @@ export default function Initialization() {
                                 <div className="flex justify-center mt-8 space-x-4">
                                     <button
                                         className="bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 transition-colors"
-                                        onClick={() => {setIsPlaceholderPlayersModalOpen(true)}}
+                                        onClick={() => { setIsPlaceholderPlayersModalOpen(true) }}
                                     >
                                         Add Placeholder Players
                                     </button>
@@ -385,7 +440,7 @@ export default function Initialization() {
                                 tournament={tournament}
                                 setTournament={setTournament}
                             />
-                            <AddPlaceholderPlayersModal isOpen={isPlaceholderPlayersModalOpen} setOpen={setIsPlaceholderPlayersModalOpen} tournament={tournament}/>
+                            <AddPlaceholderPlayersModal isOpen={isPlaceholderPlayersModalOpen} setOpen={setIsPlaceholderPlayersModalOpen} tournament={tournament} />
                             {playerForModal && (
                                 <PlayerModal
                                     isOpen={isPlayerModalOpen}
