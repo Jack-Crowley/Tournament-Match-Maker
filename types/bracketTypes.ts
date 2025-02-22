@@ -2,6 +2,7 @@ export interface Player {
     uuid: string;
     name: string;
     email: string;
+    score?: number;
 }
 
 export interface Matchup {

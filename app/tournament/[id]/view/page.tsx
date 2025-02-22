@@ -1,12 +1,45 @@
-import TournamentBracket from "@/components/tournamentViews/single/bracketView";
+"use client"
 
+import TournamentBracket from "@/components/tournamentViews/single/bracketView";
 import { Bracket } from "@/types/bracketTypes";
+import { useState } from "react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faTrophy, faList, faBullhorn, faEnvelope } from "@fortawesome/free-solid-svg-icons";
+
+const NAV_ITEMS = [
+  { key: "Bracket", icon: faTrophy },
+  { key: "Waitlist", icon: faList },
+  { key: "Announcements", icon: faBullhorn },
+  { key: "Messages", icon: faEnvelope },
+];
+
+const SideNavbar = () => {
+  const [activeTab, setActiveTab] = useState("Bracket");
+
+  return (
+    <div className="fixed top-1/2 transform -translate-y-1/2 w-[8%] z-20 flex items-center justify-center">
+      <nav className="z-20 bg-deep p-3 flex w-fit shadow-lg rounded-full flex-col gap-2 border border-soft">
+        {NAV_ITEMS.map(({ key, icon }) => (
+          <button
+            key={key}
+            onClick={() => setActiveTab(key)}
+            className={`relative group text-2xl w-12 h-12 flex justify-center items-center transition-all rounded-full ${activeTab === key ? "bg-primary text-white" : "text-soft hover:bg-highlight hover:text-white"}`}
+          >
+            <FontAwesomeIcon icon={icon} />
+            <span className="absolute left-full top-1/2 -translate-y-1/2 ml-3 px-3 py-1 bg-accent text-white text-sm rounded-full shadow opacity-0 group-hover:opacity-100 transition-opacity">{key}</span>
+          </button>
+        ))}
+      </nav>
+    </div>
+
+  );
+}
 
 const myBracket: Bracket = {
   "rounds": [
     {
       "matches": [
-        { "matchId": 1, "player1": { "uuid": "1", "name": "Player 1", "email": "player1@example.com" }, "player2": { "uuid": "2", "name": "Player 2", "email": "player2@example.com" }, "scores": { "1": 5, "2": 3 }, "winner": "1" },
+        { "matchId": 1, "player1": { "uuid": "1", "name": "Player 1", "email": "player1@example.com", "score":5 }, "player2": { "uuid": "2", "name": "Player 2", "email": "player2@example.com" }, "scores": { "1": 5, "2": 3 }, "winner": "1" },
         { "matchId": 2, "player1": { "uuid": "3", "name": "Player 3", "email": "player3@example.com" }, "player2": { "uuid": "4", "name": "Player 4", "email": "player4@example.com" }, "scores": { "3": 6, "4": 4 }, "winner": "3" },
         { "matchId": 3, "player1": { "uuid": "5", "name": "Player 5", "email": "player5@example.com" }, "player2": { "uuid": "6", "name": "Player 6", "email": "player6@example.com" }, "scores": { "5": 7, "6": 2 }, "winner": "5" },
         { "matchId": 4, "player1": { "uuid": "7", "name": "Player 7", "email": "player7@example.com" }, "player2": { "uuid": "8", "name": "Player 8", "email": "player8@example.com" }, "scores": { "7": 4, "8": 5 }, "winner": "8" },
@@ -54,6 +87,9 @@ const myBracket: Bracket = {
 export default function Home() {
   const bracket = myBracket;
   return (
-    <TournamentBracket bracket={bracket} />
+    <div className="relative">
+      <SideNavbar />
+      <TournamentBracket bracket={bracket} />
+    </div>
   )
 }
