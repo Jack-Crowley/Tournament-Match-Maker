@@ -24,7 +24,7 @@ const MatchupElement = ({
         className="w-40 bg-secondary rounded-lg shadow-lg overflow-hidden z-10 hover:cursor-pointer"
         whileHover={{ scale: 1.05 }}
         transition={{ type: "spring", stiffness: 300 }}
-        onClick={openModal}
+        onClick={() => openModal()}
       >
           {match.players.map((player, index) => (
             <div key={index}>
