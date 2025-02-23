@@ -39,27 +39,54 @@ export default function Home() {
                 return;
             }
 
-            // Fetch organizing tournaments
-            const { data: organizingTournaments, error: organizingError } = await supabase
+            const { data: organizingTournamentsOwner, error: organizingErrorOwner } = await supabase
                 .from('tournaments')
                 .select('*')
                 .eq('owner', id);
 
             let owningIds: string[] = [];
-            if (organizingTournaments) {
-                owningIds = organizingTournaments.map((record) => record.id);
-                setOrganizingTournaments(organizingTournaments);
+            if (organizingTournamentsOwner) {
+                owningIds = organizingTournamentsOwner.map((record) => record.id);
+                setOrganizingTournaments(organizingTournamentsOwner);
             }
 
-            // Fetch playing tournaments
+
             const { data: playingData, error: playingError } = await supabase
                 .from('tournament_players')
                 .select('tournament_id')
                 .eq('member_uuid', id);
 
-            if (playingError || organizingError) {
+            if (playingError || organizingErrorOwner) {
                 triggerMessage("Error fetching player data", "red");
             } else {
+                const { data: organizingTournaments } = await supabase
+                    .from('tournament_organizers')
+                    .select('*')
+                    .eq('member_uuid', id);
+
+                const nonOwnerTournamentIds = organizingTournaments
+                    ?.map((record) => record.tournament_id)
+                    .filter((tournament_id) => !owningIds.includes(tournament_id));
+
+                if (nonOwnerTournamentIds?.length) {
+                    const { data: nonOwnerTournaments, error: nonOwnerError } = await supabase
+                        .from('tournaments')
+                        .select('*')
+                        .in('id', nonOwnerTournamentIds);
+
+                    if (nonOwnerError) {
+                        triggerMessage('Error fetching non-owner tournaments:', 'red');
+                    } else if (nonOwnerTournaments) {
+                        setOrganizingTournaments((prev) => {
+                            const uniqueTournaments = new Map();
+                            [...prev, ...nonOwnerTournaments].forEach(tournament => {
+                                uniqueTournaments.set(tournament.id, tournament);
+                            });
+                            return Array.from(uniqueTournaments.values());
+                        });
+                    }
+                }
+
                 const tournamentIds = [...new Set(playingData.map((record) => record.tournament_id))];
 
                 const tournamentDetails: Tournament[] = [];
@@ -183,8 +210,7 @@ export default function Home() {
                             whileHover={{ scale: 1.01 }}
                             className="p-6 shadow-[#382c3e] hover:cursor-pointer rounded-lg shadow-lg hover:shadow-3xl transition-all bg-gradient-to-r from-highlight to-accent"
                         >
-                            <Link
-                                href={`/tournament/${tournament.id}`}>
+                            <Link href={`/tournament/${tournament.id}`}>
                                 <div className="flex justify-between items-center">
                                     <div>
                                         <h2 className="text-xl font-bold text-white">{tournament.name}</h2>
@@ -198,12 +224,11 @@ export default function Home() {
                                             {actionLabel}
                                         </button>
                                     ) : (
-                                        <Link
-                                            href={`/tournament/${tournament.id}`}
+                                        <h1
                                             className="px-4 py-2 bg-deep text-white rounded-lg hover:bg-highlight transition-colors transform"
                                         >
                                             {actionLabel}
-                                        </Link>
+                                        </h1>
                                     )}
                                 </div>
                             </Link>
@@ -293,14 +318,14 @@ export default function Home() {
                     >
                         <motion.div
                             className="bg-[#43386e] text-white flex items-center px-4 py-3 rounded-full text-lg font-medium shadow-md cursor-pointer overflow-hidden"
-                            initial={{ width: "3.9rem" }} 
-                            whileHover={{ width: "12rem" }} 
+                            initial={{ width: "3.9rem" }}
+                            whileHover={{ width: "12rem" }}
                             transition={{ type: "spring", stiffness: 150 }}
                             onClick={() => setIsModalOpen(true)}
                         >
                             <FontAwesomeIcon
                                 icon={faPlusCircle}
-                                className="text-white text-3xl mr-4" 
+                                className="text-white text-3xl mr-4"
                             />
                             <span className="whitespace-nowrap">Create New</span>
                         </motion.div>
