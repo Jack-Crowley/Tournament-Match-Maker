@@ -13,7 +13,6 @@ interface MatchupModalProps {
 
 export const MatchupModal = ({ isOpen, setOpen, matchup }: MatchupModalProps) => {
     const [editedMatchup, setEditedMatchup] = useState<Matchup>(matchup);
-    setEditedMatchup(matchup)
     const [winner, setWinner] = useState<string | null>(matchup.winner ? matchup.winner : null);
     const modalRef = useRef<HTMLDivElement>(null);
 
@@ -31,7 +30,7 @@ export const MatchupModal = ({ isOpen, setOpen, matchup }: MatchupModalProps) =>
         return () => {
             document.removeEventListener("mousedown", handleClickOutside);
         };
-    }, [isOpen, setOpen]);
+    }, []);
 
     if (!isOpen) return null;
 

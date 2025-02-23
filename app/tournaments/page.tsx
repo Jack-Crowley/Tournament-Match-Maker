@@ -50,7 +50,6 @@ export default function Home() {
                 setOrganizingTournaments(organizingTournamentsOwner);
             }
 
-
             const { data: playingData, error: playingError } = await supabase
                 .from('tournament_players')
                 .select('tournament_id')
