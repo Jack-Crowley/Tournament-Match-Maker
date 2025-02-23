@@ -9,6 +9,7 @@ export interface Tournament {
     max_players: number | null;
     time: string;
     owner: string;
+    status: string;
     skill_fields: string[];
     rules: string[];
 }

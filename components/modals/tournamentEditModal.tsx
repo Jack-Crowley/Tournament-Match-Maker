@@ -26,8 +26,6 @@ export const TournamentModal = ({
     const [endTime, setEndTime] = useState<string>(tournament.end_time || '');
     const [maxPlayers, setMaxPlayers] = useState<number>(tournament.max_players || 0);
     const [skillFields, setSkillFields] = useState<string[]>(tournament.skill_fields || []);
-    const [newSkill, setNewSkill] = useState<string>("");
-    const [newRule, setNewRule] = useState<string>("");
     const [rules, setRules] = useState<string[]>(tournament.rules || []);
     const [activeTab, setActiveTab] = useState<'info' | 'organizers'>('info');
     const [organizers, setOrganizers] = useState<{ email: string; permission: 'Admin' | 'Scorekeeper' | 'Viewer' }[]>([]);
@@ -83,7 +81,7 @@ export const TournamentModal = ({
                 setOrganizers(organizers);
             });
         }
-    }, [tournament]);
+    }, []);
 
     const handleSave = async () => {
         if (!tournament) return;

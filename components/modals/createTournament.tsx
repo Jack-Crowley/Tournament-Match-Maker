@@ -58,10 +58,9 @@ export const CreateTournament = ({ isModalOpen, setIsModalOpen, ref }: { isModal
     const { triggerMessage } = useMessage()
     const client = useClient()
     const supabase = createClient()
+    const router = useRouter()
 
     const handleCreateTournament = async () => {
-        const router = useRouter()
-
         if (!tournamentName || !button) {
             triggerMessage('Please select a tournament type and provide a name.', 'red');
             return;

@@ -17,7 +17,7 @@ const LoginPage = () => {
 
   useEffect(() => {
     setWindow(window)
-  })
+  }, [])
 
   const handleAnonymousSignIn = async () => {
     if (!captchaValue) {
