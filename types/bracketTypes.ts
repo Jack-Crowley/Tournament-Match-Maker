@@ -3,14 +3,14 @@ export interface Player {
     name: string;
     email: string;
     score?: number;
+    account_type:string
 }
 
 export interface Matchup {
     matchId: number;
-    player1: Player;
-    player2: Player;
-    scores: { [key: string]: number };
-    winner: string;
+    winner?: string;
+    players: Player[];
+    round:number;
 }
 
 export interface Round {

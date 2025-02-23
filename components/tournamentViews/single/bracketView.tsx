@@ -1,43 +1,60 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react";
-import { Bracket } from "@/types/bracketTypes";
+import { Bracket, Matchup } from "@/types/bracketTypes";
+import { MatchupModal } from "@/components/modals/displayMatchup";
 import { motion } from "framer-motion";
 
-const MatchupElement = ({ round, match, bracket }: { round: number, match: number, bracket: Bracket }) => {
-  const matchup = bracket.rounds[round].matches[match];
+const MatchupElement = ({
+  match,
+}: {
+  match: Matchup;
+}) => {
+  const [isMatchupModalOpen, setIsMatchupModalOpen] = useState<boolean>(false);
+
+  function openModal() {
+    if (match.players.some(player => player.name)) {
+      setIsMatchupModalOpen(true)
+    }
+  }
 
   return (
-    <div className={`flex justify-center items-center flex-shrink-0 z-10`}>
+    <div className={`flex justify-center items-center flex-shrink-0`}>
       <motion.div
         className="w-40 bg-secondary rounded-lg shadow-lg overflow-hidden z-10 hover:cursor-pointer"
         whileHover={{ scale: 1.05 }}
         transition={{ type: "spring", stiffness: 300 }}
+        onClick={openModal}
       >
-        <div className="flex justify-between items-center z-5 p-4 font-bold text-deep border-l-8 border-deep bg-opacity-90 hover:bg-opacity-100 transition-all">
-          <span>{matchup.player1.name}</span>
-          {matchup.player1.score && (
-            <div className="w-8 h-8 flex items-center justify-center bg-primary text-white rounded-full text-sm">
-              {matchup.player1.score}
-            </div>
-          )}
+          {match.players.map((player, index) => (
+            <div key={index}>
+              <div className={`z-5 p-4 font-bold border-l-8 ${match.winner ? player.uuid == match.winner ? "border-primary text-primary" : "border-deep text-deep" : "border-soft text-deep"} bg-opacity-90 hover:bg-opacity-100 transition-all ${player.name == "" && "text-secondary"}`}>
+                {player.name ? player.name : "Placeholder"}
+              </div>
 
-        </div>
-        <div className="h-px bg-primary opacity-50"></div>
-        <div className="flex justify-between items-center z-5 p-4 font-bold text-primary border-l-8 border-primary bg-opacity-90 hover:bg-opacity-100 transition-all">
-          <span>{matchup.player2.name}</span>
-          {matchup.player2.score && (
-            <div className="w-6 h-6 flex items-center justify-center bg-gray-200 rounded-full text-sm">
-              {matchup.player2.score}
+              {index !== match.players.length - 1 && (
+                <div className="h-px bg-primary opacity-50"></div>
+              )}
             </div>
-          )}
-        </div>
+
+          ))}
+
       </motion.div>
+      <MatchupModal matchup={match} isOpen={isMatchupModalOpen} setOpen={setIsMatchupModalOpen} />
+
     </div>
-  );
+  )
 };
 
-const BracketCreator = ({ roundIndex, matchIndex, bracket }: { roundIndex: number, matchIndex: number, bracket: Bracket }) => {
+const BracketCreator = ({
+  roundIndex,
+  matchIndex,
+  bracket,
+}: {
+  roundIndex: number;
+  matchIndex: number;
+  bracket: Bracket;
+}) => {
   const elementRef = useRef<HTMLDivElement | null>(null);
   const [box, setBox] = useState<DOMRect | null>(null);
   const heightOffset = (bracket.rounds.length - roundIndex - 1) * 7;
@@ -51,12 +68,25 @@ const BracketCreator = ({ roundIndex, matchIndex, bracket }: { roundIndex: numbe
   return (
     <div>
       {roundIndex == 0 ? (
-        <MatchupElement match={matchIndex} round={roundIndex} bracket={bracket} />
+        <MatchupElement
+          match={bracket.rounds[roundIndex].matches[matchIndex]}
+        />
       ) : (
         <div className="flex">
-          <div className="flex-shrink-0 mb-4 relative min-h-72 w-fit grid grid-rows-2 space-y-2 mr-[6rem]" ref={elementRef}>
-            <BracketCreator matchIndex={matchIndex * 2} roundIndex={roundIndex - 1} bracket={bracket} />
-            <BracketCreator matchIndex={matchIndex * 2 + 1} roundIndex={roundIndex - 1} bracket={bracket} />
+          <div
+            className="flex-shrink-0 mb-4 relative min-h-72 w-fit grid grid-rows-2 space-y-2 mr-[6rem]"
+            ref={elementRef}
+          >
+            <BracketCreator
+              matchIndex={matchIndex * 2}
+              roundIndex={roundIndex - 1}
+              bracket={bracket}
+            />
+            <BracketCreator
+              matchIndex={matchIndex * 2 + 1}
+              roundIndex={roundIndex - 1}
+              bracket={bracket}
+            />
             {box && (
               <div>
                 <div
@@ -97,7 +127,9 @@ const BracketCreator = ({ roundIndex, matchIndex, bracket }: { roundIndex: numbe
               </div>
             )}
           </div>
-          <MatchupElement match={matchIndex} round={roundIndex} bracket={bracket} />
+          <MatchupElement
+            match={bracket.rounds[roundIndex].matches[matchIndex]}
+          />
         </div>
       )}
     </div>
@@ -107,7 +139,13 @@ const BracketCreator = ({ roundIndex, matchIndex, bracket }: { roundIndex: numbe
 const TournamentBracket = ({ bracket }: { bracket: Bracket }) => {
   return (
     <div className="mt-[50px] ml-[8%] h-[89vh]">
-      <BracketCreator roundIndex={bracket.rounds.length - 1} matchIndex={0} bracket={bracket} />
+      {bracket.rounds.length > 0 && (
+        <BracketCreator
+          roundIndex={bracket.rounds.length - 1}
+          matchIndex={0}
+          bracket={bracket}
+        />
+      )}
     </div>
   );
 };

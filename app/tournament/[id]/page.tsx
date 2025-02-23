@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Initialization from "./initialization"
-import ViewBracket from "./view/page"
+import { ViewTournament } from "@/components/tournamentViews/viewTournament";
 import Join from "./join"
 import { useParams, useSearchParams } from "next/navigation";
 import { Tournament } from "@/types/tournamentTypes";
@@ -48,7 +48,7 @@ export default function Home() {
                             )}
 
                             {tournament.status == "started" && (
-                                <ViewBracket />
+                                <ViewTournament tournamentID={Number(id)} />
                             )}
                         </div>
                     ) : (
