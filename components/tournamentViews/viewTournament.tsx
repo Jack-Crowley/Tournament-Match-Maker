@@ -7,6 +7,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTrophy, faList, faBullhorn, faEnvelope } from "@fortawesome/free-solid-svg-icons";
 import { fetchBracket } from "@/utils/bracket/bracket";
 import { SpinningLoader } from "../loading";
+import { createClient } from "@/utils/supabase/client";
 
 const NAV_ITEMS = [
     { key: "Bracket", icon: faTrophy },
@@ -40,6 +41,8 @@ export const ViewTournament = ({ tournamentID }: { tournamentID: number }) => {
     const [bracket, setBracket] = useState<Bracket | null>(null)
     const [errorCode, setErrorCode] = useState<number | null>(null)
 
+    const supabase = createClient()
+
     useEffect(() => {
         async function LoadBracket() {
             const { bracket, errorCode } = await fetchBracket(tournamentID);
@@ -50,6 +53,32 @@ export const ViewTournament = ({ tournamentID }: { tournamentID: number }) => {
         }
 
         LoadBracket()
+
+
+        // ** Subscribe to Supabase real-time updates **
+        const subscription = supabase
+            .channel("tournament-matches-channel") // Unique channel name
+            .on(
+                "postgres_changes",
+                {
+                    event: "*", // Listen to all insert/update/delete events
+                    schema: "public",
+                    table: "tournament_matches",
+                },
+                async (payload) => {
+                    console.log("Tournament match table updated:", payload);
+                    await LoadBracket(); // Fetch the latest bracket when a match changes
+                }
+            )
+            .subscribe();
+
+        // Cleanup on unmount
+        return () => {
+            supabase.removeChannel(subscription);
+        };
+
+
+
     }, [tournamentID])
 
     if (errorCode) {

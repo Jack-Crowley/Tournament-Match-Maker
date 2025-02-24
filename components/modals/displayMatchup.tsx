@@ -43,18 +43,35 @@ export const MatchupModal = ({ isOpen, setOpen, matchup }: MatchupModalProps) =>
 
         console.log("Updating match winner:", winner);
 
-        const { error } = await supabase
+
+        const { error: winnerError } = await supabase
             .from("tournament_matches")
             .update({ winner: String(winner) })
             .eq("id", String(matchup.matchId));
+        
+        const { error: deletedPlayerError } = await supabase
+            .from("tournament_matches")
+            .update({ players: editedMatchup.players })
+            .eq("id", String(matchup.matchId));
 
-        if (error) {
-            console.error("Error updating match winner:", error);
+        
+
+        if (winnerError || deletedPlayerError) {
+            console.error(`Error updating match ${winnerError != null ? "winner" : "deleted player"}:`, winnerError, deletedPlayerError);
         } else {
             setEditedMatchup((prev) => ({ ...prev, winner }));
             setOpen(false);
         }
     };
+
+    const removePlayer = async (playerUuid: string) => {
+        const updatedPlayers = editedMatchup.players.map(player =>
+            player.uuid === playerUuid ? { uuid: "", name: "", email: "", account_type: "placeholder" } : player
+        );
+
+        setEditedMatchup((prev) => ({ ...prev, players: updatedPlayers }));
+    };
+
 
 
     console.log("are we open?", isOpen);
@@ -86,7 +103,7 @@ export const MatchupModal = ({ isOpen, setOpen, matchup }: MatchupModalProps) =>
                                         <FontAwesomeIcon icon={faEnvelope} />
                                     </button>
                                 )}
-                                <button className="p-2 bg-[#cc6363] rounded-lg text-white hover:bg-[#b65050]" onClick={() => {}}>
+                                <button className="p-2 bg-[#cc6363] rounded-lg text-white hover:bg-[#b65050]" onClick={() => {removePlayer(player.uuid)}}>
                                     <FontAwesomeIcon icon={faTrash} />
                                 </button>
                             </div>
