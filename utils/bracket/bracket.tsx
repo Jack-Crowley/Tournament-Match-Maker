@@ -77,18 +77,26 @@ export const fetchBracket = async (tournamentID: number): Promise<{ bracket: Bra
             uuid: "",
             name: "",
             email: "",
-            account_type:"placeholder"
+            account_type: "placeholder"
         }
 
+        let counter = 0
+
         while (matchesByRound[round].length < numMatches) {
+            if (matchesByRound[round].some(match => match.matchId == counter)) {
+                counter++
+                continue;
+            }
+
             const placeholderMatch: Matchup = {
-                matchId: -1,
+                matchId: counter++,
                 players: [tempPlayer, tempPlayer],
                 round: round,
             };
             matchesByRound[round].push(placeholderMatch);
         }
     }
+
 
     const sortedRounds = Object.keys(matchesByRound)
         .map(Number)
