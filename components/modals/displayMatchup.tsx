@@ -35,68 +35,124 @@ export const MatchupModal = ({ isOpen, setOpen, matchup }: MatchupModalProps) =>
         };
     }, [isOpen, setOpen]);
 
-    const updateMatchWinner = async () => {
-        console.log("we are updating this matchup", matchup);
-        if (!winner) {
-            console.log("No winner selected");
-        }
-        else {
+    useEffect(() => {
+        setEditedMatchup(matchup);
+        setWinner(matchup.winner ? matchup.winner : null);
+    }, [matchup]);
 
-            const { error: winnerError } = await supabase
+
+
+    const updateMatch = async () => {
+        const winnerUUID = editedMatchup.winner;
+        console.log("Winner UUID:", winnerUUID);
+        try {
+            console.log("Updating matchup:", matchup);
+            console.log("to match this following matchup", editedMatchup);
+        
+            const { error } = await supabase
                 .from("tournament_matches")
-                .update({ winner: String(winner) })
-                .eq("id", String(matchup.matchId));
-
-            if (winnerError) {
-                console.error(`Error updating winner match`, winnerError);
+                .update({ 
+                    winner: winnerUUID || null, 
+                    players: editedMatchup.players 
+                })
+                .eq("id", String(matchup.id));
+        
+            if (error) {
+                console.error("Error updating matchup:", error);
+            } else {
+                setEditedMatchup((prev) => ({ ...prev, winnerUUID: winnerUUID }));
+                if (winnerUUID) propagatePlayer(winnerUUID);
+                setOpen(false);
             }
-            else {
-                setEditedMatchup((prev) => ({ ...prev, winner }));
-                propogatePlayer(winner);
-            }
+        } catch (err) {
+            console.error("Unexpected error:", err);
         }
 
-        const { error: deletedPlayerError } = await supabase
-            .from("tournament_matches")
-            .update({ players: editedMatchup.players })
-            .eq("id", String(matchup.matchId));
+    };
+    const changeWinner = (playerUUID: string) => {
+        console.log("chaning winner")
+        const winner = editedMatchup.players.find(player => player.uuid === playerUUID);
+        if (!winner){
+           return console.error("No player found? for winner"); 
+        }
 
+        setEditedMatchup((prev) => ({ ...prev, winner: playerUUID }));
+        console.log("the new winner is in matchup", editedMatchup);
+    };
 
+    const propagatePlayer = async (playerUuid: string) => {
+        console.log("Propagating player");
+    
+        const player: BracketPlayer | undefined = editedMatchup.players.find(player => player.uuid === playerUuid);
+        if (!player) return console.error("Player not found for propagation");
+    
+        const round = editedMatchup.round + 1;
+        const matchNumber = Math.ceil(editedMatchup.match_number / 2);
+        console.log("match number is ", matchNumber);
+    
+        try {
+            // Check if a matchup already exists
+            const { data, error: fetchError } = await supabase
+                .from("tournament_matches")
+                .select("*")
+                .eq("tournament_id", matchup.tournament_id)
+                .eq("round", round)
+                .eq("match_number", matchNumber)
+                .single();
+    
+            if (fetchError && fetchError.code !== "PGRST116") { // Ignore "no rows found" error
+                console.error("Error fetching matchup:", fetchError.message);
+                return;
+            }
 
-        if (deletedPlayerError) {
-            console.error(`Error updating deleting player match`, deletedPlayerError);
-        } else {
-            setOpen(false);
+            const existingMatchup: Matchup | null = data ? (data as Matchup) : null;
+    
+            if (existingMatchup) {
+                console.log("Matchup already exists, replacing placeholder player");
+    
+                // Replace placeholder player with the new player
+                const updatedPlayers = existingMatchup.players.map((p) => 
+                    p.account_type === "placeholder" ? player : p
+                );
+    
+                const { error: updateError } = await supabase
+                    .from("tournament_matches")
+                    .update({ players: updatedPlayers })
+                    .eq("id", existingMatchup.id);
+    
+                if (updateError) {
+                    console.error("Error updating players in existing matchup:", updateError.message);
+                } else {
+                    console.log("Updated existing matchup by replacing placeholder player");
+                }
+            } else {
+                console.log("No existing matchup found, inserting new matchup");
+    
+                const placeHolderPlayer = { uuid: "", name: "", email: "", account_type: "placeholder" };
+                const players = editedMatchup.match_number % 2 === 0 ? [placeHolderPlayer, player] : [player, placeHolderPlayer];
+    
+                const newMatchup = {
+                    tournament_id: matchup.tournament_id,
+                    match_number: matchNumber,
+                    players,
+                    round,
+                };
+    
+                const { error: insertError } = await supabase
+                    .from("tournament_matches")
+                    .insert(newMatchup);
+    
+                if (insertError) {
+                    console.error("Error inserting new matchup:", insertError.message);
+                } else {
+                    console.log("Inserted new matchup successfully");
+                }
+            }
+        } catch (err) {
+            console.error("Unexpected error in propagatePlayer:", err);
         }
     };
 
-    const propogatePlayer = async (playerUuid: string) => {
-        const player: BracketPlayer | undefined = editedMatchup.players.find(player => player.uuid === playerUuid);
-        if (!player) return;
-        const round = editedMatchup.round + 1;
-        const matchNumber = Math.ceil(editedMatchup.matchNumber / 2);
-        const placeHolderPlayer = { uuid: "", name: "", email: "", account_type: "placeholder" };
-
-        const players = [player, placeHolderPlayer];
-
-        const newMatchup = {
-            tournament_id: matchup.tournament_id,
-            match: matchNumber,
-            players: editedMatchup.matchNumber % 2 === 0 ? players.reverse() : players,
-            round,
-        }
-
-        const { error } = await supabase
-            .from("tournament_matches")
-            .insert(newMatchup);
-
-        if (error) {
-            console.error("Error inserting matchup:", error.message);
-            alert(`Failed to insert matchup: ${error.message}`);
-            return;
-        }
-
-    }
 
     const removePlayer = async (playerUuid: string) => {
         const updatedPlayers = editedMatchup.players.map(player =>
@@ -147,7 +203,10 @@ export const MatchupModal = ({ isOpen, setOpen, matchup }: MatchupModalProps) =>
                     <label className="block text-sm font-medium mb-2 text-white">Declare Winner</label>
                     <select
                         value={winner || ""}
-                        onChange={(e) => setWinner(e.target.value)}
+                        onChange={(e) => {
+                            setWinner(e.target.value)
+                            changeWinner(e.target.value)
+                        }}
                         className="w-full p-3 bg-[#2A2A2A] border-b-2 border-[#7458DA] text-white rounded-lg focus:outline-none focus:border-[#604BAC]"
                     >
                         <option value="" disabled className="text-gray-400">
@@ -170,7 +229,7 @@ export const MatchupModal = ({ isOpen, setOpen, matchup }: MatchupModalProps) =>
                     </button>
                     <button
                         className="bg-[#7458DA] text-white px-4 py-2 rounded-lg hover:bg-[#604BAC] transition-colors"
-                        onClick={() => updateMatchWinner()}
+                        onClick={() => updateMatch()}
                     >
                         Save Changes
                     </button>

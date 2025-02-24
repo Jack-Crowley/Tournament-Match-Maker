@@ -210,12 +210,12 @@ export default function Initialization() {
             name: player.player_name || "Unknown",
             email: player.email || "",
             // ! YYOOOOOO WHAT ?
-            account_type: player.is_anonymous ? "anonymous" : "LOLS",
+            account_type: player.is_anonymous ? "anonymous" : "logged_in",
             score: Number(player.skills?.score) || 0,
         }));
         console.log("setting up bracket now with players: ", formattedPlayers)
 
-    
+   
         function seedPlayers(playersToSeed: BracketPlayer[]) {
             return [...playersToSeed].sort((a, b) => {
                 
@@ -240,11 +240,11 @@ export default function Initialization() {
                 };
     
                 matchups.push({
-                    matchNumber: i / 2 + 1,
+                    match_number: i / 2 + 1,
                     players: [player1, player2],
                     round: 1,
                     tournament_id: Number(tournament.id),
-                    matchId: 0
+                    id: -1,
                 });
             }
     
@@ -257,12 +257,12 @@ export default function Initialization() {
                 .insert(matchups.map(match => ({
                     tournament_id: tournament.id,
                     round: match.round,
-                    match: match.matchNumber,
+                    match_number: match.match_number,
                     players: match.players,
                 })));
     
             if (error) {
-                console.error("Error saving matchups:", error);
+                console.error("Error saving matchups in saveMatchupstoDB:", error);
             } else {
                 console.log("Matchups saved successfully!", data);
             }

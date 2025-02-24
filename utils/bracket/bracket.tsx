@@ -83,15 +83,15 @@ export const fetchBracket = async (tournamentID: number): Promise<{ bracket: Bra
         let counter = 1
 
         while (matchesByRound[round].length < numMatches) {
-            if (matchesByRound[round].some(match => match.matchNumber == counter)) {
+            if (matchesByRound[round].some(match => match.match_number == counter)) {
                 counter++
                 continue;
             }
 
             const placeholderMatch: Matchup = {
                 tournament_id: tournamentID,
-                matchNumber: counter,
-                matchId: -1,
+                match_number: counter,
+                id: -1,
                 players: [tempPlayer, tempPlayer],
                 round: round,
             };
@@ -106,7 +106,7 @@ export const fetchBracket = async (tournamentID: number): Promise<{ bracket: Bra
 
     sortedRounds.forEach(round => {
         const matches = matchesByRound[round];
-        matches.sort((a, b) => a.matchNumber - b.matchNumber);
+        matches.sort((a, b) => a.match_number - b.match_number);
         bracket.rounds.push({
             matches: matches,
         });
