@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faEnvelope, faTrash } from "@fortawesome/free-solid-svg-icons";
-import { Matchup } from "@/types/bracketTypes";
+import { BracketPlayer, Matchup } from "@/types/bracketTypes";
 import { createClient } from "@/utils/supabase/client";
 
 
@@ -38,31 +38,64 @@ export const MatchupModal = ({ isOpen, setOpen, matchup }: MatchupModalProps) =>
     const updateMatchWinner = async () => {
         if (!winner) {
             console.log("No winner selected");
-            return;
+        }
+        else {
+
+            const { error: winnerError } = await supabase
+                .from("tournament_matches")
+                .update({ winner: String(winner) })
+                .eq("id", String(matchup.matchId));
+
+            if (winnerError) {
+                console.error(`Error updating match`, winnerError);
+            }
+            else {
+                setEditedMatchup((prev) => ({ ...prev, winner }));
+                propogatePlayer(winner);
+            }
         }
 
-        console.log("Updating match winner:", winner);
-
-
-        const { error: winnerError } = await supabase
-            .from("tournament_matches")
-            .update({ winner: String(winner) })
-            .eq("id", String(matchup.matchId));
-        
         const { error: deletedPlayerError } = await supabase
             .from("tournament_matches")
             .update({ players: editedMatchup.players })
             .eq("id", String(matchup.matchId));
 
-        
 
-        if (winnerError || deletedPlayerError) {
-            console.error(`Error updating match ${winnerError != null ? "winner" : "deleted player"}:`, winnerError, deletedPlayerError);
+
+        if (deletedPlayerError) {
+            console.error(`Error updating match`, deletedPlayerError);
         } else {
-            setEditedMatchup((prev) => ({ ...prev, winner }));
             setOpen(false);
         }
     };
+
+    const propogatePlayer = async (playerUuid: string) => {
+        const player: BracketPlayer | undefined = editedMatchup.players.find(player => player.uuid === playerUuid);
+        if (!player) return;
+        const round = editedMatchup.round + 1;
+        const matchNumber = Math.ceil(editedMatchup.matchNumber / 2);
+        const placeHolderPlayer = { uuid: "", name: "", email: "", account_type: "placeholder" };
+
+        const players = [player, placeHolderPlayer];
+
+        const newMatchup = {
+            tournament_id: matchup.tournament_id,
+            matchNumber,
+            players: editedMatchup.matchNumber % 2 === 0 ? players.reverse() : players,
+            round,
+        }
+
+        const { error } = await supabase
+            .from("tournament_matches")
+            .insert(newMatchup);
+
+        if (error) {
+            console.error("Error inserting matchup:", error.message);
+            alert(`Failed to insert matchup: ${error.message}`);
+            return;
+        }
+
+    }
 
     const removePlayer = async (playerUuid: string) => {
         const updatedPlayers = editedMatchup.players.map(player =>
@@ -73,8 +106,6 @@ export const MatchupModal = ({ isOpen, setOpen, matchup }: MatchupModalProps) =>
     };
 
 
-
-    console.log("are we open?", isOpen);
     if (!isOpen) return null;
 
     return (
@@ -95,7 +126,7 @@ export const MatchupModal = ({ isOpen, setOpen, matchup }: MatchupModalProps) =>
                                 <input
                                     type="number"
                                     value={player.score}
-                                    onChange={() => {}}
+                                    onChange={() => { }}
                                     className="w-20 p-2 bg-[#3A3A3A] border-b-2 border-[#7458DA] text-white rounded-lg focus:outline-none focus:border-[#604BAC]"
                                 />
                                 {player.account_type === "logged_in" && (
@@ -103,7 +134,7 @@ export const MatchupModal = ({ isOpen, setOpen, matchup }: MatchupModalProps) =>
                                         <FontAwesomeIcon icon={faEnvelope} />
                                     </button>
                                 )}
-                                <button className="p-2 bg-[#cc6363] rounded-lg text-white hover:bg-[#b65050]" onClick={() => {removePlayer(player.uuid)}}>
+                                <button className="p-2 bg-[#cc6363] rounded-lg text-white hover:bg-[#b65050]" onClick={() => { removePlayer(player.uuid) }}>
                                     <FontAwesomeIcon icon={faTrash} />
                                 </button>
                             </div>

@@ -203,12 +203,13 @@ export default function Initialization() {
     const setupBracket = async () => {
         if (!tournament) return;
 
-        console.log(players);
+        console.log("setting up bracket!!!", players);
 
         const formattedPlayers: BracketPlayer[] = players.map(player => ({
             uuid: player.member_uuid,
             name: player.player_name || "Unknown",
             email: player.email || "",
+            // ! YYOOOOOO WHAT ?
             account_type: player.is_anonymous ? "anonymous" : "LOLS",
             score: Number(player.skills?.score) || 0,
         }));

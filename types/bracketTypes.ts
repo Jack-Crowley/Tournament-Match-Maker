@@ -7,6 +7,7 @@ export interface BracketPlayer {
 }
 
 export interface Matchup {
+    tournament_id: number;
     matchId: number;
     matchNumber:number;
     winner?: string;
