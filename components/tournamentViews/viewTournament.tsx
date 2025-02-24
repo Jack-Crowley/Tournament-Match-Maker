@@ -81,7 +81,7 @@ export const ViewTournament = ({ tournamentID }: { tournamentID: number }) => {
 
 
 
-    }, [tournamentID])
+    }, [tournamentID, supabase])
 
     if (errorCode) {
         return <div>Error: {errorCode}</div>;
