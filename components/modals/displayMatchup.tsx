@@ -36,6 +36,7 @@ export const MatchupModal = ({ isOpen, setOpen, matchup }: MatchupModalProps) =>
     }, [isOpen, setOpen]);
 
     const updateMatchWinner = async () => {
+        console.log("we are updating this matchup", matchup);
         if (!winner) {
             console.log("No winner selected");
         }
@@ -47,7 +48,7 @@ export const MatchupModal = ({ isOpen, setOpen, matchup }: MatchupModalProps) =>
                 .eq("id", String(matchup.matchId));
 
             if (winnerError) {
-                console.error(`Error updating match`, winnerError);
+                console.error(`Error updating winner match`, winnerError);
             }
             else {
                 setEditedMatchup((prev) => ({ ...prev, winner }));
@@ -63,7 +64,7 @@ export const MatchupModal = ({ isOpen, setOpen, matchup }: MatchupModalProps) =>
 
 
         if (deletedPlayerError) {
-            console.error(`Error updating match`, deletedPlayerError);
+            console.error(`Error updating deleting player match`, deletedPlayerError);
         } else {
             setOpen(false);
         }
@@ -80,7 +81,7 @@ export const MatchupModal = ({ isOpen, setOpen, matchup }: MatchupModalProps) =>
 
         const newMatchup = {
             tournament_id: matchup.tournament_id,
-            matchNumber,
+            match: matchNumber,
             players: editedMatchup.matchNumber % 2 === 0 ? players.reverse() : players,
             round,
         }

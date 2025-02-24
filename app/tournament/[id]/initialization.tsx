@@ -11,7 +11,7 @@ import { useParams } from 'next/navigation';
 import { useClient } from "@/context/clientContext";
 import { SpinningLoader } from "@/components/loading";
 import { Tournament } from "@/types/tournamentTypes";
-import { BracketPlayer } from "@/types/bracketTypes";
+import { BracketPlayer, Matchup } from "@/types/bracketTypes";
 import { Player } from "@/types/playerTypes";
 import { TournamentModal } from "@/components/modals/tournamentEditModal";
 import { PlayerModal } from "@/components/modals/editPlayersModal";
@@ -225,8 +225,9 @@ export default function Initialization() {
 
     
         function generateMatchups(players: BracketPlayer[]) {
+            if (!tournament) return [];
             const seededPlayers = seedPlayers(players);
-            const matchups = [];
+            const matchups: Matchup[] = [];
             const totalPlayers = seededPlayers.length;
     
             for (let i = 0; i < totalPlayers; i += 2) {
@@ -239,9 +240,11 @@ export default function Initialization() {
                 };
     
                 matchups.push({
-                    matchId: i / 2 + 1,
+                    matchNumber: i / 2 + 1,
                     players: [player1, player2],
                     round: 1,
+                    tournament_id: Number(tournament.id),
+                    matchId: 0
                 });
             }
     
@@ -254,7 +257,7 @@ export default function Initialization() {
                 .insert(matchups.map(match => ({
                     tournament_id: tournament.id,
                     round: match.round,
-                    match: match.matchId,
+                    match: match.matchNumber,
                     players: match.players,
                 })));
     
