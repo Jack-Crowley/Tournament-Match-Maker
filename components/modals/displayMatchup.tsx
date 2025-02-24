@@ -48,15 +48,15 @@ export const MatchupModal = ({ isOpen, setOpen, matchup }: MatchupModalProps) =>
         try {
             console.log("Updating matchup:", matchup);
             console.log("to match this following matchup", editedMatchup);
-        
+
             const { error } = await supabase
                 .from("tournament_matches")
-                .update({ 
-                    winner: winnerUUID || null, 
-                    players: editedMatchup.players 
+                .update({
+                    winner: winnerUUID || null,
+                    players: editedMatchup.players,
                 })
                 .eq("id", String(matchup.id));
-        
+
             if (error) {
                 console.error("Error updating matchup:", error);
             } else {
@@ -72,8 +72,8 @@ export const MatchupModal = ({ isOpen, setOpen, matchup }: MatchupModalProps) =>
     const changeWinner = (playerUUID: string) => {
         console.log("chaning winner")
         const winner = editedMatchup.players.find(player => player.uuid === playerUUID);
-        if (!winner){
-           return console.error("No player found? for winner"); 
+        if (!winner) {
+            return console.error("No player found? for winner");
         }
 
         setEditedMatchup((prev) => ({ ...prev, winner: playerUUID }));
@@ -82,14 +82,14 @@ export const MatchupModal = ({ isOpen, setOpen, matchup }: MatchupModalProps) =>
 
     const propagatePlayer = async (playerUuid: string) => {
         console.log("Propagating player");
-    
+
         const player: BracketPlayer | undefined = editedMatchup.players.find(player => player.uuid === playerUuid);
         if (!player) return console.error("Player not found for propagation");
-    
+
         const round = editedMatchup.round + 1;
         const matchNumber = Math.ceil(editedMatchup.match_number / 2);
         console.log("match number is ", matchNumber);
-    
+
         try {
             // Check if a matchup already exists
             const { data, error: fetchError } = await supabase
@@ -99,27 +99,27 @@ export const MatchupModal = ({ isOpen, setOpen, matchup }: MatchupModalProps) =>
                 .eq("round", round)
                 .eq("match_number", matchNumber)
                 .single();
-    
+
             if (fetchError && fetchError.code !== "PGRST116") { // Ignore "no rows found" error
                 console.error("Error fetching matchup:", fetchError.message);
                 return;
             }
 
             const existingMatchup: Matchup | null = data ? (data as Matchup) : null;
-    
+
             if (existingMatchup) {
                 console.log("Matchup already exists, replacing placeholder player");
-    
+
                 // Replace placeholder player with the new player
-                const updatedPlayers = existingMatchup.players.map((p) => 
+                const updatedPlayers = existingMatchup.players.map((p) =>
                     p.account_type === "placeholder" ? player : p
                 );
-    
+
                 const { error: updateError } = await supabase
                     .from("tournament_matches")
                     .update({ players: updatedPlayers })
                     .eq("id", existingMatchup.id);
-    
+
                 if (updateError) {
                     console.error("Error updating players in existing matchup:", updateError.message);
                 } else {
@@ -127,21 +127,21 @@ export const MatchupModal = ({ isOpen, setOpen, matchup }: MatchupModalProps) =>
                 }
             } else {
                 console.log("No existing matchup found, inserting new matchup");
-    
+
                 const placeHolderPlayer = { uuid: "", name: "", email: "", account_type: "placeholder" };
                 const players = editedMatchup.match_number % 2 === 0 ? [placeHolderPlayer, player] : [player, placeHolderPlayer];
-    
+
                 const newMatchup = {
                     tournament_id: matchup.tournament_id,
                     match_number: matchNumber,
                     players,
                     round,
                 };
-    
+
                 const { error: insertError } = await supabase
                     .from("tournament_matches")
                     .insert(newMatchup);
-    
+
                 if (insertError) {
                     console.error("Error inserting new matchup:", insertError.message);
                 } else {
@@ -152,7 +152,6 @@ export const MatchupModal = ({ isOpen, setOpen, matchup }: MatchupModalProps) =>
             console.error("Unexpected error in propagatePlayer:", err);
         }
     };
-
 
     const removePlayer = async (playerUuid: string) => {
         const updatedPlayers = editedMatchup.players.map(player =>
@@ -183,7 +182,15 @@ export const MatchupModal = ({ isOpen, setOpen, matchup }: MatchupModalProps) =>
                                 <input
                                     type="number"
                                     value={player.score}
-                                    onChange={() => { }}
+                                    onChange={(e) => { 
+                                        const newScore = parseInt(e.target.value) || 0; // Ensure valid number
+                                        setEditedMatchup(prev => ({
+                                            ...prev,
+                                            players: prev.players.map(p => 
+                                                p.uuid === player.uuid ? { ...p, score: newScore } : p
+                                            )
+                                        }));
+                                    }} 
                                     className="w-20 p-2 bg-[#3A3A3A] border-b-2 border-[#7458DA] text-white rounded-lg focus:outline-none focus:border-[#604BAC]"
                                 />
                                 {player.account_type === "logged_in" && (
