@@ -71,14 +71,14 @@ export const AnnouncementSystem = ({ tournamentID }: { tournamentID: number }) =
 
         const announcementsSubscription = supabase
             .channel('announcements')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'announcements' }, (payload) => {
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'announcements' }, () => {
                 loadAnnouncements();
             })
             .subscribe();
 
         const seenSubscription = supabase
             .channel('announcements_seen')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'announcements_seen' }, (payload) => {
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'announcements_seen' }, () => {
                 loadAnnouncements();
             })
             .subscribe();
@@ -87,7 +87,7 @@ export const AnnouncementSystem = ({ tournamentID }: { tournamentID: number }) =
             supabase.removeChannel(announcementsSubscription);
             supabase.removeChannel(seenSubscription);
         };
-    }, [tournamentID]);
+    }, [tournamentID, client.session?.user.id, supabase, triggerMessage]);
 
     const addAnnouncement = async () => {
         if (!newAnnouncement.title || !newAnnouncement.content) return;

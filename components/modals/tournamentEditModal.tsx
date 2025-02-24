@@ -32,41 +32,41 @@ export const TournamentModal = ({
     const [newOrganizerEmail, setNewOrganizerEmail] = useState<string>('');
     const [newOrganizerPermission, setNewOrganizerPermission] = useState<'Admin' | 'Scorekeeper' | 'Viewer'>('Viewer');
 
-    const fetchOrganizers = async (tournamentId: string) => {
-        const { data: organizersData, error: organizersError } = await supabase
-            .from('tournament_organizers')
-            .select('member_uuid, permission_level')
-            .eq('tournament_id', tournamentId);
-
-        if (organizersError) {
-            console.error('Error fetching organizers:', organizersError.message);
-            return [];
-        }
-
-        const organizersWithEmails = await Promise.all(
-            organizersData.map(async (organizer) => {
-                const { data: userData, error: userError } = await supabase
-                    .from('users')
-                    .select('email')
-                    .eq('uuid', organizer.member_uuid)
-                    .single();
-
-                if (userError || !userData) {
-                    console.error('Error fetching user email:', userError?.message);
-                    return null;
-                }
-
-                return {
-                    email: userData.email,
-                    permission: organizer.permission_level,
-                };
-            })
-        );
-
-        return organizersWithEmails.filter((organizer) => organizer !== null);
-    };
-
     useEffect(() => {
+        const fetchOrganizers = async (tournamentId: string) => {
+            const { data: organizersData, error: organizersError } = await supabase
+                .from('tournament_organizers')
+                .select('member_uuid, permission_level')
+                .eq('tournament_id', tournamentId);
+
+            if (organizersError) {
+                console.error('Error fetching organizers:', organizersError.message);
+                return [];
+            }
+
+            const organizersWithEmails = await Promise.all(
+                organizersData.map(async (organizer) => {
+                    const { data: userData, error: userError } = await supabase
+                        .from('users')
+                        .select('email')
+                        .eq('uuid', organizer.member_uuid)
+                        .single();
+
+                    if (userError || !userData) {
+                        console.error('Error fetching user email:', userError?.message);
+                        return null;
+                    }
+
+                    return {
+                        email: userData.email,
+                        permission: organizer.permission_level,
+                    };
+                })
+            );
+
+            return organizersWithEmails.filter((organizer) => organizer !== null);
+        };
+
         if (tournament) {
             setName(tournament.name || '');
             setDescription(tournament.description || '');
@@ -81,7 +81,7 @@ export const TournamentModal = ({
                 setOrganizers(organizers);
             });
         }
-    }, [fetchOrganizers, tournament]);
+    }, [tournament]);
 
     const handleSave = async () => {
         if (!tournament) return;

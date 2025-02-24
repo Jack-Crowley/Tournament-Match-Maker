@@ -11,7 +11,7 @@ import { useParams } from 'next/navigation';
 import { useClient } from "@/context/clientContext";
 import { SpinningLoader } from "@/components/loading";
 import { Tournament } from "@/types/tournamentTypes";
-import { BracketPlayer, Matchup } from "@/types/bracketTypes";
+import { BracketPlayer } from "@/types/bracketTypes";
 import { Player } from "@/types/playerTypes";
 import { TournamentModal } from "@/components/modals/tournamentEditModal";
 import { PlayerModal } from "@/components/modals/editPlayersModal";
@@ -229,8 +229,8 @@ export default function Initialization() {
             const totalPlayers = seededPlayers.length;
     
             for (let i = 0; i < totalPlayers; i += 2) {
-                let player1 = seededPlayers[i];
-                let player2 = seededPlayers[i + 1] || {
+                const player1 = seededPlayers[i];
+                const player2 = seededPlayers[i + 1] || {
                     uuid: "",
                     name: "",
                     account_type: "placeholder",
