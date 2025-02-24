@@ -1,6 +1,6 @@
 "use client"
 
-import { Bracket, Matchup, Player } from "@/types/bracketTypes"
+import { Bracket, Matchup, BracketPlayer } from "@/types/bracketTypes"
 import { createClient } from "../supabase/client"
 import { useMessage } from "@/context/messageContext"
 
@@ -13,6 +13,7 @@ export const fetchBracket = async (tournamentID: number): Promise<{ bracket: Bra
         .eq("tournament_id", tournamentID);
 
     if (matchesError) {
+        console.error("matches error!");
         return { bracket: null, errorCode: 500 };
     }
 
@@ -27,6 +28,7 @@ export const fetchBracket = async (tournamentID: number): Promise<{ bracket: Bra
         .in("uuid", loggedInPlayerUUIDs);
 
     if (usersError) {
+        console.error("users error!");
         return { bracket: null, errorCode: 500 };
     }
 
@@ -41,7 +43,7 @@ export const fetchBracket = async (tournamentID: number): Promise<{ bracket: Bra
 
     matchesData.forEach(match => {
         const players = match.players.map((player: any) => {
-            const playerData: Player = {
+            const playerData: BracketPlayer = {
                 uuid: player.uuid,
                 name: player.name,
                 email: player.account_type === "logged_in" ? userEmailMap.get(player.uuid) || "" : "",
@@ -102,7 +104,7 @@ export const fetchBracket = async (tournamentID: number): Promise<{ bracket: Bra
         });
     });
 
-    console.log(bracket)
+    console.log("fetch bracket: ", bracket)
 
     return { bracket, errorCode: null };
 };

@@ -11,6 +11,7 @@ import { useParams } from 'next/navigation';
 import { useClient } from "@/context/clientContext";
 import { SpinningLoader } from "@/components/loading";
 import { Tournament } from "@/types/tournamentTypes";
+import { BracketPlayer, Matchup } from "@/types/bracketTypes";
 import { Player } from "@/types/playerTypes";
 import { TournamentModal } from "@/components/modals/tournamentEditModal";
 import { PlayerModal } from "@/components/modals/editPlayersModal";
@@ -180,6 +181,17 @@ export default function Initialization() {
 
             if (response.ok) {
                 triggerMessage(result.message, "green");
+                const { error } = await supabase
+                    .from('tournaments')
+                    .update({ status: "started" })
+                    .eq('id', id);
+
+                if (error) {
+                    triggerMessage("Error updating tournament: " + error.message, "red");
+                } else {
+                    setTournament({ ...tournament, status: "started" });
+                    setupBracket();
+                }
             } else {
                 triggerMessage(result.error, "red");
             }
@@ -187,6 +199,75 @@ export default function Initialization() {
             triggerMessage("An error occurred while starting the tournament", "red");
         }
     };
+
+    const setupBracket = async () => {
+        if (!tournament) return;
+
+        console.log(players);
+
+        const formattedPlayers: BracketPlayer[] = players.map(player => ({
+            uuid: player.member_uuid,
+            name: player.player_name || "Unknown",
+            email: player.email || "",
+            account_type: player.is_anonymous ? "anonymous" : "LOLS",
+            score: Number(player.skills?.score) || 0,
+        }));
+        console.log("setting up bracket now with players: ", formattedPlayers)
+
+    
+        function seedPlayers(playersToSeed: BracketPlayer[]) {
+            return [...playersToSeed].sort((a, b) => {
+                
+                return (b.score ?? 0) - (a.score ?? 0); // Sort players by score in descending order
+            });
+        }
+
+    
+        function generateMatchups(players: BracketPlayer[]) {
+            const seededPlayers = seedPlayers(players);
+            const matchups = [];
+            const totalPlayers = seededPlayers.length;
+    
+            for (let i = 0; i < totalPlayers; i += 2) {
+                let player1 = seededPlayers[i];
+                let player2 = seededPlayers[i + 1] || {
+                    uuid: "",
+                    name: "",
+                    account_type: "placeholder",
+                    placeholder_player: true,
+                };
+    
+                matchups.push({
+                    matchId: i / 2 + 1,
+                    players: [player1, player2],
+                    round: 1,
+                });
+            }
+    
+            return matchups;
+        }
+    
+        const saveMatchupsToDatabase = async (matchups: any[]) => {
+            const { data, error } = await supabase
+                .from("tournament_matches")
+                .insert(matchups.map(match => ({
+                    tournament_id: tournament.id,
+                    round: match.round,
+                    match: match.matchId,
+                    players: match.players,
+                })));
+    
+            if (error) {
+                console.error("Error saving matchups:", error);
+            } else {
+                console.log("Matchups saved successfully!", data);
+            }
+        }
+
+        const generatedMatchups = generateMatchups(formattedPlayers);
+        console.log("here are our generated matchups: ", generatedMatchups);
+        saveMatchupsToDatabase(generatedMatchups);
+    }
 
     const handleSelectPlayer = (playerId: string) => {
         const newSelectedPlayers = new Set(selectedPlayers);
@@ -363,7 +444,7 @@ export default function Initialization() {
                                                             onChange={() => handleSelectPlayer(player.id)}
                                                         />
                                                     </td>
-                                                    <td className={`p-3 ${player.anonymous ? "text-white" : "text-[#c8c8c8]"}`}>{player.player_name}</td>
+                                                    <td className={`p-3 ${player.is_anonymous ? "text-white" : "text-[#c8c8c8]"}`}>{player.player_name}</td>
                                                     {tournament?.skill_fields.map((skill, index) => (
                                                         <td key={index} className="p-3">{player.skills[skill] ? player.skills[skill] : "N/A"}</td>
                                                     ))}

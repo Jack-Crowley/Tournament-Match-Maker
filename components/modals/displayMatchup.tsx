@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faEnvelope, faTrash } from "@fortawesome/free-solid-svg-icons";
 import { Matchup } from "@/types/bracketTypes";
+import { createClient } from "@/utils/supabase/client";
+
 
 interface MatchupModalProps {
     isOpen: boolean;
@@ -15,6 +17,7 @@ export const MatchupModal = ({ isOpen, setOpen, matchup }: MatchupModalProps) =>
     const [editedMatchup, setEditedMatchup] = useState<Matchup>(matchup);
     const [winner, setWinner] = useState<string | null>(matchup.winner ? matchup.winner : null);
     const modalRef = useRef<HTMLDivElement>(null);
+    const supabase = createClient();
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -32,6 +35,29 @@ export const MatchupModal = ({ isOpen, setOpen, matchup }: MatchupModalProps) =>
         };
     }, [isOpen, setOpen]);
 
+    const updateMatchWinner = async () => {
+        if (!winner) {
+            console.log("No winner selected");
+            return;
+        }
+
+        console.log("Updating match winner:", winner);
+
+        const { error } = await supabase
+            .from("tournament_matches")
+            .update({ winner: String(winner) })
+            .eq("id", String(matchup.matchId));
+
+        if (error) {
+            console.error("Error updating match winner:", error);
+        } else {
+            setEditedMatchup((prev) => ({ ...prev, winner }));
+            setOpen(false);
+        }
+    };
+
+
+    console.log("are we open?", isOpen);
     if (!isOpen) return null;
 
     return (
@@ -95,7 +121,7 @@ export const MatchupModal = ({ isOpen, setOpen, matchup }: MatchupModalProps) =>
                     </button>
                     <button
                         className="bg-[#7458DA] text-white px-4 py-2 rounded-lg hover:bg-[#604BAC] transition-colors"
-                        onClick={() => {}}
+                        onClick={() => updateMatchWinner()}
                     >
                         Save Changes
                     </button>

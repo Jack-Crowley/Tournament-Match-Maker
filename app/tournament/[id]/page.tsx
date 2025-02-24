@@ -37,13 +37,6 @@ export default function Home() {
 
     return (
         <div className="relative">
-            <button
-                className="absolute top-4 right-4 px-6 py-3 text-lg font-semibold rounded-lg transition-all transform bg-background text-gray-400 hover:bg-highlight hover:text-white shadow-md z-50 pointer-events-auto"
-                onClick={() => console.log("hello")}
-            >
-                Generate Scores
-            </button>
-
             {hasJoinParam ? (
                 <Join />
             ) : (

@@ -44,6 +44,8 @@ export const ViewTournament = ({ tournamentID }: { tournamentID: number }) => {
         async function LoadBracket() {
             const { bracket, errorCode } = await fetchBracket(tournamentID);
             setBracket(bracket);
+            // *** Debugging ***
+            console.log("we fetched the bracket", bracket);
             setErrorCode(errorCode);
         }
 
@@ -57,10 +59,17 @@ export const ViewTournament = ({ tournamentID }: { tournamentID: number }) => {
     return (
         <div className="relative">
             <SideNavbar />
+            <button
+                className="absolute top-4 right-4 px-6 py-3 text-lg font-semibold rounded-lg transition-all transform bg-background text-gray-400 hover:bg-highlight hover:text-white shadow-md z-50 pointer-events-auto"
+                onClick={() => console.log("hello")}
+            >
+                Generate Scores (placeholder)
+            </button>
+
             {bracket ? (
                 <TournamentBracket bracket={bracket} />
             ) : (
-                <SpinningLoader/>
+                <SpinningLoader />
             )}
         </div>
     )

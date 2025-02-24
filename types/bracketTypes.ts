@@ -1,4 +1,4 @@
-export interface Player {
+export interface BracketPlayer {
     uuid: string;
     name: string;
     email: string;
@@ -9,7 +9,7 @@ export interface Player {
 export interface Matchup {
     matchId: number;
     winner?: string;
-    players: Player[];
+    players: BracketPlayer[];
     round:number;
 }
 

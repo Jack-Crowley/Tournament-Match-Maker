@@ -87,7 +87,7 @@ export const PlayerModal = ({ isOpen, onClose, playerForModal, tournament }: { p
                                 <label className="text-white block text-sm mb-2">Anonymous</label>
                                 <input
                                     type="text"
-                                    value={player.anonymous ? 'Yes' : 'No'}
+                                    value={player.is_anonymous ? 'Yes' : 'No'}
                                     readOnly
                                     className="w-full p-3 bg-[#2a2a2a] border-b-2 border-[#7458da] text-white focus:outline-none focus:border-[#604BAC] cursor-not-allowed"
                                 />
