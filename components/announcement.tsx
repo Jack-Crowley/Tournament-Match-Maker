@@ -6,6 +6,7 @@ import { createClient } from '@/utils/supabase/client';
 import { useMessage } from '@/context/messageContext';
 import { SpinningLoader } from './loading';
 import { useClient } from '@/context/clientContext';
+import { DeleteModal } from './modals/delete';
 
 interface Announcement {
     id?: string;
@@ -237,7 +238,7 @@ export const AnnouncementSystem = ({ tournamentID }: { tournamentID: number }) =
                                     <button
                                         onClick={(e) => {
                                             e.stopPropagation();
-                                            setDeleteConfirmation(announcement.id || null);
+                                            setDeleteConfirmation(announcement.id ?? null);
                                         }}
                                         className="text-red-500 hover:text-red-700 transition-colors"
                                     >
@@ -250,42 +251,7 @@ export const AnnouncementSystem = ({ tournamentID }: { tournamentID: number }) =
                 </div>
             </div>
 
-            <AnimatePresence>
-                {deleteConfirmation && (
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4"
-                        onClick={() => setDeleteConfirmation(null)}
-                    >
-                        <motion.div
-                            initial={{ scale: 0.8 }}
-                            animate={{ scale: 1 }}
-                            exit={{ scale: 0.8 }}
-                            className="bg-[#1E1E1E] p-6 rounded-lg border border-primary shadow-lg"
-                            onClick={(e) => e.stopPropagation()}
-                        >
-                            <h2 className="text-xl font-semibold mb-4 text-white">Delete Announcement</h2>
-                            <p className="text-white mb-6">Are you sure you want to delete this announcement?</p>
-                            <div className="flex justify-end gap-4">
-                                <button
-                                    onClick={() => setDeleteConfirmation(null)}
-                                    className="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    onClick={() => handleDeleteAnnouncement(deleteConfirmation)}
-                                    className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors"
-                                >
-                                    Delete
-                                </button>
-                            </div>
-                        </motion.div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
+            <DeleteModal word="Announcement" id={deleteConfirmation} setId={setDeleteConfirmation} handleDelete={handleDeleteAnnouncement}/>
         </div>
     );
 };
