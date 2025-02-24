@@ -7,6 +7,8 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTrophy, faList, faBullhorn, faEnvelope } from "@fortawesome/free-solid-svg-icons";
 import { fetchBracket } from "@/utils/bracket/bracket";
 import { SpinningLoader } from "../loading";
+import { AnimatePresence, motion } from "framer-motion";
+import { AnnouncementSystem } from "../announcement";
 
 const NAV_ITEMS = [
     { key: "Bracket", icon: faTrophy },
@@ -15,8 +17,7 @@ const NAV_ITEMS = [
     { key: "Messages", icon: faEnvelope },
 ];
 
-const SideNavbar = () => {
-    const [activeTab, setActiveTab] = useState("Bracket");
+const SideNavbar = ({ tab, setTab }: { tab: string, setTab: (state: string) => void }) => {
 
     return (
         <div className="fixed top-1/2 transform -translate-y-1/2 w-[8%] z-20 flex items-center justify-center">
@@ -24,11 +25,11 @@ const SideNavbar = () => {
                 {NAV_ITEMS.map(({ key, icon }) => (
                     <button
                         key={key}
-                        onClick={() => setActiveTab(key)}
-                        className={`relative group text-2xl w-12 h-12 flex justify-center items-center transition-all rounded-full ${activeTab === key ? "bg-primary text-white" : "text-soft hover:bg-highlight hover:text-white"}`}
+                        onClick={() => setTab(key)}
+                        className={`relative group text-2xl w-12 h-12 flex justify-center items-center transition-all rounded-full ${tab === key ? "bg-primary text-white" : "text-soft hover:bg-highlight hover:text-white"}`}
                     >
                         <FontAwesomeIcon icon={icon} />
-                        <span className="absolute left-full top-1/2 -translate-y-1/2 ml-3 px-3 py-1 bg-accent text-white text-sm rounded-full shadow opacity-0 group-hover:opacity-100 transition-opacity">{key}</span>
+                        <span className="absolute left-full top-1/2 -translate-y-1/2 ml-6 px-3 py-1 bg-accent text-white text-sm rounded-full shadow opacity-0 group-hover:opacity-100 transition-opacity">{key}</span>
                     </button>
                 ))}
             </nav>
@@ -39,6 +40,7 @@ const SideNavbar = () => {
 export const ViewTournament = ({ tournamentID }: { tournamentID: number }) => {
     const [bracket, setBracket] = useState<Bracket | null>(null)
     const [errorCode, setErrorCode] = useState<number | null>(null)
+    const [activeTab, setActiveTab] = useState("Bracket");
 
     useEffect(() => {
         async function LoadBracket() {
@@ -56,11 +58,28 @@ export const ViewTournament = ({ tournamentID }: { tournamentID: number }) => {
 
     return (
         <div className="relative">
-            <SideNavbar />
+            <SideNavbar tab={activeTab} setTab={setActiveTab} />
             {bracket ? (
-                <TournamentBracket bracket={bracket} />
+                <AnimatePresence mode="wait">
+                    <motion.div
+                        key={activeTab}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -20 }}
+                        transition={{ duration: 0.3 }}
+                        className="mt-8 px-4 sm:px-8 lg:px-16"
+                    >
+                        {activeTab === "Bracket" && (
+                            <TournamentBracket bracket={bracket} />
+                        )}
+
+                        {activeTab === "Announcements" && (
+                            <AnnouncementSystem tournamentID={tournamentID}/>
+                        )}
+                    </motion.div>
+                </AnimatePresence>
             ) : (
-                <SpinningLoader/>
+                <SpinningLoader />
             )}
         </div>
     )
