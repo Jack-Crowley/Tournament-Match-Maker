@@ -7,9 +7,9 @@ export interface BracketPlayer {
 }
 
 export interface Matchup {
+    id: number;
     tournament_id: number;
-    matchId: number;
-    matchNumber:number;
+    match_number:number;
     winner?: string;
     players: BracketPlayer[];
     round:number;
