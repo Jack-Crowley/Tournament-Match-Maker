@@ -9,7 +9,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 export const AddPlaceholderPlayersModal = ({ isOpen, setOpen, tournament }: { tournament: Tournament, isOpen: boolean, setOpen: (state: boolean) => void, }) => {
     const [prefix, setPrefix] = useState<string>("")
-    const [numberOfPlayers, setNumberOfPlayers] = useState<number>(0)
+    const [numberOfPlayers, setNumberOfPlayers] = useState<number | ''>('')
     const supabase = createClient()
     const { triggerMessage } = useMessage()
 
@@ -31,6 +31,8 @@ export const AddPlaceholderPlayersModal = ({ isOpen, setOpen, tournament }: { to
         }
 
         const existingPlayerNames = new Set(existingPlayers.map(player => player.player_name));
+
+        let playersAdded = 0
 
         for (let i = 1; i <= numberOfPlayers; i++) {
             let playerName = `${prefix}${i}`;
@@ -60,9 +62,10 @@ export const AddPlaceholderPlayersModal = ({ isOpen, setOpen, tournament }: { to
             if (error) {
                 triggerMessage(`Error adding player ${playerName}: ${error.message}`, "red");
             } else {
-                triggerMessage(`Successfully added player ${playerName}!`, "green");
+                playersAdded++;
             }
         }
+        triggerMessage(`Successfully added ${playersAdded} player${playersAdded>1 && "s"}!`, "green");
 
         setOpen(false);
     };
