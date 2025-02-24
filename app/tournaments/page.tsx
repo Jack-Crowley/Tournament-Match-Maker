@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPlusCircle } from '@fortawesome/free-solid-svg-icons';
+import { faPlusCircle, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { useState, useRef, useEffect } from 'react';
 import { useMessage } from '@/context/messageContext';
 import { useClient } from "@/context/clientContext";
@@ -11,6 +11,7 @@ import { createClient } from "@/utils/supabase/client";
 import { Tournament } from "@/types/tournamentTypes";
 import { SpinningLoader } from "@/components/loading";
 import { CreateTournament } from "@/components/modals/createTournament";
+import { DeleteModal } from "@/components/modals/delete";
 
 export default function Home() {
     const client = useClient();
@@ -197,11 +198,48 @@ export default function Home() {
         emptyMessage: string;
         onAction?: (tournamentId: string) => void;
         actionLabel: string;
+        setTournaments : (tournaments : Tournament[]) => void;
     }
 
-    const TournamentList = ({ tournaments, emptyMessage, onAction, actionLabel }: TournamentListProps) => {
+    const TournamentList = ({ tournaments, emptyMessage, setTournaments, onAction, actionLabel }: TournamentListProps) => {
+        const [deleteSelection, setDeleteSelection] = useState<string | null>(null)
+
+        const HandleDelete = async (id: string) => {
+            if (!id) return;
+
+            await supabase
+                .from("tournament_matches")
+                .delete()
+                .eq("tournament_id", id);
+
+            await supabase
+                .from("tournament_organizers")
+                .delete()
+                .eq("tournament_id", id);
+
+            await supabase
+                .from("tournament_players")
+                .delete()
+                .eq("tournament_id", id);
+
+            const {error} = await supabase
+                .from("tournaments")
+                .delete()
+                .eq("id", id);
+
+            if (error) {
+                triggerMessage("Unable to delete tournament", "red");
+            } else {
+                triggerMessage("Announcement deleted successfully", "green");
+                setTournaments(tournaments.filter(a => a.id !== id))
+                setDeleteSelection(null);
+            }
+        }
+
         return (
             <div className="space-y-6 pb-8">
+                <DeleteModal word="tournament" id={deleteSelection} setId={setDeleteSelection} handleDelete={HandleDelete} />
+
                 {tournaments.length > 0 ? (
                     tournaments.map((tournament) => (
                         <motion.div
@@ -209,28 +247,30 @@ export default function Home() {
                             whileHover={{ scale: 1.01 }}
                             className="p-6 shadow-[#382c3e] hover:cursor-pointer rounded-lg shadow-lg hover:shadow-3xl transition-all bg-gradient-to-r from-highlight to-accent"
                         >
-                            <Link href={`/tournament/${tournament.id}`}>
-                                <div className="flex justify-between items-center">
+                            <div className="flex justify-between items-center">
+                                <Link href={`/tournament/${tournament.id}`} className="flex-1">
                                     <div>
                                         <h2 className="text-xl font-bold text-white">{tournament.name}</h2>
                                         <p className="text-gray-200">{tournament.description}</p>
                                     </div>
-                                    {onAction ? (
+                                </Link>
+                                <div className="flex items-center space-x-4">
+                                    {onAction && (
                                         <button
                                             onClick={() => onAction(tournament.id)}
                                             className="px-4 py-2 bg-deep text-white rounded-lg hover:bg-highlight transition-colors transform"
                                         >
                                             {actionLabel}
                                         </button>
-                                    ) : (
-                                        <h1
-                                            className="px-4 py-2 bg-deep text-white rounded-lg hover:bg-highlight transition-colors transform"
-                                        >
-                                            {actionLabel}
-                                        </h1>
                                     )}
+                                    <button
+                                        onClick={() => setDeleteSelection(tournament.id)}
+                                        className="p-2 bg-[rgba(0,0,0,0)] transition-duration-200 text-white rounded-full hover:bg-[#e24d4d] transition-colors transform"
+                                    >
+                                        🗑️
+                                    </button>
                                 </div>
-                            </Link>
+                            </div>
                         </motion.div>
                     ))
                 ) : (
@@ -280,6 +320,7 @@ export default function Home() {
                                         tournaments={organizingTournaments}
                                         emptyMessage="You are not organizing any tournaments."
                                         actionLabel="Manage"
+                                        setTournaments={setOrganizingTournaments}
                                     />
                                 </div>
                             )}
@@ -291,6 +332,7 @@ export default function Home() {
                                         tournaments={playingTournaments}
                                         emptyMessage="You are not playing in any tournaments."
                                         actionLabel="View"
+                                        setTournaments={setPlayingTournaments}
                                     />
                                 </div>
                             )}
@@ -303,6 +345,7 @@ export default function Home() {
                                         emptyMessage="You currently have no invitations."
                                         onAction={handleAcceptInvitation}
                                         actionLabel="Accept"
+                                        setTournaments={setInvitations}
                                     />
                                 </div>
                             )}
