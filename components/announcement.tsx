@@ -19,7 +19,7 @@ export const AnnouncementSystem = ({ tournamentID }: { tournamentID: number }) =
     const [loading, setLoading] = useState<boolean>(true);
     const [announcements, setAnnouncements] = useState<Announcement[]>([]);
     const [newAnnouncement, setNewAnnouncement] = useState({ title: '', content: '' });
-    const [deleteConfirmation, setDeleteConfirmation] = useState<string | null>(null); 
+    const [deleteConfirmation, setDeleteConfirmation] = useState<string | null>(null);
 
     const supabase = createClient()
     const client = useClient()
@@ -76,16 +76,8 @@ export const AnnouncementSystem = ({ tournamentID }: { tournamentID: number }) =
             })
             .subscribe();
 
-        const seenSubscription = supabase
-            .channel('announcements_seen')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'announcements_seen' }, () => {
-                loadAnnouncements();
-            })
-            .subscribe();
-
         return () => {
             supabase.removeChannel(announcementsSubscription);
-            supabase.removeChannel(seenSubscription);
         };
     }, [tournamentID, client.session?.user.id, supabase, triggerMessage]);
 
@@ -110,19 +102,55 @@ export const AnnouncementSystem = ({ tournamentID }: { tournamentID: number }) =
 
     const toggleReadStatus = async (announcement_id?: string) => {
         const userID = client.session?.user.id;
-        if (!userID) return;
+        if (!userID || !announcement_id) return;
 
         const announcement = announcements.find(a => a.id === announcement_id);
         if (!announcement) return;
 
-        const newReadStatus = announcement.isRead == null || !announcement.isRead;
+        const newReadStatus = !announcement.isRead;
 
-        const { error } = await supabase
+        const { data: existingRecord, error: fetchError } = await supabase
             .from("announcements_seen")
-            .upsert([{ member_uuid: userID, announcement_id, seen: newReadStatus }]);
+            .select("*")
+            .eq("member_uuid", userID)
+            .eq("announcement_id", announcement_id)
+            .single();
+
+        if (fetchError && !fetchError.details.includes("0 rows")) {
+            console.error("Error fetching existing record:", fetchError);
+            return;
+        }
+
+        let error;
+        if (existingRecord) {
+            const { error: updateError } = await supabase
+                .from("announcements_seen")
+                .update({ seen: newReadStatus })
+                .eq("member_uuid", userID)
+                .eq("announcement_id", announcement_id);
+
+            error = updateError;
+        } else {
+            const { error: insertError } = await supabase
+                .from("announcements_seen")
+                .insert([{ member_uuid: userID, announcement_id, seen: newReadStatus }]);
+
+            error = insertError;
+        }
 
         if (error) {
             console.error("Error updating read status:", error);
+        } else {
+            setAnnouncements(prevAnnouncements =>
+                prevAnnouncements.map(a =>
+                    a.id === announcement_id ? { ...a, isRead: newReadStatus } : a
+                ).toSorted((a, b) => {
+                    if (a.isRead === b.isRead) {
+                        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+                    }
+                    return a.isRead ? 1 : -1;
+                })
+            );
         }
     };
 
@@ -134,7 +162,7 @@ export const AnnouncementSystem = ({ tournamentID }: { tournamentID: number }) =
             .delete()
             .eq("announcement_id", announcement_id);
 
-        const { error:error2 } = await supabase
+        const { error: error2 } = await supabase
             .from("announcements")
             .delete()
             .eq("id", announcement_id);
@@ -187,9 +215,15 @@ export const AnnouncementSystem = ({ tournamentID }: { tournamentID: number }) =
                             <motion.div
                                 key={announcement.id}
                                 initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
+                                animate={{
+                                    opacity: 1,
+                                    y: 0,
+                                    backgroundColor: announcement.isRead ? '#31216b' : '#4F33B3',
+                                }}
                                 exit={{ opacity: 0, y: -20 }}
-                                className={`p-6 rounded-lg cursor-pointer ${!announcement.isRead ? 'bg-accent' : 'bg-deep'}`}
+                                whileHover={{ scale: 1.02 }}
+                                transition={{ duration: 0.2 }}
+                                className="p-6 rounded-lg cursor-pointer"
                                 onClick={() => toggleReadStatus(announcement.id)}
                             >
                                 <div className="flex justify-between items-start">
