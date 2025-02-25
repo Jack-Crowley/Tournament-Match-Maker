@@ -7,7 +7,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useMessage } from '@/context/messageContext';
 import { createClient } from "@/utils/supabase/client";
 import QRCode from "react-qr-code";
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { useClient } from "@/context/clientContext";
 import { SpinningLoader } from "@/components/loading";
 import { Tournament } from "@/types/tournamentTypes";
@@ -17,26 +17,35 @@ import { TournamentModal } from "@/components/modals/tournamentEditModal";
 import { PlayerModal } from "@/components/modals/editPlayersModal";
 import { AddPlaceholderPlayersModal } from "@/components/modals/addGeneratedPlayers";
 import { Checkbox } from "@/components/checkbox";
+import { PlayersTable } from "@/components/playersTable";
+import { ConfirmModal, ConfirmModalInformation } from "@/components/modals/confirmationModal";
 
-export default function Initialization() {
+export default function Initialization({refreshTournament}:{refreshTournament : () => void}) {
     const supabase = createClient();
     const client = useClient();
     const [tournament, setTournament] = useState<Tournament | null>(null);
     const [director, setDirector] = useState<boolean>(false);
     const [loading, setLoading] = useState<boolean>(true);
     const [joinLink, setJoinLink] = useState<null | string>(null);
-    const [players, setPlayers] = useState<Player[]>([]);
+
+    const [confirmModalInfo, setConfirmModalInfo] = useState<ConfirmModalInformation | null>(null)
+
+    const [activePlayers, setActivePlayers] = useState<Player[]>([]);
+    const [waitlistedPlayers, setWaitlistedPlayers] = useState<Player[]>([]);
+
+    const [selectedActivePlayers, setSelectedActivePlayers] = useState<Set<string>>(new Set());
+    const [selectedWaitlistedPlayers, setSelectedWaitlistedPlayers] = useState<Set<string>>(new Set());
+
     const [isTournamentEditModalOpen, setIsTournamentEditModalOpen] = useState<boolean>(false);
-    const [contextMenu, setContextMenu] = useState<any>(null);
     const modalRef = useRef<HTMLDivElement>(null);
-    const [selectedPlayers, setSelectedPlayers] = useState<Set<string>>(new Set());
     const [isPlaceholderPlayersModalOpen, setIsPlaceholderPlayersModalOpen] = useState<boolean>(false);
     const [playerForModal, setPlayerForModal] = useState<null | Player>();
     const [isPlayerModalOpen, setPlayerModalOpen] = useState<boolean>(false);
     const { triggerMessage } = useMessage();
     const params = useParams();
     const id = params.id;
-
+    const router = useRouter();
+    
     useEffect(() => {
         const fetchData = async () => {
             const { data, error } = await supabase
@@ -49,7 +58,7 @@ export default function Initialization() {
                 triggerMessage("Error fetching tournament data: " + error.message, "red");
             } else {
                 setTournament(data);
-                setJoinLink(window.location.href + "?join=" + data.join_code);
+                setJoinLink(window.location.origin + "/tournament/join/" + data.join_code);
             }
 
             const { data: data1, error: error1 } = await supabase
@@ -60,7 +69,8 @@ export default function Initialization() {
             if (error1) {
                 triggerMessage("Error fetching players data: " + error1.message, "red");
             } else {
-                setPlayers(data1);
+                setActivePlayers(data1.filter(player => player.type == "active"));
+                setWaitlistedPlayers(data1.filter(player => player.type == "waitlist"));
             }
 
             const uuid = client.session?.user.id;
@@ -73,7 +83,7 @@ export default function Initialization() {
         };
 
         fetchData();
-    }, [id, supabase, triggerMessage, client]);
+    }, [id, supabase, client]);
 
     const handleAllowJoinToggle = async () => {
         if (!tournament) return;
@@ -96,44 +106,6 @@ export default function Initialization() {
         navigator.clipboard.writeText(joinLink);
         triggerMessage("URL copied to clipboard!", "green");
     };
-
-    const handleRightClick = (event: any, player: any) => {
-        event.preventDefault();
-
-        const navbar = document.getElementById("navbar"); // Assuming your navbar has this ID
-        const navbarHeight = navbar ? navbar.offsetHeight : 0;
-        console.log(navbarHeight)
-
-        setContextMenu({
-            x: event.pageX,
-            y: event.pageY - navbarHeight * 1.5,
-            player,
-        });
-
-        setPlayerForModal(player);
-    };
-
-    const handleDeletePlayers = async () => {
-        if (!playerForModal) {
-            triggerMessage("Player is not loaded", "red");
-            return;
-        }
-
-        const { error } = await supabase
-            .from('tournament_players')
-            .delete()
-            .eq('id', playerForModal.id);
-
-        if (error) {
-            triggerMessage("Error deleting player", "red");
-        } else {
-            triggerMessage("Player deleted successfully", "green");
-        }
-
-        setContextMenu(null);
-    };
-
-    const handleCloseMenu = () => setContextMenu(null);
 
     const Button = ({ onClick, children }: { onClick: () => void; children: React.ReactNode }) => (
         <button
@@ -168,6 +140,24 @@ export default function Initialization() {
     const handleStartTournament = async () => {
         if (!tournament) return;
 
+        if (tournament.max_players && activePlayers.length > tournament.max_players) {
+            const waitlistSwitchConfirm: ConfirmModalInformation = {
+                title: "Are you sure you want to do this?",
+                content: `You have exceeded the maximum players defined by the tournament rules, are you sure you want to continue?`,
+                onCancel: () => { setConfirmModalInfo(null) },
+                onSuccess: StartTournamentAfterModal
+            }
+
+            setConfirmModalInfo(waitlistSwitchConfirm)
+            return;
+        }
+
+        StartTournamentAfterModal()
+    };
+
+    async function StartTournamentAfterModal() {
+        if (!tournament) return;
+        
         try {
             const response = await fetch('/api/tournament/start', {
                 method: 'POST',
@@ -198,38 +188,39 @@ export default function Initialization() {
         } catch {
             triggerMessage("An error occurred while starting the tournament", "red");
         }
-    };
+
+        setConfirmModalInfo(null)
+    }
 
     const setupBracket = async () => {
         if (!tournament) return;
 
-        console.log("setting up bracket!!!", players);
+        console.log("setting up bracket!!!", activePlayers);
 
-        const formattedPlayers: BracketPlayer[] = players.map(player => ({
+        const formattedPlayers: BracketPlayer[] = activePlayers.map(player => ({
             uuid: player.member_uuid,
             name: player.player_name || "Unknown",
             email: player.email || "",
-            // ! YYOOOOOO WHAT ?
             account_type: player.is_anonymous ? "anonymous" : "logged_in",
             score: Number(player.skills?.score) || 0,
         }));
         console.log("setting up bracket now with players: ", formattedPlayers)
 
-   
+
         function seedPlayers(playersToSeed: BracketPlayer[]) {
             return [...playersToSeed].sort((a, b) => {
-                
+
                 return (b.score ?? 0) - (a.score ?? 0); // Sort players by score in descending order
             });
         }
 
-    
+
         function generateMatchups(players: BracketPlayer[]) {
             if (!tournament) return [];
             const seededPlayers = seedPlayers(players);
             const matchups: Matchup[] = [];
             const totalPlayers = seededPlayers.length;
-    
+
             for (let i = 0; i < totalPlayers; i += 2) {
                 const player1 = seededPlayers[i];
                 const player2 = seededPlayers[i + 1] || {
@@ -238,7 +229,7 @@ export default function Initialization() {
                     account_type: "placeholder",
                     placeholder_player: true,
                 };
-    
+
                 matchups.push({
                     match_number: i / 2 + 1,
                     players: [player1, player2],
@@ -247,10 +238,10 @@ export default function Initialization() {
                     id: -1,
                 });
             }
-    
+
             return matchups;
         }
-    
+
         const saveMatchupsToDatabase = async (matchups: any[]) => {
             const { data, error } = await supabase
                 .from("tournament_matches")
@@ -260,11 +251,12 @@ export default function Initialization() {
                     match_number: match.match_number,
                     players: match.players,
                 })));
-    
+
             if (error) {
                 console.error("Error saving matchups in saveMatchupstoDB:", error);
             } else {
                 console.log("Matchups saved successfully!", data);
+                refreshTournament()
             }
         }
 
@@ -273,42 +265,13 @@ export default function Initialization() {
         saveMatchupsToDatabase(generatedMatchups);
     }
 
-    const handleSelectPlayer = (playerId: string) => {
-        const newSelectedPlayers = new Set(selectedPlayers);
-        if (newSelectedPlayers.has(playerId)) {
-            newSelectedPlayers.delete(playerId);
-        } else {
-            newSelectedPlayers.add(playerId);
-        }
-        setSelectedPlayers(newSelectedPlayers);
-    };
-
-    const handleBulkDelete = async () => {
-        if (selectedPlayers.size === 0) {
-            triggerMessage("No players selected", "red");
-            return;
-        }
-
-        const { error } = await supabase
-            .from('tournament_players')
-            .delete()
-            .in('id', Array.from(selectedPlayers));
-
-        if (error) {
-            triggerMessage("Error deleting players", "red");
-        } else {
-            triggerMessage("Players deleted successfully", "green");
-            setPlayers(players.filter(player => !selectedPlayers.has(player.id)));
-            setSelectedPlayers(new Set());
-        }
-    };
-
     return (
         <div className="relative min-h-screen mt-10 mx-8 p-6 text-white" style={{ backgroundColor: "#160A3A" }}>
             {loading ? (
                 <SpinningLoader />
             ) : (
                 <div>
+                    <ConfirmModal information={confirmModalInfo} />
                     {tournament && (
                         <div>
                             {/* Tournament Header with Gear Icon */}
@@ -411,96 +374,8 @@ export default function Initialization() {
                                 </div>
                             )}
 
-                            {/* Registered Players Section */}
-                            {players.length > 0 && (
-                                <div className="mb-6 mt-16" onClick={handleCloseMenu}>
-                                    <h2 className="text-[#7458da] font-bold text-2xl mb-4 text-center">Registered Players</h2>
-
-                                    <table className="w-full max-w-4xl mx-auto bg-deep rounded-lg shadow-lg">
-                                        <thead className="bg-[#7458da]">
-                                            <tr>
-                                                <th className="p-3 text-left text-white">
-                                                    <Checkbox deep={true} checked={selectedPlayers.size === players.length} onChange={() => {
-                                                        if (selectedPlayers.size != players.length) {
-                                                            setSelectedPlayers(new Set(players.map(player => player.id)));
-                                                        } else {
-                                                            setSelectedPlayers(new Set());
-                                                        }
-                                                    }} />
-                                                </th>
-
-                                                <th className="p-3 text-left text-white">Name</th>
-                                                {tournament?.skill_fields.map((skill, index) => (
-                                                    <th key={index} className="p-3 text-left text-white">{skill}</th>
-                                                ))}
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {players.map((player) => (
-                                                <tr
-                                                    key={player.id}
-                                                    className={`hover:bg-secondary ${playerForModal && playerForModal.id == player.id ? "bg-[#604BAC]" : ""} transition-colors duration-50 cursor-pointer`}
-                                                    onContextMenu={(e) => handleRightClick(e, player)}
-                                                >
-                                                    <td className="p-3">
-                                                        <Checkbox
-                                                            checked={selectedPlayers.has(player.id)}
-                                                            onChange={() => handleSelectPlayer(player.id)}
-                                                        />
-                                                    </td>
-                                                    <td className={`p-3 ${player.is_anonymous ? "text-white" : "text-[#c8c8c8]"}`}>{player.player_name}</td>
-                                                    {tournament?.skill_fields.map((skill, index) => (
-                                                        <td key={index} className="p-3">{player.skills[skill] ? player.skills[skill] : "N/A"}</td>
-                                                    ))}
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                    {selectedPlayers.size > 0 && (
-                                        <div className="m-4 flex w-full mt-4 justify-center">
-                                            <button
-                                                className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors"
-                                                onClick={handleBulkDelete}
-                                            >
-                                                Delete Selected
-                                            </button>
-                                        </div>
-                                    )}
-
-                                    {contextMenu && (
-                                        <motion.ul
-                                            className="absolute block bg-[#2b1668] text-white shadow-lg rounded-lg w-40"
-                                            style={{ top: `${contextMenu.y}px`, left: `${contextMenu.x}px` }}
-                                            initial={{ opacity: 0, scale: 0.9 }}
-                                            animate={{ opacity: 1, scale: 1 }}
-                                            exit={{ opacity: 0, scale: 0.9 }}
-                                        >
-                                            <li
-                                                className="flex items-center gap-2 p-3 hover:bg-[#604BAC] cursor-pointer"
-                                                onClick={() => {
-                                                    setPlayerModalOpen(true);
-                                                    setPlayerForModal(contextMenu.player);
-                                                    handleCloseMenu();
-                                                }}
-                                            >
-                                                <FontAwesomeIcon icon={faEye} /> View Information
-                                            </li>
-                                            <li
-                                                className="flex items-center gap-2 p-3 hover:bg-[#604BAC] cursor-pointer text-red-500"
-                                                onClick={() => {
-                                                    handleDeletePlayers();
-                                                }}
-                                            >
-                                                <FontAwesomeIcon icon={faTrash} /> Delete
-                                            </li>
-                                        </motion.ul>
-                                    )}
-                                </div>
-                            )}
-
-                            {players.length == 0 && (
-                                <h2 className="text-[#604BAC] font-bold text-2xl mb-4 mt-12 text-center">No Registered Players</h2>
-                            )}
+                            <PlayersTable players={activePlayers} otherPlayers={waitlistedPlayers} setPlayers={setActivePlayers} setOtherPlayers={setWaitlistedPlayers} type="active" tournament={tournament} />
+                            <PlayersTable players={waitlistedPlayers} otherPlayers={activePlayers} setPlayers={setWaitlistedPlayers} setOtherPlayers={setActivePlayers} type="waitlist" tournament={tournament} />
 
                             {director && (
                                 <div className="flex justify-center mt-8 space-x-4">
@@ -526,14 +401,6 @@ export default function Initialization() {
                                 setTournament={setTournament}
                             />
                             <AddPlaceholderPlayersModal isOpen={isPlaceholderPlayersModalOpen} setOpen={setIsPlaceholderPlayersModalOpen} tournament={tournament} />
-                            {playerForModal && (
-                                <PlayerModal
-                                    isOpen={isPlayerModalOpen}
-                                    onClose={() => setPlayerModalOpen(false)}
-                                    playerForModal={playerForModal}
-                                    tournament={tournament}
-                                />
-                            )}
                         </div>
                     )}
                 </div>

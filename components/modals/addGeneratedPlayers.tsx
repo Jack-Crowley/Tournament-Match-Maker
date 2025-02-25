@@ -13,6 +13,14 @@ export const AddPlaceholderPlayersModal = ({ isOpen, setOpen, tournament }: { to
     const supabase = createClient()
     const { triggerMessage } = useMessage()
 
+    const calculatePlayerType = (playersAmount : number) => {
+        if (tournament.max_players) {
+            return playersAmount < tournament.max_players ? "active" : "waitlist"
+        }
+
+        return "active"
+    }
+
     const handleSave = async () => {
         if (!prefix || !numberOfPlayers) {
             triggerMessage("Prefix and number of players are required", "red");
@@ -29,6 +37,8 @@ export const AddPlaceholderPlayersModal = ({ isOpen, setOpen, tournament }: { to
             setOpen(false);
             return;
         }
+
+        let playersAmount = existingPlayers.length
 
         const existingPlayerNames = new Set(existingPlayers.map(player => player.player_name));
 
@@ -52,6 +62,7 @@ export const AddPlaceholderPlayersModal = ({ isOpen, setOpen, tournament }: { to
                 skills: {},
                 is_anonymous: true,
                 placeholder_player:true,
+                type:calculatePlayerType(playersAmount)
             };
 
             const { error } = await supabase
@@ -63,6 +74,7 @@ export const AddPlaceholderPlayersModal = ({ isOpen, setOpen, tournament }: { to
                 triggerMessage(`Error adding player ${playerName}: ${error.message}`, "red");
             } else {
                 playersAdded++;
+                playersAmount++;
             }
         }
         triggerMessage(`Successfully added ${playersAdded} player${playersAdded>1 && "s"}!`, "green");

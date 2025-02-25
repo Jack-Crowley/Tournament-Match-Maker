@@ -39,7 +39,7 @@ export const PlayerModal = ({ isOpen, onClose, playerForModal, tournament }: { p
         };
 
         checkAndSetPlayer();
-    }, [playerForModal, supabase, triggerMessage]);
+    }, [playerForModal, supabase]);
 
 
     return (

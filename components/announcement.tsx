@@ -80,7 +80,7 @@ export const AnnouncementSystem = ({ tournamentID }: { tournamentID: number }) =
         return () => {
             supabase.removeChannel(announcementsSubscription);
         };
-    }, [tournamentID, client.session?.user.id, supabase, triggerMessage]);
+    }, [tournamentID, client.session?.user.id, supabase]);
 
     const addAnnouncement = async () => {
         if (!newAnnouncement.title || !newAnnouncement.content) return;

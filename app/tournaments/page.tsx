@@ -147,7 +147,7 @@ export default function Home() {
         }
 
         loadTournamentData();
-    }, [client, supabase, triggerMessage]);
+    }, [client, supabase]);
 
     const handleClickOutside = (event: MouseEvent) => {
         if (modalRef.current && !modalRef.current.contains(event.target as Node)) {
@@ -323,43 +323,44 @@ export default function Home() {
 
                 <div className="flex justify-between w-full">
                     <h1 className="text-highlight font-bold text-2xl mb-6">{title}</h1>
-                    {deleteView ? (
-                        <div className="space-x-4 transition-all duration-300 ease-in-out">
-                            <button
-                                onClick={() => { setDeleteView(false); setDeleteIndexes([]) }}
-                                className="px-4 py-2 border-2 border-[#767676] bg-[#767676] text-white rounded-lg transition-all duration-300 ease-in-out hover:bg-[#5a5a5a] hover:border-[#5a5a5a] transform"
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                onClick={() => { if (deleteIndexes.length > 0) setDeleteManyModal(true) }}
-                                className={`px-4 py-2 border-2 transition-all duration-300 ease-in-out rounded-lg text-white transform ${deleteIndexes.length > 0
-                                    ? "bg-[#c02a2a] border-[#c02a2a] hover:bg-[#a32424] hover:border-[#a32424]"
-                                    : "border-[#c02a2a8b] bg-[#4512127b] cursor-not-allowed"
-                                    }`}
-                            >
-                                Delete Tournaments
-                            </button>
-                        </div>
-                    ) : (
-                        <div className="space-x-4 transition-all duration-300 ease-in-out">
-                            <button
-                                onClick={() => { setDeleteView(true) }}
-                                className="px-4 py-2 bg-soft border-2 border-soft text-white rounded-lg transition-all duration-300 ease-in-out hover:bg-primary hover:border-primary transform"
-                            >
-                                Select
-                            </button>
-                            <button
-                                onClick={() => { setDeleteIndexes(tournaments.map(tournament => tournament.id)); setDeleteView(true) }}
-                                className="px-4 py-2 bg-soft border-2 border-soft text-white rounded-lg transition-all duration-300 ease-in-out hover:bg-primary hover:border-primary transform"
-                            >
-                                Select All
-                            </button>
+                    {title == "Organizing Tournaments" && (
+                        <div>
+                            {deleteView ? (
+                                <div className="space-x-4 transition-all duration-300 ease-in-out">
+                                    <button
+                                        onClick={() => { setDeleteView(false); setDeleteIndexes([]) }}
+                                        className="px-4 py-2 border-2 border-[#767676] bg-[#767676] text-white rounded-lg transition-all duration-300 ease-in-out hover:bg-[#5a5a5a] hover:border-[#5a5a5a] transform"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        onClick={() => { if (deleteIndexes.length > 0) setDeleteManyModal(true) }}
+                                        className={`px-4 py-2 border-2 transition-all duration-300 ease-in-out rounded-lg text-white transform ${deleteIndexes.length > 0
+                                            ? "bg-[#c02a2a] border-[#c02a2a] hover:bg-[#a32424] hover:border-[#a32424]"
+                                            : "border-[#c02a2a8b] bg-[#4512127b] cursor-not-allowed"
+                                            }`}
+                                    >
+                                        Delete Tournaments
+                                    </button>
+                                </div>
+                            ) : (
+                                <div className="space-x-4 transition-all duration-300 ease-in-out">
+                                    <button
+                                        onClick={() => { setDeleteView(true) }}
+                                        className="px-4 py-2 bg-soft border-2 border-soft text-white rounded-lg transition-all duration-300 ease-in-out hover:bg-primary hover:border-primary transform"
+                                    >
+                                        Select
+                                    </button>
+                                    <button
+                                        onClick={() => { setDeleteIndexes(tournaments.map(tournament => tournament.id)); setDeleteView(true) }}
+                                        className="px-4 py-2 bg-soft border-2 border-soft text-white rounded-lg transition-all duration-300 ease-in-out hover:bg-primary hover:border-primary transform"
+                                    >
+                                        Select All
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     )}
-
-
-
                 </div>
 
                 {tournaments.length > 0 ? (
@@ -392,7 +393,7 @@ export default function Home() {
                                             onClick={() => setDeleteSelection(tournament.id)}
                                             className="p-2 bg-[rgba(0,0,0,0)] transition-duration-200 text-white rounded-full hover:bg-[#e24d4d] transition-colors transform"
                                         >
-                                            🗑️
+                                            {title == "Organizing Tournaments" && "🗑️"} 
                                         </button>
                                     )}
 
@@ -443,7 +444,7 @@ export default function Home() {
                             {activeTab === "organizing" && (
                                 <div>
                                     <TournamentList
-                                        title="Organzing Tournaments"
+                                        title="Organizing Tournaments"
                                         tournaments={organizingTournaments}
                                         emptyMessage="You are not organizing any tournaments."
                                         actionLabel="Manage"

@@ -7,6 +7,7 @@ import { useMessage } from '@/context/messageContext';
 import { useRouter } from 'next/navigation';
 import { useClient } from '@/context/clientContext';
 import { SpinningLoader } from '@/components/loading';
+import { Tournament } from '@/types/tournamentTypes';
 
 interface SkillField {
     name: string;
@@ -15,35 +16,47 @@ interface SkillField {
 
 export default function JoinTournament() {
     const client = useClient()
+    const [tournament, setTournament] = useState<Tournament | null>(null)
     const [name, setName] = useState<string>('');
     const [skillFields, setSkillFields] = useState<SkillField[]>([]);
     const [anonymous, setAnonymous] = useState<boolean>(false);
     const [loading, setLoading] = useState<boolean>(true);
     const [joining, setJoining] = useState<boolean>(false);
+    const [maxNumber, setMaxNumber] = useState<number | null>(null);
     const supabase = createClient();
     const { triggerMessage } = useMessage();
     const router = useRouter();
 
     const params = useParams();
-    const tournamentId = params.id as string;
+    const joinCode = params.joinCode as string;
 
     useEffect(() => {
         const fetchData = async () => {
             const { data, error } = await supabase
                 .from('tournaments')
-                .select('skill_fields')
-                .eq('id', tournamentId)
+                .select('*')
+                .eq('join_code', joinCode)
                 .single();
 
             if (error) {
                 triggerMessage("Error fetching tournament data: " + error.message, "red");
-            } else if (data && data.skill_fields) {
+                return;
+            } 
+            setTournament(data)
+
+            if (data && data.skill_fields) {
                 const initialSkillFields = data.skill_fields.map((skill: string) => ({
                     name: skill,
                     value: ''
                 }));
                 setSkillFields(initialSkillFields);
             }
+
+            if (data && data.max_players) {
+                setMaxNumber(data.max_players)
+            }
+
+            console.log(client.session?.user.id)
 
             if (client.session?.user.is_anonymous) {
                 setAnonymous(true)
@@ -65,12 +78,12 @@ export default function JoinTournament() {
         };
 
 
-        if (tournamentId == null || client == null || client.session == null) {
+        if (client == null || client.session == null) {
             return;
         }
 
         fetchData();
-    }, [tournamentId, client, supabase, triggerMessage]);
+    }, [client, supabase]);
 
     const handleSkillChange = (index: number, value: string) => {
         const updatedSkillFields = [...skillFields];
@@ -79,6 +92,11 @@ export default function JoinTournament() {
     };
 
     const handleSubmit = async (e: FormEvent) => {
+        if (!tournament) {
+            triggerMessage("Tournament not loaded", "red")
+            return
+        }
+
         e.preventDefault();
         setJoining(true);
 
@@ -89,18 +107,45 @@ export default function JoinTournament() {
 
         const id = client.session?.user.id
 
-        // const {data:previousTournaments, error:tournamentPlayersError} = await supabase
-        //     .from('tournament_players')
-        //     .select('*')
-        //     .eq("tournament_id", tournamentId)
-        //     .eq("member_uuid", id)
+        const {data:previousTournaments, error:tournamentPlayersError} = await supabase
+            .from('tournament_players')
+            .select('*')
+            .eq("tournament_id", tournament.id)
+            .eq("member_uuid", id)
+        
+        if (previousTournaments && previousTournaments.length > 0) {
+            triggerMessage("You are already registered for this tournament", "green")
+            router.push(`/tournament/${tournament.id}`);
+            return;
+        }
+
+        const {data:allTournamentPlayers, error:allTournamentPlayersError} = await supabase
+            .from('tournament_players')
+            .select('*')
+            .eq("tournament_id", tournament.id)
+            .eq("type", "active")
+
+        if (allTournamentPlayersError) {
+            triggerMessage("Error loading tournament roster", "red")
+            setLoading(false)
+            return;
+        }
+
+        let type = "active"
+
+        if (allTournamentPlayers && maxNumber) {
+            if (allTournamentPlayers.length > maxNumber) {
+                type = "waitlist"
+            }
+        }
 
         const update : any = {
-            tournament_id: tournamentId,
+            tournament_id: tournament.id,
             member_uuid: id,
             player_name: name,
             skills: skills,
             is_anonymous: anonymous,
+            type:"waitlist"
         }
 
         const { error } = await supabase
@@ -114,7 +159,7 @@ export default function JoinTournament() {
             triggerMessage("Error joining tournament: " + error.message, "red");
         } else {
             triggerMessage("Successfully joined the tournament!", "green");
-            router.push(`/tournament/${tournamentId}`);
+            router.push(`/tournament/${tournament.id}`);
         }
 
         setJoining(false);
