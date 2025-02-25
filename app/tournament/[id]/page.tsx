@@ -30,6 +30,7 @@ export default function Home() {
         }
 
         loadTournament()
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [supabase, id])
 
     async function refreshTournament() {

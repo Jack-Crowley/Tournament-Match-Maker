@@ -39,6 +39,7 @@ export const PlayerModal = ({ isOpen, onClose, playerForModal, tournament }: { p
         };
 
         checkAndSetPlayer();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [playerForModal, supabase]);
 
 

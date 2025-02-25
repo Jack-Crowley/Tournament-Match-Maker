@@ -147,6 +147,7 @@ export default function Home() {
         }
 
         loadTournamentData();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [client, supabase]);
 
     const handleClickOutside = (event: MouseEvent) => {

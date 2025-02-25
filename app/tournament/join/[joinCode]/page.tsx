@@ -83,7 +83,8 @@ export default function JoinTournament() {
         }
 
         fetchData();
-    }, [client, supabase]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [client, supabase, joinCode]);
 
     const handleSkillChange = (index: number, value: string) => {
         const updatedSkillFields = [...skillFields];
@@ -107,7 +108,7 @@ export default function JoinTournament() {
 
         const id = client.session?.user.id
 
-        const {data:previousTournaments, error:tournamentPlayersError} = await supabase
+        const {data:previousTournaments} = await supabase
             .from('tournament_players')
             .select('*')
             .eq("tournament_id", tournament.id)
@@ -145,7 +146,7 @@ export default function JoinTournament() {
             player_name: name,
             skills: skills,
             is_anonymous: anonymous,
-            type:"waitlist"
+            type
         }
 
         const { error } = await supabase

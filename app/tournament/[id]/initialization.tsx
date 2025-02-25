@@ -2,21 +2,19 @@
 
 import { motion } from "framer-motion";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCopy, faEye, faTrash, faGear } from '@fortawesome/free-solid-svg-icons';
+import { faCopy, faGear } from '@fortawesome/free-solid-svg-icons';
 import { useState, useRef, useEffect } from 'react';
 import { useMessage } from '@/context/messageContext';
 import { createClient } from "@/utils/supabase/client";
 import QRCode from "react-qr-code";
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import { useClient } from "@/context/clientContext";
 import { SpinningLoader } from "@/components/loading";
 import { Tournament } from "@/types/tournamentTypes";
 import { BracketPlayer, Matchup } from "@/types/bracketTypes";
 import { Player } from "@/types/playerTypes";
 import { TournamentModal } from "@/components/modals/tournamentEditModal";
-import { PlayerModal } from "@/components/modals/editPlayersModal";
 import { AddPlaceholderPlayersModal } from "@/components/modals/addGeneratedPlayers";
-import { Checkbox } from "@/components/checkbox";
 import { PlayersTable } from "@/components/playersTable";
 import { ConfirmModal, ConfirmModalInformation } from "@/components/modals/confirmationModal";
 
@@ -33,18 +31,13 @@ export default function Initialization({refreshTournament}:{refreshTournament : 
     const [activePlayers, setActivePlayers] = useState<Player[]>([]);
     const [waitlistedPlayers, setWaitlistedPlayers] = useState<Player[]>([]);
 
-    const [selectedActivePlayers, setSelectedActivePlayers] = useState<Set<string>>(new Set());
-    const [selectedWaitlistedPlayers, setSelectedWaitlistedPlayers] = useState<Set<string>>(new Set());
-
     const [isTournamentEditModalOpen, setIsTournamentEditModalOpen] = useState<boolean>(false);
     const modalRef = useRef<HTMLDivElement>(null);
     const [isPlaceholderPlayersModalOpen, setIsPlaceholderPlayersModalOpen] = useState<boolean>(false);
-    const [playerForModal, setPlayerForModal] = useState<null | Player>();
     const [isPlayerModalOpen, setPlayerModalOpen] = useState<boolean>(false);
     const { triggerMessage } = useMessage();
     const params = useParams();
     const id = params.id;
-    const router = useRouter();
     
     useEffect(() => {
         const fetchData = async () => {
@@ -83,6 +76,7 @@ export default function Initialization({refreshTournament}:{refreshTournament : 
         };
 
         fetchData();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [id, supabase, client]);
 
     const handleAllowJoinToggle = async () => {

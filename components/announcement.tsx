@@ -80,6 +80,7 @@ export const AnnouncementSystem = ({ tournamentID }: { tournamentID: number }) =
         return () => {
             supabase.removeChannel(announcementsSubscription);
         };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [tournamentID, client.session?.user.id, supabase]);
 
     const addAnnouncement = async () => {
