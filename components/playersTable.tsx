@@ -112,15 +112,15 @@ export const PlayersTable = ({ players, setPlayers, otherPlayers, setOtherPlayer
             <ConfirmModal information={confirmModalInfo} />
 
             {players.length > 0 && (
-                <div className={`mb-6 ${type == "active" ? "mt-16" : "mt-24"} max-w-4xl mx-auto`}>
+                <div className={`mb-6 ${type == "active" ? "" : "mt-12"} mx-auto`}>
                     <div className="flex justify-between items-center mb-6">
                         <h2 className="text-[#7458da] font-bold text-2xl">{type == "active" ? "Registered Players" : "Waitlist"}</h2>
                         <div className="space-x-4">
 
                             <button
                                 className={`px-4 py-2 border-2 transition-all duration-300 ease-in-out rounded-lg text-white transform ${selectedPlayers.size > 0
-                                    ? "bg-[#2a75c0] border-[#2a75c0] hover:bg-[#215a94] hover:border-[#215a94]"
-                                    : "border-[#2a9dc08b] bg-[#123f457b] cursor-not-allowed"
+                                    ? "bg-[#1f1f1f] border-[#222222] hover:bg-[#171717] hover:border-[#171717]"
+                                    : "border-[#000000] bg-[#1717178d] cursor-not-allowed"
                                     }`}
                                 onClick={() => handleBulkSwitch()}
                             >
@@ -138,8 +138,8 @@ export const PlayersTable = ({ players, setPlayers, otherPlayers, setOtherPlayer
                         </div>
                     </div>
 
-                    <table className="w-full max-w-4xl mx-auto bg-deep rounded-lg shadow-lg">
-                        <thead className="bg-[#7458da]">
+                    <table className="w-full mx-auto bg-deep rounded-lg shadow-lg">
+                        <thead className="bg-[#1b113d]">
                             <tr>
                                 <th className="p-3 text-left text-white w-10">
                                     <Checkbox deep={true} checked={selectedPlayers.size === players.length} onChange={() => {
@@ -167,7 +167,7 @@ export const PlayersTable = ({ players, setPlayers, otherPlayers, setOtherPlayer
                                             setModalPlayer(player);
                                         }
                                     }}
-                                    className={`hover:bg-secondary ${modalPlayer && modalPlayer.id == player.id ? "bg-[#604BAC]" : ""} transition-colors duration-50 cursor-pointer`}
+                                    className={`hover:bg-[#2a1b5f] bg-[#22154F] ${modalPlayer && modalPlayer.id == player.id ? "bg-[#2a1b5f]" : ""} transition-colors duration-50 cursor-pointer`}
                                 >
                                     <td className="p-3">
                                         <CheckboxWithEvent
