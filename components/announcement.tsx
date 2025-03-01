@@ -8,7 +8,7 @@ import { SpinningLoader } from './loading';
 import { useClient } from '@/context/clientContext';
 import { DeleteModal } from './modals/delete';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faBullhorn, faCheck, faCircle, faTrash, faPlus, faSortUp, faSortDown, faSort } from '@fortawesome/free-solid-svg-icons';
+import { faBullhorn, faCheck, faCircle, faTrash, faPlus, faSortUp, faSortDown } from '@fortawesome/free-solid-svg-icons';
 
 interface Announcement {
     id?: string;
@@ -128,6 +128,7 @@ export const AnnouncementSystem = ({ tournamentID }: { tournamentID: number }) =
         return () => {
             supabase.removeChannel(announcementsSubscription);
         };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [tournamentID, client.session?.user.id, supabase]);
 
     useEffect(() => {

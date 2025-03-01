@@ -64,7 +64,9 @@ export const WaitlistView = ({ tournamentID, bracket }: { tournamentID: number, 
         }
 
         loadData();
-    }, [tournamentID]);
+        
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [tournamentID, supabase]);
 
     const handlePlayerClick = (player: Player) => {
         setActivePlayer(activePlayer?.id === player.id ? null : player);
@@ -147,7 +149,7 @@ export const WaitlistView = ({ tournamentID, bracket }: { tournamentID: number, 
                                                     </tr>
                                                 </thead>
                                                 <tbody>
-                                                    {players.map((player, playerIndex) => (
+                                                    {players.map((player) => (
                                                         <motion.tr
                                                             key={player.id}
                                                             onClick={() => handlePlayerClick(player)}

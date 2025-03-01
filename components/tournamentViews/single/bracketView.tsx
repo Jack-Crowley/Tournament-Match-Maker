@@ -11,8 +11,6 @@ import { Tournament } from "@/types/tournamentTypes";
 import { useMessage } from "@/context/messageContext";
 
 const AddPlayerButton = ({ onAddPlayer }: { onAddPlayer: () => void }) => {
-  const [isHovered, setIsHovered] = useState(false);
-
   return (
     <motion.div
       className="bg-[#947ed7] hover:bg-[#af9ce7] transition-colors duration-200"
@@ -30,8 +28,6 @@ const AddPlayerButton = ({ onAddPlayer }: { onAddPlayer: () => void }) => {
         fontWeight: 'bold',
       }}
       whileHover={{ scale: 1.05 }}
-      onHoverStart={() => setIsHovered(true)}
-      onHoverEnd={() => setIsHovered(false)}
     >
       <FontAwesomeIcon icon={faUserPlus} />
       Add Player
@@ -56,7 +52,7 @@ const MatchupElement = ({
   const { triggerMessage } = useMessage?.() || { triggerMessage: () => {} };
 
   function openModal() {
-    if (viewType === "single" && match.players.some(player => player.name)) {
+    if (viewType === "single") {
       setIsMatchupModalOpen(true);
     }
   }
@@ -186,12 +182,6 @@ const BracketCreator = ({
 
       const resizeObserver = new ResizeObserver(updateBox);
       resizeObserver.observe(elementRef.current);
-
-      return () => {
-        if (elementRef.current) {
-          resizeObserver.unobserve(elementRef.current);
-        }
-      };
     }
   }, []);
 

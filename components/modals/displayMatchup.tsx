@@ -38,7 +38,7 @@ export const MatchupModal = ({ isOpen, setOpen, matchup }: MatchupModalProps) =>
         return () => {
             document.removeEventListener("mousedown", handleClickOutside);
         };
-    }, [isOpen, setOpen]);
+    }, [isOpen, setOpen, matchup]);
 
     useEffect(() => {
         async function LookupNextMatch() {
@@ -57,7 +57,7 @@ export const MatchupModal = ({ isOpen, setOpen, matchup }: MatchupModalProps) =>
         setEditedMatchup(matchup);
         setRemovedPlayersList([])
         LookupNextMatch()
-    }, [matchup]);
+    }, [matchup, supabase]);
 
     const updateMatch = async () => {
         const winnerUUID = editedMatchup.winner;
@@ -134,8 +134,8 @@ export const MatchupModal = ({ isOpen, setOpen, matchup }: MatchupModalProps) =>
             const existingMatchup: Matchup | null = data ? (data as Matchup) : null;
 
             if (existingMatchup) {
-                let players: BracketPlayer[] = existingMatchup.players || [];
-                let playerIndex = 1 - editedMatchup.match_number % 2
+                const players: BracketPlayer[] = existingMatchup.players || [];
+                const playerIndex = 1 - editedMatchup.match_number % 2
 
                 while (players.length < 2) {
                     players.push({
