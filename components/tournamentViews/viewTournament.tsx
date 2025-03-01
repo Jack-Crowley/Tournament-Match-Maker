@@ -10,6 +10,7 @@ import { SpinningLoader } from "../loading";
 import { createClient } from "@/utils/supabase/client";
 import { AnimatePresence, motion } from "framer-motion";
 import { AnnouncementSystem } from "../announcement";
+import { WaitlistView } from "./waitlistView";
 
 const NAV_ITEMS = [
     { key: "Bracket", icon: faTrophy },
@@ -94,12 +95,12 @@ export const ViewTournament = ({ tournamentID }: { tournamentID: number }) => {
     return (
         <div className="relative">
             <SideNavbar tab={activeTab} setTab={setActiveTab} />
-            <button
+            {/* <button
                 className="absolute top-4 right-4 px-6 py-3 text-lg font-semibold rounded-lg transition-all transform bg-background text-gray-400 hover:bg-highlight hover:text-white shadow-md z-50 pointer-events-auto"
                 onClick={() => console.log("hello")}
             >
                 Generate Scores (placeholder)
-            </button>
+            </button> */}
 
             {bracket ? (
                 <AnimatePresence mode="wait">
@@ -113,6 +114,10 @@ export const ViewTournament = ({ tournamentID }: { tournamentID: number }) => {
                     >
                         {activeTab === "Bracket" && (
                             <TournamentBracket bracket={bracket} />
+                        )}
+
+                        {activeTab == "Waitlist" && (
+                            <WaitlistView tournamentID={tournamentID}/>
                         )}
 
                         {activeTab === "Announcements" && (
