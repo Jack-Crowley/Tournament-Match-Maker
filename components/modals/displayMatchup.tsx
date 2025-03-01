@@ -5,7 +5,9 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faEnvelope, faTrash } from "@fortawesome/free-solid-svg-icons";
 import { BracketPlayer, Matchup } from "@/types/bracketTypes";
 import { createClient } from "@/utils/supabase/client";
-
+import { faPlus } from "@fortawesome/free-solid-svg-icons/faPlus";
+import { motion } from "framer-motion";
+import { faCrown } from "@fortawesome/free-solid-svg-icons/faCrown";
 
 interface MatchupModalProps {
     isOpen: boolean;
@@ -22,6 +24,7 @@ export const MatchupModal = ({ isOpen, setOpen, matchup }: MatchupModalProps) =>
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
             if (modalRef.current && !modalRef.current.contains(event.target as Node)) {
+                setEditedMatchup(matchup)
                 setOpen(false);
             }
         };
@@ -75,6 +78,8 @@ export const MatchupModal = ({ isOpen, setOpen, matchup }: MatchupModalProps) =>
         if (!winner) {
             return console.error("No player found? for winner");
         }
+
+        setWinner(winner.uuid)
 
         setEditedMatchup((prev) => ({ ...prev, winner: playerUUID }));
         console.log("the new winner is in matchup", editedMatchup);
@@ -171,66 +176,85 @@ export const MatchupModal = ({ isOpen, setOpen, matchup }: MatchupModalProps) =>
 
                 <div className="space-y-4">
                     {editedMatchup.players.map((player) => (
-                        <div key={player.uuid} className="flex items-center justify-between bg-[#2A2A2A] p-3 rounded-lg">
-                            <div className="flex flex-col">
-                                <span className="text-lg font-semibold text-white">{player.name}</span>
-                                {player.account_type === "logged_in" && (
-                                    <span className="text-sm text-gray-400">{player.email}</span>
-                                )}
-                            </div>
-                            <div className="flex items-center space-x-4">
-                                <input
-                                    type="number"
-                                    value={player.score}
-                                    onChange={(e) => { 
-                                        const newScore = parseInt(e.target.value) || 0; // Ensure valid number
-                                        setEditedMatchup(prev => ({
-                                            ...prev,
-                                            players: prev.players.map(p => 
-                                                p.uuid === player.uuid ? { ...p, score: newScore } : p
-                                            )
-                                        }));
-                                    }} 
-                                    className="w-20 p-2 bg-[#3A3A3A] border-b-2 border-[#7458DA] text-white rounded-lg focus:outline-none focus:border-[#604BAC]"
-                                />
-                                {player.account_type === "logged_in" && (
-                                    <button className="p-2 bg-[#604BAC] rounded-lg text-white hover:bg-[#7458DA]">
-                                        <FontAwesomeIcon icon={faEnvelope} />
-                                    </button>
-                                )}
-                                <button className="p-2 bg-[#cc6363] rounded-lg text-white hover:bg-[#b65050]" onClick={() => { removePlayer(player.uuid) }}>
-                                    <FontAwesomeIcon icon={faTrash} />
-                                </button>
-                            </div>
+                        <div key={player.uuid} className=" ">
+                            {player.name ? (
+                                <div className="flex items-center justify-between bg-[#2A2A2A] p-3 rounded-lg">
+                                    <div className="flex items-center space-x-4">
+                                        <motion.div
+                                            className="relative"
+                                            whileHover={{ scale: 1.1 }}
+                                            transition={{ type: "spring", stiffness: 300 }}
+                                        >
+                                            {player.uuid === winner ? (
+                                                <FontAwesomeIcon
+                                                    icon={faCrown}
+                                                    className="text-yellow-400"
+                                                    size="2x"
+                                                />
+                                            ) : (
+                                                <motion.div
+                                                    initial={{color:"rgba(0,0,0,0)"}}
+                                                    whileHover={{ color: "rgba(255, 255, 0, 0.2)", stroke: "rgba(255, 255, 255, 0.5)" }}
+                                                    onClick={() => changeWinner(player.uuid)}
+                                                >
+                                                    <FontAwesomeIcon
+                                                        icon={faCrown}
+                                                        className="stroke-2 stroke-white"
+                                                        size="2x"
+                                                    />
+                                                </motion.div>
+                                            )}
+                                        </motion.div>
+                                        <span className=" text-white">{player.name}</span>
+                                        {player.account_type === "logged_in" && (
+                                            <span className="text-sm text-gray-400">{player.email}</span>
+                                        )}
+                                    </div>
+                                    <div className="flex items-center space-x-4">
+                                        <input
+                                            type="number"
+                                            value={player.score}
+                                            onChange={(e) => {
+                                                const newScore = parseInt(e.target.value) || 0;
+                                                setEditedMatchup(prev => ({
+                                                    ...prev,
+                                                    players: prev.players.map(p =>
+                                                        p.uuid === player.uuid ? { ...p, score: newScore } : p
+                                                    )
+                                                }));
+                                            }}
+                                            className="w-20 p-2 bg-[#3A3A3A] border-b-2 border-[#7458DA] text-white rounded-lg focus:outline-none focus:border-[#604BAC]"
+                                        />
+                                        {player.account_type === "logged_in" && (
+                                            <button className="p-2 bg-[#604BAC] rounded-lg text-white hover:bg-[#7458DA]">
+                                                <FontAwesomeIcon icon={faEnvelope} />
+                                            </button>
+                                        )}
+                                        <button className="p-2 bg-[#cc6363] rounded-lg text-white hover:bg-[#b65050]" onClick={() => { removePlayer(player.uuid) }}>
+                                            <FontAwesomeIcon icon={faTrash} />
+                                        </button>
+                                    </div>
+                                </div>
+                            ) : (
+                                <motion.button
+                                    whileHover={{ scale: 1.05 }}
+                                    whileTap={{ scale: 0.95 }}
+                                    className="flex w-full items-center justify-center px-6 py-3 bg-[#3d3641] text-white rounded-lg shadow-lg hover:bg-[#5a4a5f] transition-colors duration-200"
+                                >
+                                    <FontAwesomeIcon icon={faPlus} className="text-white text-lg" />
+                                    <span className="ml-2 text-white">Add Player</span>
+                                </motion.button>
+                            )}
+
                         </div>
                     ))}
                 </div>
 
-                <div className="mt-6">
-                    <label className="block text-sm font-medium mb-2 text-white">Declare Winner</label>
-                    <select
-                        value={winner || ""}
-                        onChange={(e) => {
-                            setWinner(e.target.value)
-                            changeWinner(e.target.value)
-                        }}
-                        className="w-full p-3 bg-[#2A2A2A] border-b-2 border-[#7458DA] text-white rounded-lg focus:outline-none focus:border-[#604BAC]"
-                    >
-                        <option value="" disabled className="text-gray-400">
-                            Select a winner
-                        </option>
-                        {editedMatchup.players.map((player) => (
-                            <option key={player.uuid} value={player.uuid} className="text-white">
-                                {player.name}
-                            </option>
-                        ))}
-                    </select>
-                </div>
 
                 <div className="mt-8 space-x-4 flex justify-end">
                     <button
                         className="bg-[#2C2C2C] text-white px-4 py-2 rounded-lg hover:bg-[#3C3C3C] transition-colors"
-                        onClick={() => setOpen(false)}
+                        onClick={() => { setOpen(false); setEditedMatchup(matchup) }}
                     >
                         Cancel
                     </button>
