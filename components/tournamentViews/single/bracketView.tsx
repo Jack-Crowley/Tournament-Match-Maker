@@ -27,8 +27,8 @@ const MatchupElement = ({
         onClick={() => openModal()}
       >
           {match.players.map((player, index) => (
-            <div key={index}>
-              <div className={`z-5 p-4 font-bold border-l-8 ${match.winner ? player.uuid == match.winner ? "border-primary text-primary" : "border-deep text-deep" : "border-soft text-deep"} bg-opacity-90 hover:bg-opacity-100 transition-all ${player.name == "" && "text-secondary"}`}>
+            <div key={index} className={`${match.winner && (player.uuid == match.winner ? "bg-[#98979b10]" : "bg-[#120b2942]")}`}>
+              <div className={`z-5 p-4 font-bold border-l-8 ${match.winner ? player.uuid == match.winner ? "border-[#baa6f6] text-[#baa6f6]" : "border-[#1e153e] text-[#271c4e]" : "border-soft text-[#2e225b]"} bg-opacity-90 hover:bg-opacity-100 transition-all ${player.name == "" && "text-secondary"}`}>
                 {player.name ? player.name : "Placeholder"}
               </div>
 
