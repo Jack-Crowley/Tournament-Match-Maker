@@ -1,6 +1,7 @@
 export interface BracketPlayer {
     uuid: string;
     name: string;
+    player_name?: string;
     email: string;
     score?: number;
     account_type:string

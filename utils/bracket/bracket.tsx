@@ -3,6 +3,82 @@
 import { Bracket, Matchup, BracketPlayer } from "@/types/bracketTypes"
 import { createClient } from "../supabase/client"
 import { useMessage } from "@/context/messageContext"
+import { Tournament } from "@/types/tournamentTypes";
+
+export const addPlayerToMatchupFromWaitlist = async (
+    tournament: Tournament,
+    matchNumber: number,
+    roundNumber: number,
+    player: BracketPlayer,
+    playerIndex: number
+): Promise<{ success: boolean, errorCode: number | null }> => {
+    console.log(player)
+
+    const supabase = createClient();
+
+    const { data: existingMatch, error: fetchError } = await supabase
+        .from("tournament_matches")
+        .select("*")
+        .eq("tournament_id", tournament.id)
+        .eq("round", roundNumber)
+        .eq("match_number", matchNumber)
+        .single();
+
+    if (fetchError && fetchError.code !== "PGRST116") {
+        console.error("Error fetching match:", fetchError);
+        return { success: false, errorCode: 500 };
+    }
+
+    let players: BracketPlayer[] = existingMatch?.players || [];
+
+    while (players.length < 2) {
+        players.push({
+            uuid: "",
+            name: "",
+            email: "",
+            account_type: "placeholder",
+        });
+    }
+
+    if (playerIndex >= players.length) {
+        console.error("Invalid player index!");
+        return { success: false, errorCode: 400 };
+    }
+
+    players[playerIndex] = {
+        uuid: (player as any).member_uuid,
+        name: player.player_name!,
+        email: player.email || "",
+        account_type: (player as any).type,
+    };
+
+    const { error: upsertError } = await supabase
+        .from("tournament_matches")
+        .upsert({
+            tournament_id: tournament.id,
+            round: roundNumber,
+            match_number: matchNumber,
+            players: players,
+            id: existingMatch?.id || undefined,
+        });
+
+    if (upsertError) {
+        console.error("Error upserting match:", upsertError);
+        return { success: false, errorCode: 500 };
+    }
+
+    const { error: updateError } = await supabase
+        .from("tournament_players")
+        .update({ type: "active" })
+        .match({ id: (player as any).id });
+
+
+    console.log((player as any).id)
+    console.log(upsertError)
+    console.log(updateError)
+
+    return { success: true, errorCode: null };
+};
 
 export const fetchBracket = async (tournamentID: number): Promise<{ bracket: Bracket | null, errorCode: number | null }> => {
     const supabase = createClient()

@@ -4,7 +4,7 @@ import TournamentBracket from "@/components/tournamentViews/single/bracketView";
 import { Bracket } from "@/types/bracketTypes";
 import { useEffect, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faTrophy, faList, faBullhorn, faEnvelope } from "@fortawesome/free-solid-svg-icons";
+import { faTrophy, faUserClock, faBullhorn, faEnvelope } from "@fortawesome/free-solid-svg-icons";
 import { fetchBracket } from "@/utils/bracket/bracket";
 import { SpinningLoader } from "../loading";
 import { createClient } from "@/utils/supabase/client";
@@ -14,7 +14,7 @@ import { WaitlistView } from "./waitlistView";
 
 const NAV_ITEMS = [
     { key: "Bracket", icon: faTrophy },
-    { key: "Waitlist", icon: faList },
+    { key: "Waitlist", icon: faUserClock },
     { key: "Announcements", icon: faBullhorn },
     { key: "Messages", icon: faEnvelope },
 ];
@@ -117,7 +117,7 @@ export const ViewTournament = ({ tournamentID }: { tournamentID: number }) => {
                         )}
 
                         {activeTab == "Waitlist" && (
-                            <WaitlistView tournamentID={tournamentID}/>
+                            <WaitlistView tournamentID={tournamentID} bracket={bracket}/>
                         )}
 
                         {activeTab === "Announcements" && (
