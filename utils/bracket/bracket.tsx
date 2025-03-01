@@ -41,8 +41,14 @@ export const addPlayerToMatchupFromWaitlist = async (
     }
 
     if (playerIndex >= players.length) {
-        console.error("Invalid player index!");
-        return { success: false, errorCode: 400 };
+        for (let i = players.length; i < playerIndex; i++) {
+            players.push({
+                uuid: "",
+                name: "",
+                email: "",
+                account_type: "placeholder",
+            });
+        }
     }
 
     players[playerIndex] = {
@@ -187,8 +193,6 @@ export const fetchBracket = async (tournamentID: number): Promise<{ bracket: Bra
             matches: matches,
         });
     });
-
-    console.log("fetch bracket: ", bracket)
 
     return { bracket, errorCode: null };
 };

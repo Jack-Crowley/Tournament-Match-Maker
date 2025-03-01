@@ -50,12 +50,6 @@ export const ViewTournament = ({ tournamentID }: { tournamentID: number }) => {
         async function LoadBracket() {
             const { bracket, errorCode } = await fetchBracket(tournamentID);
             setBracket(bracket);
-            // *** Debugging ***
-            console.log("we fetched the bracket", bracket);
-            if (!bracket) {
-                // !!!!!!!
-                console.error("WE NEED TO SET UP THE BRACKET FIGURE THIS OUT");
-            }
             setErrorCode(errorCode);
         }
 

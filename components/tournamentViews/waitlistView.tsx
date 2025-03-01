@@ -9,9 +9,9 @@ import { faUserClock, faExclamationCircle, faInfoCircle } from "@fortawesome/fre
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import TournamentBracketWithAddingPlayer from "./single/bracketViewWithAddPlayer";
+import TournamentBracket from "./single/bracketView";
 
-export const WaitlistView = ({ tournamentID, bracket }: { tournamentID: number, bracket : Bracket }) => {
+export const WaitlistView = ({ tournamentID, bracket }: { tournamentID: number, bracket: Bracket }) => {
     const [activePlayer, setActivePlayer] = useState<Player | null>(null);
     const [players, setPlayers] = useState<Player[]>([]);
     const [tournament, setTournament] = useState<Tournament | null>(null);
@@ -21,6 +21,14 @@ export const WaitlistView = ({ tournamentID, bracket }: { tournamentID: number, 
 
     const { triggerMessage } = useMessage();
     const supabase = createClient();
+
+    const addPlayerSuccess = () => {
+        if (!activePlayer) return;
+
+        setPlayers(players.filter(player => player.member_uuid != activePlayer.member_uuid))
+        setActivePlayer(null)
+        setIsAdding(false)
+    }
 
     useEffect(() => {
         async function loadData() {
@@ -65,10 +73,10 @@ export const WaitlistView = ({ tournamentID, bracket }: { tournamentID: number, 
     return (
         <div>
             {isAdding && tournament ? (
-                <TournamentBracketWithAddingPlayer tournament={tournament} bracket={bracket} newPlayer={activePlayer as unknown as BracketPlayer} onClose={() => setIsAdding(false)}/>
+                <TournamentBracket viewType={`add-player`} tournament={tournament} bracket={bracket} newPlayer={activePlayer as unknown as BracketPlayer} onClose={addPlayerSuccess} />
             ) : (
                 <motion.div
-                    className="w-full max-w-6xl mx-auto bg-gradient-to-b from-[#1F1346] to-[#18103a] p-6 md:p-12 rounded-2xl shadow-2xl"
+                    className="w-full max-w-6xl mx-auto bg-[#1F1346] p-6 md:p-12 rounded-2xl shadow-2xl"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ duration: 0.5 }}
@@ -112,7 +120,6 @@ export const WaitlistView = ({ tournamentID, bracket }: { tournamentID: number, 
                         )}
                     </AnimatePresence>
 
-                    {/* Waitlist Content */}
                     {!isLoading && (
                         <AnimatePresence>
                             {players.length > 0 ? (
@@ -124,9 +131,9 @@ export const WaitlistView = ({ tournamentID, bracket }: { tournamentID: number, 
                                 >
                                     <div className="overflow-hidden rounded-lg shadow-2xl bg-[#2a1a66] p-4 md:p-8">
                                         <div className="overflow-x-auto">
-                                            <table className="w-full rounded-lg border-collapse bg-[#1b113d]">
-                                                <thead>
-                                                    <tr className="bg-[#261a5a]">
+                                            <table className="w-full mx-auto bg-deep rounded-lg shadow-lg">
+                                                <thead className="bg-[#1b113d]">
+                                                    <tr className="">
                                                         <th className="p-4 text-left text-white font-semibold text-lg border-b-2 border-[#3a2b7d]">Name</th>
                                                         {tournament?.skill_fields?.map((skill, index) => (
                                                             <th
@@ -145,14 +152,8 @@ export const WaitlistView = ({ tournamentID, bracket }: { tournamentID: number, 
                                                             key={player.id}
                                                             onClick={() => handlePlayerClick(player)}
                                                             className={`
-                                                        ${playerIndex % 2 === 0 ? 'bg-[#211746]' : 'bg-[#281b5a]'}
-                                                        ${activePlayer?.id === player.id ? 'bg-[#342575]' : ''}
-                                                        hover:bg-[#3a2b7d] transition-colors duration-200 cursor-pointer
+                                                        hover:bg-[#2a1b5f] bg-[#22154F] ${activePlayer && activePlayer.id == player.id ? "bg-[#342373]" : ""} transition-colors duration-50 cursor-pointer
                                                     `}
-                                                            whileHover={{ backgroundColor: '#3a2b7d' }}
-                                                            initial={{ opacity: 0, y: 10 }}
-                                                            animate={{ opacity: 1, y: 0 }}
-                                                            transition={{ delay: 0.1 * playerIndex, duration: 0.3 }}
                                                         >
                                                             <td className={`p-4 text-lg border-b border-[#3a2b7d] ${player.is_anonymous ? "text-white font-medium" : "text-[#d8d8d8] font-medium"}`}>
                                                                 {player.player_name}
@@ -268,6 +269,7 @@ export const WaitlistView = ({ tournamentID, bracket }: { tournamentID: number, 
                     )}
                 </motion.div>
             )}
+            <div className="h-10"></div>
         </div>
     );
 };
