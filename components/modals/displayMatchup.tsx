@@ -53,7 +53,7 @@ export const MatchupModal = ({ isOpen, setOpen, matchup }: MatchupModalProps) =>
                 console.log(error)
             }
 
-            setLocked(data.winner)
+            setLocked(data && data.winner)
         }
 
         setEditedMatchup(matchup);
@@ -102,6 +102,35 @@ export const MatchupModal = ({ isOpen, setOpen, matchup }: MatchupModalProps) =>
             console.error("Unexpected error:", err);
         }
     };
+
+    const handleAddPlayer = (player : BracketPlayer, index : number) => {
+        const players: BracketPlayer[] = editedMatchup.players || [];
+        const playerIndex = index;
+
+        while (players.length < 2) {
+            players.push({
+                uuid: "",
+                name: "",
+                email: "",
+                account_type: "placeholder",
+            });
+        }
+
+        if (playerIndex >= players.length) {
+            for (let i = players.length; i < playerIndex; i++) {
+                players.push({
+                    uuid: "",
+                    name: "",
+                    email: "",
+                    account_type: "placeholder",
+                });
+            }
+        }
+
+        players[playerIndex] = player;
+
+        setEditedMatchup((prev) => ({...prev, players:players}))
+    }
 
 
     const changeWinner = (playerUUID: string) => {
@@ -310,7 +339,7 @@ export const MatchupModal = ({ isOpen, setOpen, matchup }: MatchupModalProps) =>
                                     )}
                                     {addPlayersIndex == index && (
                                         <div className="w-full">
-                                            <PlayerManagementTabs tournamentID={matchup.tournament_id} matchup={matchup} index={index} />
+                                            <PlayerManagementTabs tournamentID={matchup.tournament_id} matchup={matchup} index={index} onClose={(player : BracketPlayer) => handleAddPlayer(player, index)} />
                                         </div>
                                     )
                                     }

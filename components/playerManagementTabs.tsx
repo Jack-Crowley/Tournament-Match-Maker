@@ -10,7 +10,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { BracketPlayer, Matchup } from "@/types/bracketTypes";
 import { v4 } from "uuid";
 
-export const PlayerManagementTabs = ({ tournamentID, matchup, index }: { tournamentID: number, matchup: Matchup, index: number }) => {
+export const PlayerManagementTabs = ({ tournamentID, matchup, index, onClose }: { tournamentID: number, matchup: Matchup, index: number, onClose: (player:BracketPlayer) => void }) => {
     const [activeTab, setActiveTab] = useState("waitlist");
     const [waitlistPlayers, setWaitlistPlayers] = useState<TournamentPlayer[]>([]);
     const [inactivePlayers, setInactivePlayers] = useState<TournamentPlayer[]>([]);
@@ -23,60 +23,17 @@ export const PlayerManagementTabs = ({ tournamentID, matchup, index }: { tournam
     const { triggerMessage } = useMessage();
     const supabase = createClient();
 
-    const addPlayer = async (player: TournamentPlayer) => {
-        const { data, error: fetchError } = await supabase
-            .from("tournament_matches")
-            .select("*")
-            .eq("tournament_id", matchup.tournament_id)
-            .eq("round", matchup.round)
-            .eq("match_number", matchup.match_number)
-            .single();
+    const addPlayer = async (player: TournamentPlayer | null) => {
+        if (!player) return;
 
-        if (fetchError && fetchError.code !== "PGRST116") {
-            console.error("Error fetching matchup:", fetchError.message);
-            return;
-        }
-
-        const players: BracketPlayer[] = data.players || [];
-        const playerIndex = index;
-
-        while (players.length < 2) {
-            players.push({
-                uuid: "",
-                name: "",
-                email: "",
-                account_type: "placeholder",
-            });
-        }
-
-        if (playerIndex >= players.length) {
-            for (let i = players.length; i < playerIndex; i++) {
-                players.push({
-                    uuid: "",
-                    name: "",
-                    email: "",
-                    account_type: "placeholder",
-                });
-            }
-        }
-
-        players[playerIndex] = {
+        const bracketPlayer : BracketPlayer = {
             uuid: player.member_uuid,
             name: player.player_name,
             email: "",
             account_type: player.type
-        };
+        } 
 
-        const { error: updateError } = await supabase
-            .from("tournament_matches")
-            .update({ players: players })
-            .eq("id", matchup.id);
-
-        if (updateError) {
-            console.error("Error updating players in existing matchup:", updateError.message);
-        } else {
-            console.log("Updated existing matchup by replacing placeholder player");
-        }
+        onClose(bracketPlayer)
     }
 
     useEffect(() => {
@@ -156,9 +113,8 @@ export const PlayerManagementTabs = ({ tournamentID, matchup, index }: { tournam
                 triggerMessage("Error adding player", "red");
                 console.error(error);
             } else {
-                triggerMessage("Player added successfully", "green");
                 setNewPlayerName("");
-
+                addPlayer(data)
             }
         } catch (err) {
             console.error("Error adding new player:", err);
@@ -253,8 +209,9 @@ export const PlayerManagementTabs = ({ tournamentID, matchup, index }: { tournam
                         <button
                             className={`px-4 py-2 rounded-md transition-opacity ${selectedPlayer ? 'bg-[#7458da] hover:bg-[#634bc1] opacity-100' : 'bg-[#7458da] opacity-50 cursor-not-allowed'}`}
                             disabled={!selectedPlayer}
+                            onClick={() => addPlayer(selectedPlayer)}
                         >
-                            {activeTab === "waitlist" ? "Add to Roster" : "Restore Player"}
+                            Move Player
                         </button>
                         <button
                             className={`px-4 py-2 rounded-md transition-opacity ${selectedPlayer ? 'bg-[#342575] hover:bg-[#3a2b7d] opacity-100' : 'bg-[#342575] opacity-50 cursor-not-allowed'}`}
