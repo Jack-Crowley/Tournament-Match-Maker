@@ -8,6 +8,7 @@ import { createClient } from "@/utils/supabase/client";
 import { faPlus } from "@fortawesome/free-solid-svg-icons/faPlus";
 import { motion } from "framer-motion";
 import { faCrown } from "@fortawesome/free-solid-svg-icons/faCrown";
+import { PlayerManagementTabs } from "../playerManagementTabs";
 
 interface MatchupModalProps {
     isOpen: boolean;
@@ -17,6 +18,7 @@ interface MatchupModalProps {
 
 export const MatchupModal = ({ isOpen, setOpen, matchup }: MatchupModalProps) => {
     const [editedMatchup, setEditedMatchup] = useState<Matchup>(matchup);
+    const [addPlayersIndex, setAddPlayersIndex] = useState<number>(-1)
     const modalRef = useRef<HTMLDivElement>(null);
     const supabase = createClient();
 
@@ -58,6 +60,10 @@ export const MatchupModal = ({ isOpen, setOpen, matchup }: MatchupModalProps) =>
         setRemovedPlayersList([])
         LookupNextMatch()
     }, [matchup, supabase]);
+
+    const OpenAddPlayerDropdown = (index: number) => {
+        setAddPlayersIndex(index)
+    }
 
     const updateMatch = async () => {
         const winnerUUID = editedMatchup.winner;
@@ -216,7 +222,7 @@ export const MatchupModal = ({ isOpen, setOpen, matchup }: MatchupModalProps) =>
                 <h2 className="text-xl font-bold mb-4 text-white">Edit Matchup</h2>
 
                 <div className="space-y-4">
-                    {editedMatchup.players.map((player) => (
+                    {editedMatchup.players.map((player, index) => (
                         <div key={player.uuid} className=" ">
                             {player.name ? (
                                 <div className="flex items-center justify-between bg-[#2A2A2A] p-3 rounded-lg">
@@ -295,12 +301,19 @@ export const MatchupModal = ({ isOpen, setOpen, matchup }: MatchupModalProps) =>
                                         <motion.button
                                             whileHover={{ scale: 1.05 }}
                                             whileTap={{ scale: 0.95 }}
-                                            className="flex w-full items-center justify-center px-6 py-3 bg-[#3d3641] text-white rounded-lg shadow-lg hover:bg-[#5a4a5f] transition-colors duration-200"
+                                            onClick={() => OpenAddPlayerDropdown(index)}
+                                            className="flex w-full items-center justify-center px-6 py-3 bg-[#342373] text-white rounded-lg shadow-lg hover:bg-[#674dc8] transition-colors duration-200"
                                         >
                                             <FontAwesomeIcon icon={faPlus} className="text-white text-lg" />
                                             <span className="ml-2 text-white">Add Player</span>
                                         </motion.button>
                                     )}
+                                    {addPlayersIndex == index && (
+                                        <div className="w-full">
+                                            <PlayerManagementTabs tournamentID={matchup.tournament_id} matchup={matchup} index={index} />
+                                        </div>
+                                    )
+                                    }
                                 </div>
                             )}
 

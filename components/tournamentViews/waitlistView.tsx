@@ -38,7 +38,7 @@ export const WaitlistView = ({ tournamentID, bracket }: { tournamentID: number, 
                 .from("tournament_players")
                 .select("*")
                 .eq("tournament_id", tournamentID)
-                .eq("type", "waitlist");
+                .in("type", ["waitlist", "inactive"]);
 
             if (error) {
                 triggerMessage("Error fetching waitlist", "red");
@@ -64,7 +64,7 @@ export const WaitlistView = ({ tournamentID, bracket }: { tournamentID: number, 
         }
 
         loadData();
-        
+
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [tournamentID, supabase]);
 
@@ -173,13 +173,24 @@ export const WaitlistView = ({ tournamentID, bracket }: { tournamentID: number, 
                                                                     ) : "—"}
                                                                 </td>
                                                             ))}
-                                                            <td className="p-4 text-center border-b border-[#3a2b7d]">
-                                                                <div className="flex justify-center">
-                                                                    <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-[#3a2b7d] text-[#a899e0]">
-                                                                        Waiting
-                                                                    </span>
-                                                                </div>
-                                                            </td>
+                                                            {(player as any).type == "waitlist" ? (
+                                                                <td className="p-4 text-center border-b border-[#3a2b7d]">
+                                                                    <div className="flex justify-center">
+                                                                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-[#3a2b7d] text-[#a899e0]">
+                                                                            Waitlist
+                                                                        </span>
+                                                                    </div>
+                                                                </td>
+                                                            ) : (
+                                                                <td className="p-4 text-center border-b border-[#1E3A8A]">
+                                                                    <div className="flex justify-center">
+                                                                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-[#1E3A8A] text-[#BFDBFE]">
+                                                                            Inactive
+                                                                        </span>
+                                                                    </div>
+                                                                </td>
+                                                            )}
+
                                                         </motion.tr>
                                                     ))}
                                                 </tbody>
@@ -205,7 +216,7 @@ export const WaitlistView = ({ tournamentID, bracket }: { tournamentID: number, 
                                                     </div>
                                                     <div className="ml-4">
                                                         <h3 className="text-xl font-bold text-white">{activePlayer.player_name}</h3>
-                                                        <p className="text-[#b8b8b8] mt-1">Waitlist Position: #{players.findIndex(p => p.id === activePlayer.id) + 1}</p>
+                                                        {(activePlayer as any).type == "waitlist" && (<p className="text-[#b8b8b8] mt-1">Waitlist Position: #{players.findIndex(p => p.id === activePlayer.id) + 1}</p>)} 
 
                                                         <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
                                                             {tournament?.skill_fields?.map((skill, index) => (
@@ -264,6 +275,24 @@ export const WaitlistView = ({ tournamentID, bracket }: { tournamentID: number, 
                                     <h4 className="text-white font-medium">About the Waitlist</h4>
                                     <p className="text-[#b8b8b8] text-sm mt-1">
                                         Players on the waitlist are players who have joined the tournament after the maximum players were reached or were specifically moved here.
+                                    </p>
+                                </div>
+                            </div>
+                        </motion.div>
+                    )}
+                    {!isLoading && players.length > 0 && (
+                        <motion.div
+                            className="mt-8 p-4 bg-[#221655] rounded-lg border border-[#3a2b7d]"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            transition={{ delay: 0.6, duration: 0.5 }}
+                        >
+                            <div className="flex items-start">
+                                <FontAwesomeIcon icon={faInfoCircle} className="text-[#7458da] text-xl mt-1" />
+                                <div className="ml-3">
+                                    <h4 className="text-white font-medium">About Inactive Players</h4>
+                                    <p className="text-[#b8b8b8] text-sm mt-1">
+                                        Inactive players were players who were originally in the tournament, but have been removed
                                     </p>
                                 </div>
                             </div>
