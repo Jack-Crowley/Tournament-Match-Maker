@@ -111,10 +111,11 @@ export const MatchupModal = ({ isOpen, setOpen, matchup }: MatchupModalProps) =>
                 console.log("Matchup already exists, replacing placeholder player");
 
                 // Replace placeholder player with the new player
-                const updatedPlayers = existingMatchup.players.map((p) =>
-                    p.account_type === "placeholder" ? player : p
-                );
-
+                // const updatedPlayers = existingMatchup.players.map((p) =>
+                //     p.account_type === "placeholder" ? player : p
+                // );
+                const placeHolderPlayer = { uuid: "", name: "", email: "", account_type: "placeholder" };
+                const updatedPlayers = existingMatchup.match_number % 2 === 0 ? [placeHolderPlayer, player] : [player, placeHolderPlayer];
                 const { error: updateError } = await supabase
                     .from("tournament_matches")
                     .update({ players: updatedPlayers })
