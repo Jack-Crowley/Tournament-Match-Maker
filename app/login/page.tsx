@@ -15,7 +15,6 @@ const LoginPageContent = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   
-  // Get redirectTo from URL params or use previously stored path
   const redirectParam = searchParams?.get('redirectTo');
   
   useEffect(() => {
