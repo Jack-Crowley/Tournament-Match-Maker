@@ -5,7 +5,10 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faEnvelope, faTrash } from "@fortawesome/free-solid-svg-icons";
 import { BracketPlayer, Matchup } from "@/types/bracketTypes";
 import { createClient } from "@/utils/supabase/client";
-
+import { faPlus } from "@fortawesome/free-solid-svg-icons/faPlus";
+import { motion } from "framer-motion";
+import { faCrown } from "@fortawesome/free-solid-svg-icons/faCrown";
+import { PlayerManagementTabs } from "../playerManagementTabs";
 
 interface MatchupModalProps {
     isOpen: boolean;
@@ -15,13 +18,17 @@ interface MatchupModalProps {
 
 export const MatchupModal = ({ isOpen, setOpen, matchup }: MatchupModalProps) => {
     const [editedMatchup, setEditedMatchup] = useState<Matchup>(matchup);
-    const [winner, setWinner] = useState<string | null>(matchup.winner ? matchup.winner : null);
+    const [addPlayersIndex, setAddPlayersIndex] = useState<number>(-1)
     const modalRef = useRef<HTMLDivElement>(null);
     const supabase = createClient();
+
+    const [locked, setLocked] = useState<boolean>(false)
+    const [removedPlayersList, setRemovedPlayersList] = useState<number[]>([])
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
             if (modalRef.current && !modalRef.current.contains(event.target as Node)) {
+                setEditedMatchup(matchup)
                 setOpen(false);
             }
         };
@@ -33,22 +40,34 @@ export const MatchupModal = ({ isOpen, setOpen, matchup }: MatchupModalProps) =>
         return () => {
             document.removeEventListener("mousedown", handleClickOutside);
         };
-    }, [isOpen, setOpen]);
+    }, [isOpen, setOpen, matchup]);
 
     useEffect(() => {
+        async function LookupNextMatch() {
+            const { data, error } = await supabase.from("tournament_matches").select("*")
+                .eq("tournament_id", matchup.tournament_id)
+                .eq("match_number", Math.ceil(matchup.match_number / 2))
+                .eq("round", matchup.round + 1).single()
+
+            if (error) {
+                console.log(error)
+            }
+
+            setLocked(data && data.winner)
+        }
+
         setEditedMatchup(matchup);
-        setWinner(matchup.winner ? matchup.winner : null);
-    }, [matchup]);
+        setRemovedPlayersList([])
+        LookupNextMatch()
+    }, [matchup, supabase]);
 
-
+    const OpenAddPlayerDropdown = (index: number) => {
+        setAddPlayersIndex(index)
+    }
 
     const updateMatch = async () => {
         const winnerUUID = editedMatchup.winner;
-        console.log("Winner UUID:", winnerUUID);
         try {
-            console.log("Updating matchup:", matchup);
-            console.log("to match this following matchup", editedMatchup);
-
             const { error } = await supabase
                 .from("tournament_matches")
                 .update({
@@ -57,18 +76,63 @@ export const MatchupModal = ({ isOpen, setOpen, matchup }: MatchupModalProps) =>
                 })
                 .eq("id", String(matchup.id));
 
+            for (let i = 0; i < removedPlayersList.length; i++) {
+                const playerIndex: number = removedPlayersList[i];
+
+                if (matchup.round > 1) {
+                    const { error } = await supabase.from("tournament_matches").update({ winner: null })
+                        .eq("match_number", matchup.match_number * 2 - playerIndex % 2 + 1)
+                        .eq("round", matchup.round - 1)
+                        .eq("tournament_id", matchup.tournament_id)
+
+                    if (error) {
+                        console.log(error)
+                    }
+                }
+            }
+
             if (error) {
                 console.error("Error updating matchup:", error);
             } else {
-                setEditedMatchup((prev) => ({ ...prev, winnerUUID: winnerUUID }));
                 if (winnerUUID) propagatePlayer(winnerUUID);
+                setEditedMatchup((prev) => ({ ...prev, winnerUUID: winnerUUID }));
                 setOpen(false);
             }
         } catch (err) {
             console.error("Unexpected error:", err);
         }
-
     };
+
+    const handleAddPlayer = (player : BracketPlayer, index : number) => {
+        const players: BracketPlayer[] = editedMatchup.players || [];
+        const playerIndex = index;
+
+        while (players.length < 2) {
+            players.push({
+                uuid: "",
+                name: "",
+                email: "",
+                account_type: "placeholder",
+            });
+        }
+
+        if (playerIndex >= players.length) {
+            for (let i = players.length; i < playerIndex; i++) {
+                players.push({
+                    uuid: "",
+                    name: "",
+                    email: "",
+                    account_type: "placeholder",
+                });
+            }
+        }
+
+        players[playerIndex] = player;
+
+        setEditedMatchup((prev) => ({...prev, players:players}))
+    }
+
+
     const changeWinner = (playerUUID: string) => {
         console.log("chaning winner")
         const winner = editedMatchup.players.find(player => player.uuid === playerUUID);
@@ -81,8 +145,6 @@ export const MatchupModal = ({ isOpen, setOpen, matchup }: MatchupModalProps) =>
     };
 
     const propagatePlayer = async (playerUuid: string) => {
-        console.log("Propagating player");
-
         const player: BracketPlayer | undefined = editedMatchup.players.find(player => player.uuid === playerUuid);
         if (!player) return console.error("Player not found for propagation");
 
@@ -91,7 +153,6 @@ export const MatchupModal = ({ isOpen, setOpen, matchup }: MatchupModalProps) =>
         console.log("match number is ", matchNumber);
 
         try {
-            // Check if a matchup already exists
             const { data, error: fetchError } = await supabase
                 .from("tournament_matches")
                 .select("*")
@@ -100,7 +161,7 @@ export const MatchupModal = ({ isOpen, setOpen, matchup }: MatchupModalProps) =>
                 .eq("match_number", matchNumber)
                 .single();
 
-            if (fetchError && fetchError.code !== "PGRST116") { // Ignore "no rows found" error
+            if (fetchError && fetchError.code !== "PGRST116") {
                 console.error("Error fetching matchup:", fetchError.message);
                 return;
             }
@@ -108,17 +169,34 @@ export const MatchupModal = ({ isOpen, setOpen, matchup }: MatchupModalProps) =>
             const existingMatchup: Matchup | null = data ? (data as Matchup) : null;
 
             if (existingMatchup) {
-                console.log("Matchup already exists, replacing placeholder player");
+                const players: BracketPlayer[] = existingMatchup.players || [];
+                const playerIndex = 1 - editedMatchup.match_number % 2
 
-                // Replace placeholder player with the new player
-                // const updatedPlayers = existingMatchup.players.map((p) =>
-                //     p.account_type === "placeholder" ? player : p
-                // );
-                const placeHolderPlayer = { uuid: "", name: "", email: "", account_type: "placeholder" };
-                const updatedPlayers = existingMatchup.match_number % 2 === 0 ? [placeHolderPlayer, player] : [player, placeHolderPlayer];
+                while (players.length < 2) {
+                    players.push({
+                        uuid: "",
+                        name: "",
+                        email: "",
+                        account_type: "placeholder",
+                    });
+                }
+
+                if (playerIndex >= players.length) {
+                    for (let i = players.length; i < playerIndex; i++) {
+                        players.push({
+                            uuid: "",
+                            name: "",
+                            email: "",
+                            account_type: "placeholder",
+                        });
+                    }
+                }
+
+                players[playerIndex] = player;
+
                 const { error: updateError } = await supabase
                     .from("tournament_matches")
-                    .update({ players: updatedPlayers })
+                    .update({ players: players })
                     .eq("id", existingMatchup.id);
 
                 if (updateError) {
@@ -159,6 +237,8 @@ export const MatchupModal = ({ isOpen, setOpen, matchup }: MatchupModalProps) =>
             player.uuid === playerUuid ? { uuid: "", name: "", email: "", account_type: "placeholder" } : player
         );
 
+        setRemovedPlayersList(prev => [...prev, editedMatchup.players.map(player => player.uuid).indexOf(playerUuid)])
+
         setEditedMatchup((prev) => ({ ...prev, players: updatedPlayers }));
     };
 
@@ -171,77 +251,134 @@ export const MatchupModal = ({ isOpen, setOpen, matchup }: MatchupModalProps) =>
                 <h2 className="text-xl font-bold mb-4 text-white">Edit Matchup</h2>
 
                 <div className="space-y-4">
-                    {editedMatchup.players.map((player) => (
-                        <div key={player.uuid} className="flex items-center justify-between bg-[#2A2A2A] p-3 rounded-lg">
-                            <div className="flex flex-col">
-                                <span className="text-lg font-semibold text-white">{player.name}</span>
-                                {player.account_type === "logged_in" && (
-                                    <span className="text-sm text-gray-400">{player.email}</span>
-                                )}
-                            </div>
-                            <div className="flex items-center space-x-4">
-                                <input
-                                    type="number"
-                                    value={player.score}
-                                    onChange={(e) => { 
-                                        const newScore = parseInt(e.target.value) || 0; // Ensure valid number
-                                        setEditedMatchup(prev => ({
-                                            ...prev,
-                                            players: prev.players.map(p => 
-                                                p.uuid === player.uuid ? { ...p, score: newScore } : p
-                                            )
-                                        }));
-                                    }} 
-                                    className="w-20 p-2 bg-[#3A3A3A] border-b-2 border-[#7458DA] text-white rounded-lg focus:outline-none focus:border-[#604BAC]"
-                                />
-                                {player.account_type === "logged_in" && (
-                                    <button className="p-2 bg-[#604BAC] rounded-lg text-white hover:bg-[#7458DA]">
-                                        <FontAwesomeIcon icon={faEnvelope} />
-                                    </button>
-                                )}
-                                <button className="p-2 bg-[#cc6363] rounded-lg text-white hover:bg-[#b65050]" onClick={() => { removePlayer(player.uuid) }}>
-                                    <FontAwesomeIcon icon={faTrash} />
-                                </button>
-                            </div>
+                    {editedMatchup.players.map((player, index) => (
+                        <div key={player.uuid} className=" ">
+                            {player.name ? (
+                                <div className="flex items-center justify-between bg-[#2A2A2A] p-3 rounded-lg">
+                                    <div className="flex items-center space-x-4">
+                                        <motion.div
+                                            className="relative hover:cursor-pointer"
+                                            whileHover={{ scale: 1.1 }}
+                                            transition={{ type: "spring", stiffness: 300 }}
+                                        >
+                                            {player.uuid === editedMatchup.winner ? (
+                                                <FontAwesomeIcon
+                                                    icon={faCrown}
+                                                    className="text-yellow-400"
+                                                    size="2x"
+                                                />
+                                            ) : (
+                                                <motion.div
+                                                    initial={{ color: "rgba(0,0,0,0)" }}
+                                                    whileHover={{ color: `${locked ? "rgba(0,0,0,0)" : "rgba(255, 255, 0, 0.2)"}`, stroke: "rgba(255, 255, 255, 0.5)" }}
+                                                    onClick={() => { if (!locked) changeWinner(player.uuid) }}
+                                                >
+                                                    <FontAwesomeIcon
+                                                        icon={faCrown}
+                                                        className="stroke-2 stroke-white"
+                                                        size="2x"
+                                                    />
+                                                </motion.div>
+                                            )}
+                                        </motion.div>
+                                        <span className=" text-white">{player.name}</span>
+                                        {player.account_type === "logged_in" && (
+                                            <span className="text-sm text-gray-400">{player.email}</span>
+                                        )}
+                                    </div>
+                                    <div className="flex items-center space-x-4">
+                                        {locked ? (
+                                            <input
+                                                type="number"
+                                                value={player.score}
+                                                readOnly
+                                                className="w-20 p-2 bg-[#1f1f1f] border-b-2 border-[#7458DA] text-white rounded-lg focus:outline-none focus:border-[#604BAC]"
+                                            />
+                                        ) : (
+                                            <input
+                                                type="number"
+                                                value={player.score}
+                                                onChange={(e) => {
+                                                    const newScore = parseInt(e.target.value) || 0;
+                                                    setEditedMatchup(prev => ({
+                                                        ...prev,
+                                                        players: prev.players.map(p =>
+                                                            p.uuid === player.uuid ? { ...p, score: newScore } : p
+                                                        )
+                                                    }));
+                                                }}
+                                                className="w-20 p-2 bg-[#3A3A3A] border-b-2 border-[#7458DA] text-white rounded-lg focus:outline-none focus:border-[#604BAC]"
+                                            />
+                                        )}
+
+                                        {player.account_type === "logged_in" && (
+                                            <button className="p-2 bg-[#604BAC] rounded-lg text-white hover:bg-[#7458DA]">
+                                                <FontAwesomeIcon icon={faEnvelope} />
+                                            </button>
+                                        )}
+                                        <button className={`p-2 ${!locked
+                                            ? "bg-[#c02a2a] border-[#c02a2a] hover:bg-[#a32424] hover:border-[#a32424]"
+                                            : "border-[#c02a2a8b] bg-[#4512127b] cursor-not-allowed"
+                                            } rounded-lg text-white border-[1px]`} onClick={() => { if (!locked) removePlayer(player.uuid) }}>
+                                            <FontAwesomeIcon icon={faTrash} />
+                                        </button>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="w-full">
+                                    {!locked && (
+                                        <motion.button
+                                            whileHover={{ scale: 1.05 }}
+                                            whileTap={{ scale: 0.95 }}
+                                            onClick={() => OpenAddPlayerDropdown(index)}
+                                            className="flex w-full items-center justify-center px-6 py-3 bg-[#342373] text-white rounded-lg shadow-lg hover:bg-[#674dc8] transition-colors duration-200"
+                                        >
+                                            <FontAwesomeIcon icon={faPlus} className="text-white text-lg" />
+                                            <span className="ml-2 text-white">Add Player</span>
+                                        </motion.button>
+                                    )}
+                                    {addPlayersIndex == index && (
+                                        <div className="w-full">
+                                            <PlayerManagementTabs tournamentID={matchup.tournament_id} matchup={matchup} index={index} onClose={(player : BracketPlayer) => handleAddPlayer(player, index)} />
+                                        </div>
+                                    )
+                                    }
+                                </div>
+                            )}
+
                         </div>
                     ))}
                 </div>
 
-                <div className="mt-6">
-                    <label className="block text-sm font-medium mb-2 text-white">Declare Winner</label>
-                    <select
-                        value={winner || ""}
-                        onChange={(e) => {
-                            setWinner(e.target.value)
-                            changeWinner(e.target.value)
-                        }}
-                        className="w-full p-3 bg-[#2A2A2A] border-b-2 border-[#7458DA] text-white rounded-lg focus:outline-none focus:border-[#604BAC]"
-                    >
-                        <option value="" disabled className="text-gray-400">
-                            Select a winner
-                        </option>
-                        {editedMatchup.players.map((player) => (
-                            <option key={player.uuid} value={player.uuid} className="text-white">
-                                {player.name}
-                            </option>
-                        ))}
-                    </select>
-                </div>
 
-                <div className="mt-8 space-x-4 flex justify-end">
-                    <button
-                        className="bg-[#2C2C2C] text-white px-4 py-2 rounded-lg hover:bg-[#3C3C3C] transition-colors"
-                        onClick={() => setOpen(false)}
-                    >
-                        Cancel
-                    </button>
-                    <button
-                        className="bg-[#7458DA] text-white px-4 py-2 rounded-lg hover:bg-[#604BAC] transition-colors"
-                        onClick={() => updateMatch()}
-                    >
-                        Save Changes
-                    </button>
-                </div>
+                {locked ? (
+                    <div className="text-center w-full mt-5">
+                        <h1>This match has been locked as the next match in the series has already had a winner declared</h1>
+                        <button
+                            className="mt-5 bg-[#2f2f2f] text-white px-4 py-2 rounded-lg hover:bg-[#3C3C3C] transition-colors"
+                            onClick={() => { setOpen(false); setEditedMatchup(matchup) }}
+                        >
+                            Go Back
+                        </button>
+                    </div>
+
+                ) : (
+                    <div className="mt-8 space-x-4 flex justify-end">
+                        <button
+                            className="bg-[#2C2C2C] text-white px-4 py-2 rounded-lg hover:bg-[#3C3C3C] transition-colors"
+                            onClick={() => { setOpen(false); setEditedMatchup(matchup) }}
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            className="bg-[#7458DA] text-white px-4 py-2 rounded-lg hover:bg-[#604BAC] transition-colors"
+                            onClick={() => updateMatch()}
+                        >
+                            Save Changes
+                        </button>
+                    </div>
+                )}
+
             </div>
         </div>
     );

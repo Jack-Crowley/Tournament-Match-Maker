@@ -3,16 +3,13 @@
 import { useEffect, useState } from "react";
 import Initialization from "./initialization"
 import { ViewTournament } from "@/components/tournamentViews/viewTournament";
-import Join from "./join"
-import { useParams, useSearchParams } from "next/navigation";
+import { useParams } from "next/navigation";
 import { Tournament } from "@/types/tournamentTypes";
 import { SpinningLoader } from "@/components/loading";
 import { createClient } from "@/utils/supabase/client";
 import { useMessage } from "@/context/messageContext";
 
 export default function Home() {
-    const searchParams = useSearchParams();
-    const hasJoinParam = searchParams.has("join");
     const [tournament, setTournament] = useState<Tournament | null>(null)
     const params = useParams();
     const id = params.id;
@@ -33,29 +30,37 @@ export default function Home() {
         }
 
         loadTournament()
-    }, [supabase, id, triggerMessage])
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [supabase, id])
+
+    async function refreshTournament() {
+        const { data, error } = await supabase.from("tournaments").select("*").eq("id", id).single()
+
+        if (error) {
+            triggerMessage("Error reloading tournament", "red")
+            return
+        }
+
+        setTournament(data)
+    }
 
     return (
         <div className="relative">
-            {hasJoinParam ? (
-                <Join />
-            ) : (
-                <div>
-                    {tournament ? (
-                        <div>
-                            {tournament.status == "initialization" && (
-                                <Initialization />
-                            )}
+            <div>
+                {tournament ? (
+                    <div>
+                        {tournament.status == "initialization" && (
+                            <Initialization refreshTournament={refreshTournament}/>
+                        )}
 
-                            {tournament.status == "started" && (
-                                <ViewTournament tournamentID={Number(id)} />
-                            )}
-                        </div>
-                    ) : (
-                        <SpinningLoader />
-                    )}
-                </div>
-            )}
+                        {tournament.status == "started" && (
+                            <ViewTournament tournamentID={Number(id)} />
+                        )}
+                    </div>
+                ) : (
+                    <SpinningLoader />
+                )}
+            </div>
         </div>
     )
 }

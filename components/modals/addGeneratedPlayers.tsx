@@ -9,9 +9,17 @@ import { v4 as uuidv4 } from 'uuid';
 
 export const AddPlaceholderPlayersModal = ({ isOpen, setOpen, tournament }: { tournament: Tournament, isOpen: boolean, setOpen: (state: boolean) => void, }) => {
     const [prefix, setPrefix] = useState<string>("")
-    const [numberOfPlayers, setNumberOfPlayers] = useState<number>(0)
+    const [numberOfPlayers, setNumberOfPlayers] = useState<number | ''>('')
     const supabase = createClient()
     const { triggerMessage } = useMessage()
+
+    const calculatePlayerType = (playersAmount : number) => {
+        if (tournament.max_players) {
+            return playersAmount < tournament.max_players ? "active" : "waitlist"
+        }
+
+        return "active"
+    }
 
     const handleSave = async () => {
         if (!prefix || !numberOfPlayers) {
@@ -30,7 +38,11 @@ export const AddPlaceholderPlayersModal = ({ isOpen, setOpen, tournament }: { to
             return;
         }
 
+        let playersAmount = existingPlayers.length
+
         const existingPlayerNames = new Set(existingPlayers.map(player => player.player_name));
+
+        let playersAdded = 0
 
         for (let i = 1; i <= numberOfPlayers; i++) {
             let playerName = `${prefix}${i}`;
@@ -50,6 +62,7 @@ export const AddPlaceholderPlayersModal = ({ isOpen, setOpen, tournament }: { to
                 skills: {},
                 is_anonymous: true,
                 placeholder_player:true,
+                type:calculatePlayerType(playersAmount)
             };
 
             const { error } = await supabase
@@ -60,9 +73,11 @@ export const AddPlaceholderPlayersModal = ({ isOpen, setOpen, tournament }: { to
             if (error) {
                 triggerMessage(`Error adding player ${playerName}: ${error.message}`, "red");
             } else {
-                triggerMessage(`Successfully added player ${playerName}!`, "green");
+                playersAdded++;
+                playersAmount++;
             }
         }
+        triggerMessage(`Successfully added ${playersAdded} player${playersAdded>1 && "s"}!`, "green");
 
         setOpen(false);
     };

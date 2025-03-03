@@ -11,7 +11,8 @@ import { createClient } from "@/utils/supabase/client";
 import { Tournament } from "@/types/tournamentTypes";
 import { SpinningLoader } from "@/components/loading";
 import { CreateTournament } from "@/components/modals/createTournament";
-import { DeleteModal } from "@/components/modals/delete";
+import { DeleteManyModal, DeleteModal } from "@/components/modals/delete";
+import { Checkbox } from "@/components/checkbox";
 
 export default function Home() {
     const client = useClient();
@@ -146,7 +147,8 @@ export default function Home() {
         }
 
         loadTournamentData();
-    }, [client, supabase, triggerMessage]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [client, supabase]);
 
     const handleClickOutside = (event: MouseEvent) => {
         if (modalRef.current && !modalRef.current.contains(event.target as Node)) {
@@ -195,34 +197,74 @@ export default function Home() {
 
     interface TournamentListProps {
         tournaments: Tournament[];
+        title: string,
         emptyMessage: string;
         onAction?: (tournamentId: string) => void;
         actionLabel: string;
-        setTournaments : (tournaments : Tournament[]) => void;
+        setTournaments: (tournaments: Tournament[]) => void;
     }
 
-    const TournamentList = ({ tournaments, emptyMessage, setTournaments, onAction, actionLabel }: TournamentListProps) => {
+    const deleteTournamentForeignKeys = async (id: string) => {
+        await supabase
+            .from("tournament_matches")
+            .delete()
+            .eq("tournament_id", id);
+
+        await supabase
+            .from("tournament_organizers")
+            .delete()
+            .eq("tournament_id", id);
+
+        await supabase
+            .from("tournament_players")
+            .delete()
+            .eq("tournament_id", id);
+
+        const { data: announcements, error: announcementsError } = await supabase
+            .from("announcements")
+            .select("id")
+            .eq("tournament_id", id);
+
+        if (announcementsError) {
+            console.error("Error fetching announcements:", announcementsError);
+        } else {
+            const announcementIds = announcements.map(a => a.id);
+
+            if (announcementIds.length > 0) {
+                const { error: seenError } = await supabase
+                    .from("announcements_seen")
+                    .delete()
+                    .in("announcement_id", announcementIds);
+
+                if (seenError) {
+                    console.error("Error deleting announcements_seen:", seenError);
+                }
+
+                const { error: announcementsDeleteError } = await supabase
+                    .from("announcements")
+                    .delete()
+                    .in("id", announcementIds);
+
+                if (announcementsDeleteError) {
+                    console.error("Error deleting announcements:", announcementsDeleteError);
+                }
+            }
+        }
+
+    }
+
+    const TournamentList = ({ title, tournaments, emptyMessage, setTournaments, onAction, actionLabel }: TournamentListProps) => {
         const [deleteSelection, setDeleteSelection] = useState<string | null>(null)
+        const [deleteView, setDeleteView] = useState<boolean>(false)
+        const [deleteManyModal, setDeleteManyModal] = useState<boolean>(false)
+        const [deleteIndexes, setDeleteIndexes] = useState<string[]>([])
 
         const HandleDelete = async (id: string) => {
             if (!id) return;
 
-            await supabase
-                .from("tournament_matches")
-                .delete()
-                .eq("tournament_id", id);
+            await deleteTournamentForeignKeys(id)
 
-            await supabase
-                .from("tournament_organizers")
-                .delete()
-                .eq("tournament_id", id);
-
-            await supabase
-                .from("tournament_players")
-                .delete()
-                .eq("tournament_id", id);
-
-            const {error} = await supabase
+            const { error } = await supabase
                 .from("tournaments")
                 .delete()
                 .eq("id", id);
@@ -230,15 +272,97 @@ export default function Home() {
             if (error) {
                 triggerMessage("Unable to delete tournament", "red");
             } else {
-                triggerMessage("Announcement deleted successfully", "green");
+                triggerMessage("Tournament deleted successfully", "green");
                 setTournaments(tournaments.filter(a => a.id !== id))
                 setDeleteSelection(null);
+            }
+        }
+
+        const HandleDeleteMany = async (ids: string[]) => {
+            let counter = 0
+
+            for (let i = 0; i < ids.length; i++) {
+                const id = ids[i]
+
+                await deleteTournamentForeignKeys(id)
+
+                const { error } = await supabase
+                    .from("tournaments")
+                    .delete()
+                    .eq("id", id);
+
+                if (error) {
+                    triggerMessage("Unable to delete tournament with id " + id, "red");
+                } else {
+                    counter++;
+                }
+                setTournaments(tournaments.filter(a => a.id !== id))
+            }
+
+            if (counter > 0) {
+                triggerMessage(`${counter} Tournament${counter > 0 && "s"} deleted successfully`, "green");
+            }
+
+            setDeleteIndexes([])
+            setDeleteView(false)
+            setDeleteManyModal(false)
+        }
+
+        function handleCheckboxClick(id: string) {
+            if (deleteIndexes.includes(id)) {
+                setDeleteIndexes(deleteIndexes.filter(tournamentId => tournamentId != id))
+            }
+            else {
+                setDeleteIndexes([...deleteIndexes, id])
             }
         }
 
         return (
             <div className="space-y-6 pb-8">
                 <DeleteModal word="tournament" id={deleteSelection} setId={setDeleteSelection} handleDelete={HandleDelete} />
+                <DeleteManyModal word="Tournament" ids={deleteIndexes} isOpen={deleteManyModal} setOpen={setDeleteManyModal} handleDelete={HandleDeleteMany} />
+
+                <div className="flex justify-between w-full">
+                    <h1 className="text-highlight font-bold text-2xl mb-6">{title}</h1>
+                    {title == "Organizing Tournaments" && (
+                        <div>
+                            {deleteView ? (
+                                <div className="space-x-4 transition-all duration-300 ease-in-out">
+                                    <button
+                                        onClick={() => { setDeleteView(false); setDeleteIndexes([]) }}
+                                        className="px-4 py-2 border-2 border-[#767676] bg-[#767676] text-white rounded-lg transition-all duration-300 ease-in-out hover:bg-[#5a5a5a] hover:border-[#5a5a5a] transform"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        onClick={() => { if (deleteIndexes.length > 0) setDeleteManyModal(true) }}
+                                        className={`px-4 py-2 border-2 transition-all duration-300 ease-in-out rounded-lg text-white transform ${deleteIndexes.length > 0
+                                            ? "bg-[#c02a2a] border-[#c02a2a] hover:bg-[#a32424] hover:border-[#a32424]"
+                                            : "border-[#c02a2a8b] bg-[#4512127b] cursor-not-allowed"
+                                            }`}
+                                    >
+                                        Delete Tournaments
+                                    </button>
+                                </div>
+                            ) : (
+                                <div className="space-x-4 transition-all duration-300 ease-in-out">
+                                    <button
+                                        onClick={() => { setDeleteView(true) }}
+                                        className="px-4 py-2 bg-soft border-2 border-soft text-white rounded-lg transition-all duration-300 ease-in-out hover:bg-primary hover:border-primary transform"
+                                    >
+                                        Select
+                                    </button>
+                                    <button
+                                        onClick={() => { setDeleteIndexes(tournaments.map(tournament => tournament.id)); setDeleteView(true) }}
+                                        className="px-4 py-2 bg-soft border-2 border-soft text-white rounded-lg transition-all duration-300 ease-in-out hover:bg-primary hover:border-primary transform"
+                                    >
+                                        Select All
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </div>
 
                 {tournaments.length > 0 ? (
                     tournaments.map((tournament) => (
@@ -263,12 +387,17 @@ export default function Home() {
                                             {actionLabel}
                                         </button>
                                     )}
-                                    <button
-                                        onClick={() => setDeleteSelection(tournament.id)}
-                                        className="p-2 bg-[rgba(0,0,0,0)] transition-duration-200 text-white rounded-full hover:bg-[#e24d4d] transition-colors transform"
-                                    >
-                                        🗑️
-                                    </button>
+                                    {deleteView ? (
+                                        <Checkbox checked={deleteIndexes.includes(tournament.id)} onChange={() => { handleCheckboxClick(tournament.id) }} />
+                                    ) : (
+                                        <button
+                                            onClick={() => setDeleteSelection(tournament.id)}
+                                            className="p-2 bg-[rgba(0,0,0,0)] transition-duration-200 text-white rounded-full hover:bg-[#e24d4d] transition-colors transform"
+                                        >
+                                            {title == "Organizing Tournaments" && "🗑️"} 
+                                        </button>
+                                    )}
+
                                 </div>
                             </div>
                         </motion.div>
@@ -315,8 +444,8 @@ export default function Home() {
                         >
                             {activeTab === "organizing" && (
                                 <div>
-                                    <h1 className="text-highlight font-bold text-2xl mb-6">Organizing Tournaments</h1>
                                     <TournamentList
+                                        title="Organizing Tournaments"
                                         tournaments={organizingTournaments}
                                         emptyMessage="You are not organizing any tournaments."
                                         actionLabel="Manage"
@@ -327,8 +456,8 @@ export default function Home() {
 
                             {activeTab === "playing" && (
                                 <div>
-                                    <h1 className="text-highlight font-bold text-2xl mb-6">Playing Tournaments</h1>
                                     <TournamentList
+                                        title="Playing Tournaments"
                                         tournaments={playingTournaments}
                                         emptyMessage="You are not playing in any tournaments."
                                         actionLabel="View"
@@ -339,8 +468,8 @@ export default function Home() {
 
                             {activeTab === "invitations" && (
                                 <div>
-                                    <h1 className="text-highlight font-bold text-2xl mb-6">Invitations</h1>
                                     <TournamentList
+                                        title="Invitations"
                                         tournaments={invitations}
                                         emptyMessage="You currently have no invitations."
                                         onAction={handleAcceptInvitation}

@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCopy, faEye, faTrash, faGear } from '@fortawesome/free-solid-svg-icons';
+import { faCopy, faGear, faQrcode, faUsers, faCalendarAlt, faMapMarkerAlt, faInfoCircle } from '@fortawesome/free-solid-svg-icons';
 import { useState, useRef, useEffect } from 'react';
 import { useMessage } from '@/context/messageContext';
 import { createClient } from "@/utils/supabase/client";
@@ -14,79 +14,93 @@ import { Tournament } from "@/types/tournamentTypes";
 import { BracketPlayer, Matchup } from "@/types/bracketTypes";
 import { Player } from "@/types/playerTypes";
 import { TournamentModal } from "@/components/modals/tournamentEditModal";
-import { PlayerModal } from "@/components/modals/editPlayersModal";
 import { AddPlaceholderPlayersModal } from "@/components/modals/addGeneratedPlayers";
-import { Checkbox } from "@/components/checkbox";
+import { PlayersTable } from "@/components/playersTable";
+import { ConfirmModal, ConfirmModalInformation } from "@/components/modals/confirmationModal";
 
-export default function Initialization() {
+export default function Initialization({ refreshTournament }: { refreshTournament: () => void }) {
     const supabase = createClient();
     const client = useClient();
     const [tournament, setTournament] = useState<Tournament | null>(null);
     const [director, setDirector] = useState<boolean>(false);
     const [loading, setLoading] = useState<boolean>(true);
     const [joinLink, setJoinLink] = useState<null | string>(null);
-    const [players, setPlayers] = useState<Player[]>([]);
+    const [showQRCode, setShowQRCode] = useState<boolean>(false);
+
+    const [confirmModalInfo, setConfirmModalInfo] = useState<ConfirmModalInformation | null>(null);
+    const [activePlayers, setActivePlayers] = useState<Player[]>([]);
+    const [waitlistedPlayers, setWaitlistedPlayers] = useState<Player[]>([]);
+
     const [isTournamentEditModalOpen, setIsTournamentEditModalOpen] = useState<boolean>(false);
-    const [contextMenu, setContextMenu] = useState<any>(null);
-    const modalRef = useRef<HTMLDivElement>(null);
-    const [selectedPlayers, setSelectedPlayers] = useState<Set<string>>(new Set());
     const [isPlaceholderPlayersModalOpen, setIsPlaceholderPlayersModalOpen] = useState<boolean>(false);
-    const [playerForModal, setPlayerForModal] = useState<null | Player>();
     const [isPlayerModalOpen, setPlayerModalOpen] = useState<boolean>(false);
+
+    const modalRef = useRef<HTMLDivElement>(null);
     const { triggerMessage } = useMessage();
     const params = useParams();
     const id = params.id;
 
     useEffect(() => {
         const fetchData = async () => {
-            const { data, error } = await supabase
-                .from('tournaments')
-                .select('*')
-                .eq('id', id)
-                .single();
+            try {
+                const { data, error } = await supabase
+                    .from('tournaments')
+                    .select('*')
+                    .eq('id', id)
+                    .single();
 
-            if (error) {
-                triggerMessage("Error fetching tournament data: " + error.message, "red");
-            } else {
-                setTournament(data);
-                setJoinLink(window.location.href + "?join=" + data.join_code);
+                if (error) {
+                    triggerMessage("Error fetching tournament data: " + error.message, "red");
+                } else {
+                    setTournament(data);
+                    setJoinLink(window.location.origin + "/tournament/join/" + data.join_code);
+                }
+
+                const { data: data1, error: error1 } = await supabase
+                    .from('tournament_players')
+                    .select('*')
+                    .eq('tournament_id', id);
+
+                if (error1) {
+                    triggerMessage("Error fetching players data: " + error1.message, "red");
+                } else {
+                    setActivePlayers(data1.filter(player => player.type == "active"));
+                    setWaitlistedPlayers(data1.filter(player => player.type == "waitlist"));
+                }
+
+                const uuid = client.session?.user.id;
+                if (data && uuid == data.owner) {
+                    setDirector(true);
+                }
+            } catch (error) {
+                triggerMessage("An unexpected error occurred", "red");
+                console.error(error);
+            } finally {
+                setLoading(false);
             }
-
-            const { data: data1, error: error1 } = await supabase
-                .from('tournament_players')
-                .select('*')
-                .eq('tournament_id', id);
-
-            if (error1) {
-                triggerMessage("Error fetching players data: " + error1.message, "red");
-            } else {
-                setPlayers(data1);
-            }
-
-            const uuid = client.session?.user.id;
-
-            if (data && uuid == data.owner) {
-                setDirector(true);
-            }
-
-            setLoading(false);
         };
 
         fetchData();
-    }, [id, supabase, triggerMessage, client]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [id, supabase, client]);
 
     const handleAllowJoinToggle = async () => {
         if (!tournament) return;
 
-        const { error } = await supabase
-            .from('tournaments')
-            .update({ allow_join: !tournament.allow_join })
-            .eq('id', id);
+        try {
+            const { error } = await supabase
+                .from('tournaments')
+                .update({ allow_join: !tournament.allow_join })
+                .eq('id', id);
 
-        if (error) {
-            triggerMessage("Error updating tournament: " + error.message, "red");
-        } else {
-            setTournament({ ...tournament, allow_join: !tournament.allow_join });
+            if (error) {
+                triggerMessage("Error updating tournament: " + error.message, "red");
+            } else {
+                setTournament({ ...tournament, allow_join: !tournament.allow_join });
+                triggerMessage(`Player joining ${tournament.allow_join ? 'disabled' : 'enabled'}`, "green");
+            }
+        } catch {
+            triggerMessage("An error occurred while updating settings", "red");
         }
     };
 
@@ -94,60 +108,12 @@ export default function Initialization() {
         if (joinLink == null) return;
 
         navigator.clipboard.writeText(joinLink);
-        triggerMessage("URL copied to clipboard!", "green");
+        triggerMessage("Join URL copied to clipboard!", "green");
     };
-
-    const handleRightClick = (event: any, player: any) => {
-        event.preventDefault();
-
-        const navbar = document.getElementById("navbar"); // Assuming your navbar has this ID
-        const navbarHeight = navbar ? navbar.offsetHeight : 0;
-        console.log(navbarHeight)
-
-        setContextMenu({
-            x: event.pageX,
-            y: event.pageY - navbarHeight * 1.5,
-            player,
-        });
-
-        setPlayerForModal(player);
-    };
-
-    const handleDeletePlayers = async () => {
-        if (!playerForModal) {
-            triggerMessage("Player is not loaded", "red");
-            return;
-        }
-
-        const { error } = await supabase
-            .from('tournament_players')
-            .delete()
-            .eq('id', playerForModal.id);
-
-        if (error) {
-            triggerMessage("Error deleting player", "red");
-        } else {
-            triggerMessage("Player deleted successfully", "green");
-        }
-
-        setContextMenu(null);
-    };
-
-    const handleCloseMenu = () => setContextMenu(null);
-
-    const Button = ({ onClick, children }: { onClick: () => void; children: React.ReactNode }) => (
-        <button
-            className="bg-[#7458da] text-white px-4 py-2 rounded-lg hover:bg-[#604BAC] transition-colors"
-            onClick={onClick}
-        >
-            {children}
-        </button>
-    );
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
             if (modalRef.current && !modalRef.current.contains(event.target as Node)) {
-                // Close the currently open modal
                 if (isTournamentEditModalOpen) setIsTournamentEditModalOpen(false);
                 if (isPlayerModalOpen) setPlayerModalOpen(false);
             }
@@ -159,13 +125,39 @@ export default function Initialization() {
         };
     }, [isTournamentEditModalOpen, isPlayerModalOpen]);
 
-    const TimezoneConversion = (date: string) => {
+    const formatDateTime = (date: string) => {
         const d = new Date(date);
         d.setMinutes(d.getMinutes() - new Date().getTimezoneOffset());
-        return d;
+        return d.toLocaleString('en-US', {
+            weekday: 'short',
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric',
+            hour: 'numeric',
+            minute: '2-digit',
+            hour12: true
+        });
     };
 
     const handleStartTournament = async () => {
+        if (!tournament) return;
+
+        if (tournament.max_players && activePlayers.length > tournament.max_players) {
+            const waitlistSwitchConfirm: ConfirmModalInformation = {
+                title: "Maximum Player Limit Exceeded",
+                content: `You currently have ${activePlayers.length} active players, which exceeds the tournament limit of ${tournament.max_players}. Would you like to continue anyway?`,
+                onCancel: () => { setConfirmModalInfo(null) },
+                onSuccess: startTournamentAfterConfirmation
+            };
+
+            setConfirmModalInfo(waitlistSwitchConfirm);
+            return;
+        }
+
+        startTournamentAfterConfirmation();
+    };
+
+    async function startTournamentAfterConfirmation() {
         if (!tournament) return;
 
         try {
@@ -195,41 +187,35 @@ export default function Initialization() {
             } else {
                 triggerMessage(result.error, "red");
             }
-        } catch {
+        } catch (error) {
             triggerMessage("An error occurred while starting the tournament", "red");
+            console.error(error);
         }
-    };
+
+        setConfirmModalInfo(null);
+    }
 
     const setupBracket = async () => {
         if (!tournament) return;
 
-        console.log("setting up bracket!!!", players);
-
-        const formattedPlayers: BracketPlayer[] = players.map(player => ({
+        const formattedPlayers: BracketPlayer[] = activePlayers.map(player => ({
             uuid: player.member_uuid,
             name: player.player_name || "Unknown",
             email: player.email || "",
-            // ! YYOOOOOO WHAT ?
             account_type: player.is_anonymous ? "anonymous" : "logged_in",
             score: Number(player.skills?.score) || 0,
         }));
-        console.log("setting up bracket now with players: ", formattedPlayers)
 
-   
         function seedPlayers(playersToSeed: BracketPlayer[]) {
-            return [...playersToSeed].sort((a, b) => {
-                
-                return (b.score ?? 0) - (a.score ?? 0); // Sort players by score in descending order
-            });
+            return [...playersToSeed].sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
         }
 
-    
         function generateMatchups(players: BracketPlayer[]) {
             if (!tournament) return [];
             const seededPlayers = seedPlayers(players);
             const matchups: Matchup[] = [];
             const totalPlayers = seededPlayers.length;
-    
+
             for (let i = 0; i < totalPlayers; i += 2) {
                 const player1 = seededPlayers[i];
                 const player2 = seededPlayers[i + 1] || {
@@ -238,7 +224,7 @@ export default function Initialization() {
                     account_type: "placeholder",
                     placeholder_player: true,
                 };
-    
+
                 matchups.push({
                     match_number: i / 2 + 1,
                     players: [player1, player2],
@@ -247,297 +233,284 @@ export default function Initialization() {
                     id: -1,
                 });
             }
-    
+
             return matchups;
         }
-    
+
         const saveMatchupsToDatabase = async (matchups: any[]) => {
-            const { data, error } = await supabase
-                .from("tournament_matches")
-                .insert(matchups.map(match => ({
-                    tournament_id: tournament.id,
-                    round: match.round,
-                    match_number: match.match_number,
-                    players: match.players,
-                })));
-    
-            if (error) {
-                console.error("Error saving matchups in saveMatchupstoDB:", error);
-            } else {
-                console.log("Matchups saved successfully!", data);
+            try {
+                const { error } = await supabase
+                    .from("tournament_matches")
+                    .insert(matchups.map(match => ({
+                        tournament_id: tournament.id,
+                        round: match.round,
+                        match_number: match.match_number,
+                        players: match.players,
+                    })));
+
+                if (error) {
+                    console.error("Error saving matchups:", error);
+                    triggerMessage("Error creating tournament brackets", "red");
+                } else {
+                    triggerMessage("Tournament brackets created successfully", "green");
+                    refreshTournament();
+                }
+            } catch (error) {
+                console.error("Exception saving matchups:", error);
+                triggerMessage("Error creating tournament brackets", "red");
             }
-        }
+        };
 
         const generatedMatchups = generateMatchups(formattedPlayers);
-        console.log("here are our generated matchups: ", generatedMatchups);
         saveMatchupsToDatabase(generatedMatchups);
+    };
+
+    const ActionButton = ({ onClick, children, color = "#7458da", hoverColor = "#604BAC", className = "" }:
+        { onClick: () => void; children: React.ReactNode; color?: string; hoverColor?: string; className?: string }) => (
+        <button
+            className={`flex items-center justify-center px-4 py-2 rounded-lg text-white transition-all duration-300 shadow-md hover:shadow-lg ${className}`}
+            style={{ backgroundColor: color }}
+            onClick={onClick}
+            onMouseOver={(e) => (e.currentTarget.style.backgroundColor = hoverColor)}
+            onMouseOut={(e) => (e.currentTarget.style.backgroundColor = color)}
+        >
+            {children}
+        </button>
+    );
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center h-screen" style={{ backgroundColor: "#160A3A" }}>
+                <SpinningLoader />
+            </div>
+        );
     }
 
-    const handleSelectPlayer = (playerId: string) => {
-        const newSelectedPlayers = new Set(selectedPlayers);
-        if (newSelectedPlayers.has(playerId)) {
-            newSelectedPlayers.delete(playerId);
-        } else {
-            newSelectedPlayers.add(playerId);
-        }
-        setSelectedPlayers(newSelectedPlayers);
-    };
-
-    const handleBulkDelete = async () => {
-        if (selectedPlayers.size === 0) {
-            triggerMessage("No players selected", "red");
-            return;
-        }
-
-        const { error } = await supabase
-            .from('tournament_players')
-            .delete()
-            .in('id', Array.from(selectedPlayers));
-
-        if (error) {
-            triggerMessage("Error deleting players", "red");
-        } else {
-            triggerMessage("Players deleted successfully", "green");
-            setPlayers(players.filter(player => !selectedPlayers.has(player.id)));
-            setSelectedPlayers(new Set());
-        }
-    };
+    if (!tournament) {
+        return (
+            <div className="flex flex-col items-center justify-center h-screen text-white" style={{ backgroundColor: "#160A3A" }}>
+                <h1 className="text-2xl font-bold mb-4">Tournament Not Found</h1>
+                <p>Unable to load tournament information.</p>
+            </div>
+        );
+    }
 
     return (
-        <div className="relative min-h-screen mt-10 mx-8 p-6 text-white" style={{ backgroundColor: "#160A3A" }}>
-            {loading ? (
-                <SpinningLoader />
-            ) : (
-                <div>
-                    {tournament && (
-                        <div>
-                            {/* Tournament Header with Gear Icon */}
-                            <div className="flex items-center justify-between mb-6">
-                                <h1 className="text-[#7458da] font-bold text-3xl">{tournament?.name}</h1>
-                                {director && (
-                                    <button
-                                        onClick={() => setIsTournamentEditModalOpen(true)}
-                                        className="text-[#7458da] hover:text-[#604BAC] transition-colors"
-                                    >
-                                        <FontAwesomeIcon icon={faGear} size="lg" />
-                                    </button>
-                                )}
+        <div className="relative min-h-screen py-10 px-4 md:px-8" style={{ backgroundColor: "#160A3A" }}>
+            <ConfirmModal information={confirmModalInfo} />
+
+            <div className="max-w-6xl mx-auto bg-[#201644] rounded-2xl shadow-2xl overflow-hidden">
+                <div className="relative px-6 pt-8 md:px-10">
+                    <div className="flex items-center justify-between">
+                        <h1 className="text-[#7458da] font-bold text-3xl md:text-4xl text-center">{tournament.name}</h1>
+                        {director && (
+                            <button
+                                onClick={() => setIsTournamentEditModalOpen(true)}
+                                className="text-[#7458da] hover:text-[#604BAC] transition-colors p-2 rounded-full hover:bg-[#2a1a66]"
+                                title="Edit Tournament Settings"
+                            >
+                                <FontAwesomeIcon icon={faGear} size="lg" />
+                            </button>
+                        )}
+                    </div>
+
+                    {tournament.description && (
+                        <div className="mt-4 text-gray-300 max-w-3xl">
+                            <div className="flex items-start">
+                                <FontAwesomeIcon icon={faInfoCircle} className="text-[#7458da] mt-1 mr-3" />
+                                <p>{tournament.description}</p>
                             </div>
+                        </div>
+                    )}
+                </div>
 
-                            {/* Tournament Details */}
-                            <div className="space-y-4 mb-8">
-                                {tournament.description && (
-                                    <div className="text-center text-gray-300">
-                                        {tournament.description}
-                                    </div>
-                                )}
 
+
+                <div className="p-6 md:p-8">
+                    {(tournament.location || tournament.start_time || tournament.end_time || tournament.max_players) && (
+                        <div className="bg-[#2a1a66] rounded-xl p-6 shadow-md mb-8">
+                            <h2 className="text-[#7458da] font-bold text-2xl mb-4">Tournament Details</h2>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 {tournament.location && (
-                                    <div className="text-center text-gray-300">
-                                        Location: {tournament.location}
+                                    <div className="flex items-center text-gray-300">
+                                        <FontAwesomeIcon icon={faMapMarkerAlt} className="text-[#7458da] mr-3" />
+                                        <span>{tournament.location}</span>
                                     </div>
                                 )}
 
                                 {tournament.start_time && (
-                                    <div className="text-center text-gray-300">
-                                        <strong>Start Time:</strong> {TimezoneConversion(tournament.start_time).toLocaleString('en-US')}
+                                    <div className="flex items-center text-gray-300">
+                                        <FontAwesomeIcon icon={faCalendarAlt} className="text-[#7458da] mr-3" />
+                                        <span>Start: {formatDateTime(tournament.start_time)}</span>
                                     </div>
                                 )}
 
                                 {tournament.end_time && (
-                                    <div className="text-center text-gray-300">
-                                        <strong>End Time:</strong> {TimezoneConversion(tournament.end_time).toLocaleString('en-US')}
+                                    <div className="flex items-center text-gray-300">
+                                        <FontAwesomeIcon icon={faCalendarAlt} className="text-[#7458da] mr-3" />
+                                        <span>End: {formatDateTime(tournament.end_time)}</span>
+                                    </div>
+                                )}
+
+                                {tournament.max_players && (
+                                    <div className="flex items-center text-gray-300">
+                                        <FontAwesomeIcon icon={faUsers} className="text-[#7458da] mr-3" />
+                                        <span>Max Players: {tournament.max_players}</span>
                                     </div>
                                 )}
                             </div>
+                        </div>
+                    )}
 
-                            {/* Player Joining Section */}
-                            {director && (
-                                <div className="mb-8">
-                                    <h2 className="text-[#7458da] font-bold text-2xl mb-4 text-center">Player Joining</h2>
 
-                                    {tournament.max_players && (
-                                        <div className="text-center text-gray-300 mb-4">
-                                            Maximum Players: {tournament.max_players}
-                                        </div>
-                                    )}
+                    {director && (
+                        <div className="bg-[#2a1a66] rounded-xl p-6 shadow-md mb-8">
+                            <h2 className="text-[#7458da] font-bold text-2xl mb-6">Player Registration</h2>
 
-                                    <div className="flex items-center justify-center mb-4">
-                                        <span className="text-white mr-2">Allow People to Join</span>
-                                        <motion.div
-                                            className={`w-10 h-6 rounded-full flex items-center p-1 cursor-pointer ${tournament?.allow_join ? "justify-end" : "justify-start"}`}
-                                            onClick={handleAllowJoinToggle}
-                                            initial={false}
-                                            animate={{
-                                                background: tournament?.allow_join
-                                                    ? "linear-gradient(45deg, #7458da, #cec5eb)"
-                                                    : "linear-gradient(45deg, #3A3A3A, #5C5C5C)",
-                                            }}
-                                            transition={{ duration: 0.3 }}
-                                        >
-                                            <motion.div
-                                                className="w-4 h-4 bg-white rounded-full"
-                                                layout
-                                                transition={{ type: "spring", stiffness: 200, damping: 30 }}
+                            <div className="flex items-center justify-between mb-6 p-4 bg-[#22154F] rounded-lg">
+                                <div className="flex items-center">
+                                    <FontAwesomeIcon icon={faUsers} className="text-[#7458da] mr-3" />
+                                    <span className="text-white">Allow Players to Join</span>
+                                </div>
+
+                                <motion.div
+                                    className={`w-12 h-6 rounded-full flex items-center p-1 cursor-pointer ${tournament.allow_join ? "justify-end" : "justify-start"}`}
+                                    onClick={handleAllowJoinToggle}
+                                    initial={false}
+                                    animate={{
+                                        background: tournament.allow_join
+                                            ? "linear-gradient(45deg, #7458da, #8F78E6)"
+                                            : "linear-gradient(45deg, #3A3A3A, #5C5C5C)",
+                                    }}
+                                    transition={{ duration: 0.3 }}
+                                >
+                                    <motion.div
+                                        className="w-4 h-4 bg-white rounded-full shadow-md"
+                                        layout
+                                        transition={{ type: "spring", stiffness: 200, damping: 30 }}
+                                    />
+                                </motion.div>
+                            </div>
+
+                            {joinLink && tournament.allow_join && (
+                                <div className="space-y-8">
+                                    <div className="relative">
+                                        <label className="text-white text-sm mb-2 block">Join Code</label>
+                                        <div className="flex">
+                                            <input
+                                                type="text"
+                                                value={(tournament as any).join_code}
+                                                readOnly
+                                                className="w-full p-3 bg-[#22154F] border-l-4 border-[#7458da] text-white focus:outline-none rounded-l-lg"
                                             />
-                                        </motion.div>
+                                        </div>
                                     </div>
-
-                                    {joinLink && tournament.allow_join && (
-                                        <div className="text-center">
-                                            <label className="text-white block text-sm mb-2">Join Code/URL</label>
-                                            <div className="flex items-center justify-center">
+                                    <div className="relative">
+                                        <label className="text-white text-sm mb-2 block">Share Tournament Join Link</label>
+                                        <div className="md:flex block">
+                                            <div className="flex w-full">
                                                 <input
                                                     type="text"
                                                     value={joinLink}
                                                     readOnly
-                                                    className="w-full max-w-md p-3 bg-[#2a2a2a] border-b-2 border-[#7458da] text-white focus:outline-none focus:border-[#604BAC] rounded-lg"
+                                                    className="w-full p-3 bg-[#22154F] border-l-4 border-[#7458da] text-white focus:outline-none rounded-l-lg"
                                                 />
-                                                <Button onClick={handleCopyUrl}>
+                                                <ActionButton onClick={handleCopyUrl} className="rounded-l-none">
                                                     <FontAwesomeIcon icon={faCopy} />
-                                                </Button>
+                                                </ActionButton>
                                             </div>
-                                        </div>
-                                    )}
 
-                                    {joinLink && tournament.allow_join && (
-                                        <div className="text-center mt-4">
-                                            <label className="text-white block text-sm mb-2">QR Code</label>
-                                            <div className="p-4 bg-[#a968b942] rounded-lg inline-block">
-                                                <QRCode value={joinLink} size={128} />
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-                            )}
-
-                            {/* Registered Players Section */}
-                            {players.length > 0 && (
-                                <div className="mb-6 mt-16" onClick={handleCloseMenu}>
-                                    <h2 className="text-[#7458da] font-bold text-2xl mb-4 text-center">Registered Players</h2>
-
-                                    <table className="w-full max-w-4xl mx-auto bg-deep rounded-lg shadow-lg">
-                                        <thead className="bg-[#7458da]">
-                                            <tr>
-                                                <th className="p-3 text-left text-white">
-                                                    <Checkbox deep={true} checked={selectedPlayers.size === players.length} onChange={() => {
-                                                        if (selectedPlayers.size != players.length) {
-                                                            setSelectedPlayers(new Set(players.map(player => player.id)));
-                                                        } else {
-                                                            setSelectedPlayers(new Set());
-                                                        }
-                                                    }} />
-                                                </th>
-
-                                                <th className="p-3 text-left text-white">Name</th>
-                                                {tournament?.skill_fields.map((skill, index) => (
-                                                    <th key={index} className="p-3 text-left text-white">{skill}</th>
-                                                ))}
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {players.map((player) => (
-                                                <tr
-                                                    key={player.id}
-                                                    className={`hover:bg-secondary ${playerForModal && playerForModal.id == player.id ? "bg-[#604BAC]" : ""} transition-colors duration-50 cursor-pointer`}
-                                                    onContextMenu={(e) => handleRightClick(e, player)}
-                                                >
-                                                    <td className="p-3">
-                                                        <Checkbox
-                                                            checked={selectedPlayers.has(player.id)}
-                                                            onChange={() => handleSelectPlayer(player.id)}
-                                                        />
-                                                    </td>
-                                                    <td className={`p-3 ${player.is_anonymous ? "text-white" : "text-[#c8c8c8]"}`}>{player.player_name}</td>
-                                                    {tournament?.skill_fields.map((skill, index) => (
-                                                        <td key={index} className="p-3">{player.skills[skill] ? player.skills[skill] : "N/A"}</td>
-                                                    ))}
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                    {selectedPlayers.size > 0 && (
-                                        <div className="m-4 flex w-full mt-4 justify-center">
-                                            <button
-                                                className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors"
-                                                onClick={handleBulkDelete}
+                                            <ActionButton
+                                                onClick={() => setShowQRCode(!showQRCode)}
+                                                className="border-l w-fit border-[#604BAC] ml-8 flex items-center gap-2"
                                             >
-                                                Delete Selected
-                                            </button>
+                                                <p className="m-0">QR</p>
+                                                <FontAwesomeIcon icon={faQrcode} />
+                                            </ActionButton>
                                         </div>
-                                    )}
+                                    </div>
 
-                                    {contextMenu && (
-                                        <motion.ul
-                                            className="absolute block bg-[#2b1668] text-white shadow-lg rounded-lg w-40"
-                                            style={{ top: `${contextMenu.y}px`, left: `${contextMenu.x}px` }}
-                                            initial={{ opacity: 0, scale: 0.9 }}
-                                            animate={{ opacity: 1, scale: 1 }}
-                                            exit={{ opacity: 0, scale: 0.9 }}
+                                    {showQRCode && (
+                                        <motion.div
+                                            initial={{ opacity: 0, height: 0 }}
+                                            animate={{ opacity: 1, height: "auto" }}
+                                            exit={{ opacity: 0, height: 0 }}
+                                            transition={{ duration: 0.3 }}
+                                            className="flex justify-center p-4"
                                         >
-                                            <li
-                                                className="flex items-center gap-2 p-3 hover:bg-[#604BAC] cursor-pointer"
-                                                onClick={() => {
-                                                    setPlayerModalOpen(true);
-                                                    setPlayerForModal(contextMenu.player);
-                                                    handleCloseMenu();
-                                                }}
-                                            >
-                                                <FontAwesomeIcon icon={faEye} /> View Information
-                                            </li>
-                                            <li
-                                                className="flex items-center gap-2 p-3 hover:bg-[#604BAC] cursor-pointer text-red-500"
-                                                onClick={() => {
-                                                    handleDeletePlayers();
-                                                }}
-                                            >
-                                                <FontAwesomeIcon icon={faTrash} /> Delete
-                                            </li>
-                                        </motion.ul>
+                                            <div className="p-4 bg-white rounded-lg inline-block">
+                                                <QRCode value={joinLink} size={160} />
+                                            </div>
+                                        </motion.div>
                                     )}
                                 </div>
-                            )}
-
-                            {players.length == 0 && (
-                                <h2 className="text-[#604BAC] font-bold text-2xl mb-4 mt-12 text-center">No Registered Players</h2>
-                            )}
-
-                            {director && (
-                                <div className="flex justify-center mt-8 space-x-4">
-                                    <button
-                                        className="bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 transition-colors"
-                                        onClick={() => { setIsPlaceholderPlayersModalOpen(true) }}
-                                    >
-                                        Add Placeholder Players
-                                    </button>
-                                    <button
-                                        className="bg-[#7458da] text-white px-6 py-3 rounded-lg hover:bg-[#604BAC] transition-colors"
-                                        onClick={handleStartTournament}
-                                    >
-                                        Start Tournament
-                                    </button>
-                                </div>
-                            )}
-
-                            <TournamentModal
-                                isOpen={isTournamentEditModalOpen}
-                                onClose={() => setIsTournamentEditModalOpen(false)}
-                                tournament={tournament}
-                                setTournament={setTournament}
-                            />
-                            <AddPlaceholderPlayersModal isOpen={isPlaceholderPlayersModalOpen} setOpen={setIsPlaceholderPlayersModalOpen} tournament={tournament} />
-                            {playerForModal && (
-                                <PlayerModal
-                                    isOpen={isPlayerModalOpen}
-                                    onClose={() => setPlayerModalOpen(false)}
-                                    playerForModal={playerForModal}
-                                    tournament={tournament}
-                                />
                             )}
                         </div>
                     )}
+
+                    {(activePlayers.length > 0 || waitlistedPlayers.length > 0) && (
+                        <div className="bg-[#2a1a66] rounded-xl p-6 shadow-md mb-8 space-y-8">
+                            <PlayersTable
+                                players={activePlayers}
+                                otherPlayers={waitlistedPlayers}
+                                setPlayers={setActivePlayers}
+                                setOtherPlayers={setWaitlistedPlayers}
+                                type="active"
+                                tournament={tournament}
+                            />
+
+                            <PlayersTable
+                                players={waitlistedPlayers}
+                                otherPlayers={activePlayers}
+                                setPlayers={setWaitlistedPlayers}
+                                setOtherPlayers={setActivePlayers}
+                                type="waitlist"
+                                tournament={tournament}
+                            />
+                        </div>
+                    )}
+
+
+
+                    {director && (
+                        <div className="flex flex-wrap justify-center gap-4 mb-6">
+                            <ActionButton
+                                onClick={() => setIsPlaceholderPlayersModalOpen(true)}
+                                color="#4A6FFF"
+                                hoverColor="#3A5FEF"
+                                className="min-w-[180px]"
+                            >
+                                <FontAwesomeIcon icon={faUsers} className="mr-2" />
+                                Add Placeholder Players
+                            </ActionButton>
+
+                            <ActionButton
+                                onClick={handleStartTournament}
+                                className="min-w-[180px]"
+                            >
+                                <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
+                                </svg>
+                                Start Tournament
+                            </ActionButton>
+                        </div>
+                    )}
                 </div>
-            )}
+
+            </div>
+
+            <TournamentModal
+                isOpen={isTournamentEditModalOpen}
+                onClose={() => setIsTournamentEditModalOpen(false)}
+                tournament={tournament}
+                setTournament={setTournament}
+            />
+
+            <AddPlaceholderPlayersModal
+                isOpen={isPlaceholderPlayersModalOpen}
+                setOpen={setIsPlaceholderPlayersModalOpen}
+                tournament={tournament}
+            />
         </div>
     );
 }

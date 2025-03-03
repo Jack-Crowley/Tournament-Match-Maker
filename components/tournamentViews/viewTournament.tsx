@@ -4,16 +4,19 @@ import TournamentBracket from "@/components/tournamentViews/single/bracketView";
 import { Bracket } from "@/types/bracketTypes";
 import { useEffect, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faTrophy, faList, faBullhorn, faEnvelope } from "@fortawesome/free-solid-svg-icons";
+import { faTrophy, faUserClock, faBullhorn, faEnvelope } from "@fortawesome/free-solid-svg-icons";
 import { fetchBracket } from "@/utils/bracket/bracket";
 import { SpinningLoader } from "../loading";
 import { createClient } from "@/utils/supabase/client";
 import { AnimatePresence, motion } from "framer-motion";
 import { AnnouncementSystem } from "../announcement";
+import { WaitlistView } from "./waitlistView";
+import { User } from "@/types/userType";
+import { useClient } from "@/context/clientContext";
 
 const NAV_ITEMS = [
     { key: "Bracket", icon: faTrophy },
-    { key: "Waitlist", icon: faList },
+    { key: "Waitlist", icon: faUserClock },
     { key: "Announcements", icon: faBullhorn },
     { key: "Messages", icon: faEnvelope },
 ];
@@ -42,19 +45,54 @@ export const ViewTournament = ({ tournamentID }: { tournamentID: number }) => {
     const [bracket, setBracket] = useState<Bracket | null>(null)
     const [errorCode, setErrorCode] = useState<number | null>(null)
 
+    const [userPermission, setUserPermission] = useState<User | null>()
+    const client = useClient()
+
     const supabase = createClient()
     const [activeTab, setActiveTab] = useState("Bracket");
+
+    useEffect(() => {
+        async function loadPlayer() {
+            const uuid = client.session?.user.id;
+
+            if (!uuid) return;
+
+            const anonymous = client.session?.user.is_anonymous
+            if (anonymous == undefined) return;
+            let role = "none"
+
+            const {data, error} = await supabase.from("tournaments").select("*").eq("id", tournamentID).single()
+
+            if (error) {
+                console.log("Error fetching tournament")
+            }
+            else {
+                if (data.owner == uuid) {
+                    role = "owner"
+                }
+
+                const user = {
+                    uuid,
+                    anonymous,
+                    permission_level:role                    
+                }
+
+                setUserPermission(user)
+                return
+            }
+
+            
+
+
+        }   
+
+        loadPlayer()
+    }, [])
 
     useEffect(() => {
         async function LoadBracket() {
             const { bracket, errorCode } = await fetchBracket(tournamentID);
             setBracket(bracket);
-            // *** Debugging ***
-            console.log("we fetched the bracket", bracket);
-            if (!bracket) {
-                // !!!!!!!
-                console.error("WE NEED TO SET UP THE BRACKET FIGURE THIS OUT");
-            }
             setErrorCode(errorCode);
         }
 
@@ -94,12 +132,12 @@ export const ViewTournament = ({ tournamentID }: { tournamentID: number }) => {
     return (
         <div className="relative">
             <SideNavbar tab={activeTab} setTab={setActiveTab} />
-            <button
+            {/* <button
                 className="absolute top-4 right-4 px-6 py-3 text-lg font-semibold rounded-lg transition-all transform bg-background text-gray-400 hover:bg-highlight hover:text-white shadow-md z-50 pointer-events-auto"
                 onClick={() => console.log("hello")}
             >
                 Generate Scores (placeholder)
-            </button>
+            </button> */}
 
             {bracket ? (
                 <AnimatePresence mode="wait">
@@ -113,6 +151,10 @@ export const ViewTournament = ({ tournamentID }: { tournamentID: number }) => {
                     >
                         {activeTab === "Bracket" && (
                             <TournamentBracket bracket={bracket} />
+                        )}
+
+                        {activeTab == "Waitlist" && (
+                            <WaitlistView tournamentID={tournamentID} bracket={bracket}/>
                         )}
 
                         {activeTab === "Announcements" && (

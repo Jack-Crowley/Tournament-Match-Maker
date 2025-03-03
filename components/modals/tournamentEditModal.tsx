@@ -81,7 +81,7 @@ export const TournamentModal = ({
                 setOrganizers(organizers);
             });
         }
-    }, [tournament]);
+    }, [tournament, supabase]);
 
     const handleSave = async () => {
         if (!tournament) return;
