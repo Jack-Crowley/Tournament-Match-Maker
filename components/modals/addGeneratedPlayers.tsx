@@ -8,13 +8,14 @@ import { AnimatePresence, motion } from "framer-motion";
 import { ChangeEvent, useState } from "react";
 import { v4 as uuidv4 } from 'uuid';
 
-export const AddPlaceholderPlayersModal = ({ isOpen, setOpen, tournament, addActivePlayers, addWaitlistPlayers }: { addActivePlayers : (player : TournamentPlayer) => void, addWaitlistPlayers : (player : TournamentPlayer) => void, tournament: Tournament, isOpen: boolean, setOpen: (state: boolean) => void, }) => {
+export const AddPlaceholderPlayersModal = ({ isOpen, setOpen, tournament, addActivePlayers, addWaitlistPlayers }: { addActivePlayers: (player: TournamentPlayer) => void, addWaitlistPlayers: (player: TournamentPlayer) => void, tournament: Tournament, isOpen: boolean, setOpen: (state: boolean) => void, }) => {
+    const [working, setWorking] = useState<boolean>(false)
     const [prefix, setPrefix] = useState<string>("")
     const [numberOfPlayers, setNumberOfPlayers] = useState<number | ''>('')
     const supabase = createClient()
     const { triggerMessage } = useMessage()
 
-    const calculatePlayerType = (playersAmount : number) => {
+    const calculatePlayerType = (playersAmount: number) => {
         if (tournament.max_players) {
             return playersAmount < tournament.max_players ? "active" : "waitlist"
         }
@@ -23,8 +24,13 @@ export const AddPlaceholderPlayersModal = ({ isOpen, setOpen, tournament, addAct
     }
 
     const handleSave = async () => {
+        if (working) return;
+
+        setWorking(true)
+
         if (!prefix || !numberOfPlayers) {
             triggerMessage("Prefix and number of players are required", "red");
+            setWorking(false)
             return;
         }
 
@@ -45,7 +51,7 @@ export const AddPlaceholderPlayersModal = ({ isOpen, setOpen, tournament, addAct
 
         let playersAdded = 0
 
-        const players : any= []
+        const players: any = []
 
         for (let i = 1; i <= numberOfPlayers; i++) {
             let playerName = `${prefix}${i}`;
@@ -64,8 +70,8 @@ export const AddPlaceholderPlayersModal = ({ isOpen, setOpen, tournament, addAct
                 player_name: playerName,
                 skills: {},
                 is_anonymous: true,
-                placeholder_player:true,
-                type:calculatePlayerType(playersAmount)
+                placeholder_player: true,
+                type: calculatePlayerType(playersAmount)
             };
 
 
@@ -87,12 +93,13 @@ export const AddPlaceholderPlayersModal = ({ isOpen, setOpen, tournament, addAct
             }
         }
 
-        addActivePlayers(players.filter((player : any) => player.type == "active"))
-        addWaitlistPlayers(players.filter((player : any) => player.type == "waitlist"))
+        addActivePlayers(players.filter((player: any) => player.type == "active"))
+        addWaitlistPlayers(players.filter((player: any) => player.type == "waitlist"))
 
-        triggerMessage(`Successfully added ${playersAdded} player${playersAdded>1 && "s"}!`, "green");
+        triggerMessage(`Successfully added ${playersAdded} player${playersAdded > 1 && "s"}!`, "green");
 
         setOpen(false);
+        setWorking(false)
     };
 
     return (
@@ -141,7 +148,7 @@ export const AddPlaceholderPlayersModal = ({ isOpen, setOpen, tournament, addAct
                         {/* Save and Close Buttons */}
                         <div className="mt-8 space-x-4">
                             <button onClick={handleSave} className="bg-[#604BAC] text-white px-6 py-2 rounded-lg">
-                                Save
+                                {working ? "Working..." : "Save"}
                             </button>
                             <button onClick={() => { setOpen(false) }} className="bg-gray-500 text-white px-6 py-2 rounded-lg">
                                 Close

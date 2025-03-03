@@ -26,6 +26,7 @@ export default function Initialization({ refreshTournament }: { refreshTournamen
     const [loading, setLoading] = useState<boolean>(true);
     const [joinLink, setJoinLink] = useState<null | string>(null);
     const [showQRCode, setShowQRCode] = useState<boolean>(false);
+    const [starting, setStarting] = useState<boolean>(false);
 
     const [confirmModalInfo, setConfirmModalInfo] = useState<ConfirmModalInformation | null>(null);
     const [activePlayers, setActivePlayers] = useState<Player[]>([]);
@@ -140,8 +141,12 @@ export default function Initialization({ refreshTournament }: { refreshTournamen
     };
 
     const handleStartTournament = async () => {
-        if (!tournament) return;
+        if (starting) return;
 
+        setStarting(true)
+
+        if (!tournament) return;
+        
         if (tournament.max_players && activePlayers.length > tournament.max_players) {
             const waitlistSwitchConfirm: ConfirmModalInformation = {
                 title: "Maximum Player Limit Exceeded",
@@ -151,6 +156,7 @@ export default function Initialization({ refreshTournament }: { refreshTournamen
             };
 
             setConfirmModalInfo(waitlistSwitchConfirm);
+            setStarting(false)
             return;
         }
 
@@ -491,7 +497,7 @@ export default function Initialization({ refreshTournament }: { refreshTournamen
                                 <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
                                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
                                 </svg>
-                                Start Tournament
+                                {starting ? "Working..." : "Start Tournament"}
                             </ActionButton>
                         </div>
                     )}
@@ -510,8 +516,8 @@ export default function Initialization({ refreshTournament }: { refreshTournamen
                 isOpen={isPlaceholderPlayersModalOpen}
                 setOpen={setIsPlaceholderPlayersModalOpen}
                 tournament={tournament}
-                addActivePlayers={((players : any) => {setActivePlayers((prev) => [...prev, ...players])})}
-                addWaitlistPlayers={((players : any) => {setWaitlistedPlayers((prev) => [...prev, ...players])})}
+                addActivePlayers={((players: any) => { setActivePlayers((prev) => [...prev, ...players]) })}
+                addWaitlistPlayers={((players: any) => { setWaitlistedPlayers((prev) => [...prev, ...players]) })}
             />
         </div>
     );
