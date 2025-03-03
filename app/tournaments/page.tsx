@@ -268,6 +268,29 @@ export default function Home() {
         const [deleteManyModal, setDeleteManyModal] = useState<boolean>(false)
         const [deleteIndexes, setDeleteIndexes] = useState<string[]>([])
         const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+        const [localSearchTerm, setLocalSearchTerm] = useState<string>(searchTerm);
+
+        // Use the parent's searchTerm as initial value
+        useEffect(() => {
+            setLocalSearchTerm(searchTerm);
+        }, []);
+
+        // Handle search input changes without immediate filtering
+        const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+            setLocalSearchTerm(e.target.value);
+        };
+
+        // Apply the search filter when Enter is pressed or search button is clicked
+        const applySearch = () => {
+            setSearchTerm(localSearchTerm);
+        };
+
+        // Apply search on Enter key
+        const handleKeyDown = (e: React.KeyboardEvent) => {
+            if (e.key === 'Enter') {
+                applySearch();
+            }
+        };
 
         const filteredTournaments = filterTournaments(tournaments);
 
@@ -339,6 +362,14 @@ export default function Home() {
             setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
         };
 
+        // Get proper empty state message based on searchTerm
+        const getEmptyMessage = () => {
+            if (searchTerm) {
+                return "No tournaments match your search criteria.";
+            }
+            return emptyMessage;
+        };
+
         return (
             <div className="space-y-6 pb-8">
                 <DeleteModal word="tournament" id={deleteSelection} setId={setDeleteSelection} handleDelete={HandleDelete} />
@@ -352,14 +383,17 @@ export default function Home() {
                             <input
                                 type="text"
                                 placeholder="Search tournaments..."
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
+                                value={localSearchTerm}
+                                onChange={handleSearchChange}
+                                onKeyDown={handleKeyDown}
                                 className="pl-10 pr-4 py-2 w-full rounded-lg bg-[#2a1a66] border border-[#3f3175] text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-highlight"
                             />
-                            <FontAwesomeIcon
-                                icon={faSearch}
-                                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
-                            />
+                            <button 
+                                onClick={applySearch}
+                                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white"
+                            >
+                                <FontAwesomeIcon icon={faSearch} />
+                            </button>
                         </div>
 
                         {title === "Organizing Tournaments" && (
@@ -386,10 +420,11 @@ export default function Home() {
                                     <div className="flex gap-2 w-full sm:w-auto">
                                         <button
                                             onClick={toggleSortOrder}
-                                            className="p-2 bg-[#2a1a66] hover:bg-[#3f2c84] text-white rounded-lg transition-all flex items-center justify-center w-10 h-10"
+                                            className="px-4 py-2 bg-[#2a1a66] hover:bg-[#3f2c84] text-white rounded-lg transition-all flex items-center justify-center"
                                             title={`Sort ${sortOrder === 'asc' ? 'descending' : 'ascending'}`}
                                         >
-                                            <FontAwesomeIcon icon={faSort} />
+                                            <FontAwesomeIcon icon={faSort} className="mr-2" />
+                                            Sort: {sortOrder === 'asc' ? 'A-Z' : 'Z-A'}
                                         </button>
                                         <button
                                             onClick={() => { setDeleteView(true) }}
@@ -470,8 +505,8 @@ export default function Home() {
                     </div>
                 ) : (
                     <div className="bg-[#2a1a66] rounded-lg p-10 text-center">
-                        <p className="text-gray-300 text-lg mb-4">{emptyMessage}</p>
-                        {title === "Organizing Tournaments" && (
+                        <p className="text-gray-300 text-lg mb-4">{getEmptyMessage()}</p>
+                        {title === "Organizing Tournaments" && !searchTerm && (
                             <button
                                 onClick={() => setIsModalOpen(true)}
                                 className="px-6 py-3 bg-highlight hover:bg-[#8569ea] text-white rounded-lg transition-colors font-medium"
