@@ -48,7 +48,7 @@ export default function Homepage() {
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-3xl font-bold text-white mb-4">
-              Discover Our Powerful Tournament Management Features
+              Discover Our Powerful Tournament Management Features!
             </h2>
             <p className="text-gray-300 max-w-3xl mx-auto">
               Our platform simplifies the tournament experience for everyone involved. From players to organizers, we provide tools for efficient management and streamlined operations.
