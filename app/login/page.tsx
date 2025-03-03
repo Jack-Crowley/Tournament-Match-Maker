@@ -79,7 +79,7 @@ const LoginPageContent = () => {
                   },
                 }}
                 theme="dark"
-                redirectTo={getRedirectUrl()}
+                redirectTo={`${window.location.origin}/auth/callback`}
               />
             </div>
 
