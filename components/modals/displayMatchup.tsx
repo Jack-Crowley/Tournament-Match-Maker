@@ -44,14 +44,12 @@ export const MatchupModal = ({ isOpen, setOpen, matchup }: MatchupModalProps) =>
 
     useEffect(() => {
         async function LookupNextMatch() {
-            const { data, error } = await supabase.from("tournament_matches").select("*")
+            if (!isOpen) {return}
+
+            const { data } = await supabase.from("tournament_matches").select("*")
                 .eq("tournament_id", matchup.tournament_id)
                 .eq("match_number", Math.ceil(matchup.match_number / 2))
                 .eq("round", matchup.round + 1).single()
-
-            if (error) {
-                console.log(error)
-            }
 
             setLocked(data && data.winner)
         }
@@ -59,7 +57,7 @@ export const MatchupModal = ({ isOpen, setOpen, matchup }: MatchupModalProps) =>
         setEditedMatchup(matchup);
         setRemovedPlayersList([])
         LookupNextMatch()
-    }, [matchup, supabase]);
+    }, [matchup, supabase, isOpen]);
 
     const OpenAddPlayerDropdown = (index: number) => {
         setAddPlayersIndex(index)
