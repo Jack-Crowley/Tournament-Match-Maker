@@ -50,7 +50,7 @@ export const MatchupModal = ({ isOpen, setOpen, matchup }: MatchupModalProps) =>
                 .eq("round", matchup.round + 1).single()
 
             if (error) {
-                console.log(error)
+                console.error("LookupNextMatch", error)
             }
 
             setLocked(data && data.winner)
@@ -150,7 +150,6 @@ export const MatchupModal = ({ isOpen, setOpen, matchup }: MatchupModalProps) =>
 
         const round = editedMatchup.round + 1;
         const matchNumber = Math.ceil(editedMatchup.match_number / 2);
-        console.log("match number is ", matchNumber);
 
         try {
             const { data, error: fetchError } = await supabase
@@ -169,6 +168,7 @@ export const MatchupModal = ({ isOpen, setOpen, matchup }: MatchupModalProps) =>
             const existingMatchup: Matchup | null = data ? (data as Matchup) : null;
 
             if (existingMatchup) {
+                console.log("Found existing matchup, updating players");
                 const players: BracketPlayer[] = existingMatchup.players || [];
                 const playerIndex = 1 - editedMatchup.match_number % 2
 
@@ -207,7 +207,8 @@ export const MatchupModal = ({ isOpen, setOpen, matchup }: MatchupModalProps) =>
             } else {
                 console.log("No existing matchup found, inserting new matchup");
 
-                const placeHolderPlayer = { uuid: "", name: "", email: "", account_type: "placeholder" };
+                const placeHolderPlayer: BracketPlayer = { uuid: "", name: "", email: "", account_type: "placeholder" };
+                player.score = 0;
                 const players = editedMatchup.match_number % 2 === 0 ? [placeHolderPlayer, player] : [player, placeHolderPlayer];
 
                 const newMatchup = {
