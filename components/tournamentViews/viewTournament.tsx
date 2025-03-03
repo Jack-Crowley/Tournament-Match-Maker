@@ -11,6 +11,8 @@ import { createClient } from "@/utils/supabase/client";
 import { AnimatePresence, motion } from "framer-motion";
 import { AnnouncementSystem } from "../announcement";
 import { WaitlistView } from "./waitlistView";
+import { User } from "@/types/userType";
+import { useClient } from "@/context/clientContext";
 
 const NAV_ITEMS = [
     { key: "Bracket", icon: faTrophy },
@@ -43,8 +45,49 @@ export const ViewTournament = ({ tournamentID }: { tournamentID: number }) => {
     const [bracket, setBracket] = useState<Bracket | null>(null)
     const [errorCode, setErrorCode] = useState<number | null>(null)
 
+    const [userPermission, setUserPermission] = useState<User | null>()
+    const client = useClient()
+
     const supabase = createClient()
     const [activeTab, setActiveTab] = useState("Bracket");
+
+    useEffect(() => {
+        async function loadPlayer() {
+            const uuid = client.session?.user.id;
+
+            if (!uuid) return;
+
+            const anonymous = client.session?.user.is_anonymous
+            if (anonymous == undefined) return;
+            let role = "none"
+
+            const {data, error} = await supabase.from("tournaments").select("*").eq("id", tournamentID).single()
+
+            if (error) {
+                console.log("Error fetching tournament")
+            }
+            else {
+                if (data.owner == uuid) {
+                    role = "owner"
+                }
+
+                const user = {
+                    uuid,
+                    anonymous,
+                    permission_level:role                    
+                }
+
+                setUserPermission(user)
+                return
+            }
+
+            
+
+
+        }   
+
+        loadPlayer()
+    }, [])
 
     useEffect(() => {
         async function LoadBracket() {
