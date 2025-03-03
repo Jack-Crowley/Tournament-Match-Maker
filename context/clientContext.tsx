@@ -1,17 +1,15 @@
 "use client";
 
-import { createContext, useState, useContext, useEffect, ReactNode } from 'react';
-import { createClient } from '@/utils/supabase/client'
-import { SupabaseClient, Session } from '@supabase/supabase-js';
-import { useRouter } from 'next/navigation';
-import { faFileShield } from '@fortawesome/free-solid-svg-icons';
-import { usePathname } from 'next/navigation';
+import { createContext, useState, useContext, useEffect, ReactNode } from "react";
+import { createClient } from "@/utils/supabase/client";
+import { SupabaseClient, Session } from "@supabase/supabase-js";
+import { useRouter, usePathname } from "next/navigation";
 
 type ClientContextType = {
     client: SupabaseClient;
     session: Session | null;
     authChange: number;
-    setAuthChange: any;
+    setAuthChange: React.Dispatch<React.SetStateAction<number>>;
     admin: boolean;
 };
 
@@ -20,74 +18,52 @@ const ClientContext = createContext<ClientContextType | null>(null);
 export function ClientProvider({ children }: { children: ReactNode }) {
     const [client] = useState<SupabaseClient>(createClient());
     const [session, setSession] = useState<Session | null>(null);
-    const [signedIn, setSignedIn] = useState<boolean>(false)
-    const [authChange, SetAuthChange] = useState<number>(0)
-    const [admin, setAdmin] = useState<boolean>(false)
+    const [authChange, setAuthChange] = useState<number>(0);
+    const [admin, setAdmin] = useState<boolean>(false);
+    const [loading, setLoading] = useState<boolean>(true);
+
     const router = useRouter();
     const pathname = usePathname();
 
     useEffect(() => {
         const fetchSession = async () => {
+            setLoading(true);
             try {
                 const { data: { session } } = await client.auth.getSession();
                 setSession(session);
 
-                if (!session) {
-                    // Store current path before redirecting to login
-                    if (pathname !== '/login' && pathname !== '/auth/callback') {
-                        localStorage.setItem('previousPath', pathname);
-                    }
-                    router.push('/login');
-                    return;
+                if (!session && pathname !== "/login" && pathname !== "/auth/callback" && pathname !== "/") {
+                    localStorage.setItem("previousPath", pathname);
+                    router.push("/login");
                 }
-
-                setSignedIn(true);
-
             } catch (err) {
-                console.log(err)
-                // router.push('/login');
+                console.error("Error fetching session:", err);
+            } finally {
+                setLoading(false);
             }
         };
 
         fetchSession();
 
-        // Set up auth state change listener
         const { data: { subscription } } = client.auth.onAuthStateChange((event, session) => {
             console.log("Auth event:", event);
-            
-            if (event === 'SIGNED_OUT') {
-                setSignedIn(false);
+
+            if (event === "SIGNED_OUT") {
                 setSession(null);
-                
-                // For sign out, we still want to redirect to login
-                router.push('/login');
-            } 
-            else if ((event === 'SIGNED_IN' || event === 'USER_UPDATED') && session) {
-                // Just update the session state - no automatic redirects
+                router.push("/login");
+            } else if ((event === "SIGNED_IN" || event === "USER_UPDATED") && session) {
                 setSession(session);
-                setSignedIn(true);
-                
-                // Trigger auth change for components that need to react
-                SetAuthChange(prev => prev + 1);
+                setAuthChange(prev => prev + 1);
             }
         });
 
-        // Cleanup subscription
-        return () => {
-            subscription.unsubscribe();
-        };
+        return () => subscription?.unsubscribe();
     }, [client, router, pathname]);
 
-    const value: ClientContextType = {
-        client,
-        session,
-        authChange,
-        admin,
-        setAuthChange: SetAuthChange
-    };
+    if (loading) return <p>Loading...</p>;
 
     return (
-        <ClientContext.Provider value={value}>
+        <ClientContext.Provider value={{ client, session, authChange, setAuthChange, admin }}>
             {children}
         </ClientContext.Provider>
     );
@@ -95,8 +71,8 @@ export function ClientProvider({ children }: { children: ReactNode }) {
 
 export function useClient(): ClientContextType {
     const context = useContext(ClientContext);
-    if (context === null) {
-        throw new Error('useClient must be used within a ClientProvider');
+    if (!context) {
+        throw new Error("useClient must be used within a ClientProvider");
     }
     return context;
 }

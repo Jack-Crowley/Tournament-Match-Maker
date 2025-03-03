@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPlusCircle } from '@fortawesome/free-solid-svg-icons';
+import { faPlusCircle, faSearch, faSort, faEllipsisVertical } from '@fortawesome/free-solid-svg-icons';
 import { useState, useRef, useEffect } from 'react';
 import { useMessage } from '@/context/messageContext';
 import { useClient } from "@/context/clientContext";
@@ -13,6 +13,7 @@ import { SpinningLoader } from "@/components/loading";
 import { CreateTournament } from "@/components/modals/createTournament";
 import { DeleteManyModal, DeleteModal } from "@/components/modals/delete";
 import { Checkbox } from "@/components/checkbox";
+import { Footer } from "@/components/footer";
 
 export default function Home() {
     const client = useClient();
@@ -23,13 +24,14 @@ export default function Home() {
     const [invitations, setInvitations] = useState<Tournament[]>([]);
     const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
     const [activeTab, setActiveTab] = useState<string>("organizing");
+    const [searchTerm, setSearchTerm] = useState<string>("");
     const modalRef = useRef<HTMLDivElement>(null);
     const { triggerMessage } = useMessage();
 
     const tabs = [
-        { id: "organizing", label: "Organizing" },
-        { id: "playing", label: "Playing" },
-        { id: "invitations", label: "Invitations" },
+        { id: "organizing", label: "Organizing", count: organizingTournaments.length },
+        { id: "playing", label: "Playing", count: playingTournaments.length },
+        { id: "invitations", label: "Invitations", count: invitations.length },
     ];
 
     useEffect(() => {
@@ -195,14 +197,13 @@ export default function Home() {
         triggerMessage("Invitation accepted successfully!", "green");
     };
 
-    interface TournamentListProps {
-        tournaments: Tournament[];
-        title: string,
-        emptyMessage: string;
-        onAction?: (tournamentId: string) => void;
-        actionLabel: string;
-        setTournaments: (tournaments: Tournament[]) => void;
-    }
+    const filterTournaments = (tournaments: Tournament[]) => {
+        if (!searchTerm) return tournaments;
+        return tournaments.filter(
+            t => t.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                (t.description && t.description.toLowerCase().includes(searchTerm.toLowerCase()))
+        );
+    };
 
     const deleteTournamentForeignKeys = async (id: string) => {
         await supabase
@@ -250,7 +251,15 @@ export default function Home() {
                 }
             }
         }
+    }
 
+    interface TournamentListProps {
+        tournaments: Tournament[];
+        title: string,
+        emptyMessage: string;
+        onAction?: (tournamentId: string) => void;
+        actionLabel: string;
+        setTournaments: (tournaments: Tournament[]) => void;
     }
 
     const TournamentList = ({ title, tournaments, emptyMessage, setTournaments, onAction, actionLabel }: TournamentListProps) => {
@@ -258,6 +267,15 @@ export default function Home() {
         const [deleteView, setDeleteView] = useState<boolean>(false)
         const [deleteManyModal, setDeleteManyModal] = useState<boolean>(false)
         const [deleteIndexes, setDeleteIndexes] = useState<string[]>([])
+        const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+
+        const filteredTournaments = filterTournaments(tournaments);
+
+        const sortedTournaments = [...filteredTournaments].sort((a, b) => {
+            return sortOrder === 'asc'
+                ? a.name.localeCompare(b.name)
+                : b.name.localeCompare(a.name);
+        });
 
         const HandleDelete = async (id: string) => {
             if (!id) return;
@@ -300,7 +318,7 @@ export default function Home() {
             }
 
             if (counter > 0) {
-                triggerMessage(`${counter} Tournament${counter > 0 && "s"} deleted successfully`, "green");
+                triggerMessage(`${counter} Tournament${counter > 1 ? "s" : ""} deleted successfully`, "green");
             }
 
             setDeleteIndexes([])
@@ -317,120 +335,194 @@ export default function Home() {
             }
         }
 
+        const toggleSortOrder = () => {
+            setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+        };
+
         return (
             <div className="space-y-6 pb-8">
                 <DeleteModal word="tournament" id={deleteSelection} setId={setDeleteSelection} handleDelete={HandleDelete} />
                 <DeleteManyModal word="Tournament" ids={deleteIndexes} isOpen={deleteManyModal} setOpen={setDeleteManyModal} handleDelete={HandleDeleteMany} />
 
-                <div className="flex justify-between w-full">
-                    <h1 className="text-highlight font-bold text-2xl mb-6">{title}</h1>
-                    {title == "Organizing Tournaments" && (
-                        <div>
-                            {deleteView ? (
-                                <div className="space-x-4 transition-all duration-300 ease-in-out">
-                                    <button
-                                        onClick={() => { setDeleteView(false); setDeleteIndexes([]) }}
-                                        className="px-4 py-2 border-2 border-[#767676] bg-[#767676] text-white rounded-lg transition-all duration-300 ease-in-out hover:bg-[#5a5a5a] hover:border-[#5a5a5a] transform"
-                                    >
-                                        Cancel
-                                    </button>
-                                    <button
-                                        onClick={() => { if (deleteIndexes.length > 0) setDeleteManyModal(true) }}
-                                        className={`px-4 py-2 border-2 transition-all duration-300 ease-in-out rounded-lg text-white transform ${deleteIndexes.length > 0
-                                            ? "bg-[#c02a2a] border-[#c02a2a] hover:bg-[#a32424] hover:border-[#a32424]"
-                                            : "border-[#c02a2a8b] bg-[#4512127b] cursor-not-allowed"
-                                            }`}
-                                    >
-                                        Delete Tournaments
-                                    </button>
-                                </div>
-                            ) : (
-                                <div className="space-x-4 transition-all duration-300 ease-in-out">
-                                    <button
-                                        onClick={() => { setDeleteView(true) }}
-                                        className="px-4 py-2 bg-soft border-2 border-soft text-white rounded-lg transition-all duration-300 ease-in-out hover:bg-primary hover:border-primary transform"
-                                    >
-                                        Select
-                                    </button>
-                                    <button
-                                        onClick={() => { setDeleteIndexes(tournaments.map(tournament => tournament.id)); setDeleteView(true) }}
-                                        className="px-4 py-2 bg-soft border-2 border-soft text-white rounded-lg transition-all duration-300 ease-in-out hover:bg-primary hover:border-primary transform"
-                                    >
-                                        Select All
-                                    </button>
-                                </div>
-                            )}
+                <div className="flex flex-col sm:flex-row justify-between w-full gap-4 items-start sm:items-center mb-4">
+                    <h1 className="text-highlight font-bold text-2xl">{title}</h1>
+
+                    <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+                        <div className="relative flex-grow sm:flex-grow-0 max-w-md">
+                            <input
+                                type="text"
+                                placeholder="Search tournaments..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                className="pl-10 pr-4 py-2 w-full rounded-lg bg-[#2a1a66] border border-[#3f3175] text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-highlight"
+                            />
+                            <FontAwesomeIcon
+                                icon={faSearch}
+                                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                            />
                         </div>
-                    )}
+
+                        {title === "Organizing Tournaments" && (
+                            <div className="flex gap-2">
+                                {deleteView ? (
+                                    <div className="flex gap-2 w-full sm:w-auto">
+                                        <button
+                                            onClick={() => { setDeleteView(false); setDeleteIndexes([]) }}
+                                            className="px-4 py-2 border border-[#767676] bg-transparent text-white rounded-lg transition-all duration-300 ease-in-out hover:bg-[#5a5a5a] transform flex-grow sm:flex-grow-0"
+                                        >
+                                            Cancel
+                                        </button>
+                                        <button
+                                            onClick={() => { if (deleteIndexes.length > 0) setDeleteManyModal(true) }}
+                                            className={`px-4 py-2 border transition-all duration-300 ease-in-out rounded-lg text-white transform flex-grow sm:flex-grow-0 ${deleteIndexes.length > 0
+                                                ? "bg-[#c02a2a] border-[#c02a2a] hover:bg-[#a32424] hover:border-[#a32424]"
+                                                : "border-[#c02a2a8b] bg-[#4512127b] cursor-not-allowed"
+                                                }`}
+                                        >
+                                            Delete ({deleteIndexes.length})
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <div className="flex gap-2 w-full sm:w-auto">
+                                        <button
+                                            onClick={toggleSortOrder}
+                                            className="p-2 bg-[#2a1a66] hover:bg-[#3f2c84] text-white rounded-lg transition-all flex items-center justify-center w-10 h-10"
+                                            title={`Sort ${sortOrder === 'asc' ? 'descending' : 'ascending'}`}
+                                        >
+                                            <FontAwesomeIcon icon={faSort} />
+                                        </button>
+                                        <button
+                                            onClick={() => { setDeleteView(true) }}
+                                            className="px-4 py-2 bg-[#2a1a66] border border-[#3f3175] text-white rounded-lg transition-all duration-300 ease-in-out hover:bg-[#3f2c84] transform"
+                                        >
+                                            Select
+                                        </button>
+                                        <button
+                                            onClick={() => { setDeleteIndexes(sortedTournaments.map(tournament => tournament.id)); setDeleteView(true) }}
+                                            className="px-4 py-2 bg-[#2a1a66] border border-[#3f3175] text-white rounded-lg transition-all duration-300 ease-in-out hover:bg-[#3f2c84] transform"
+                                        >
+                                            Select All
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </div>
                 </div>
 
-                {tournaments.length > 0 ? (
-                    tournaments.map((tournament) => (
-                        <motion.div
-                            key={tournament.id}
-                            whileHover={{ scale: 1.01 }}
-                            className="p-6 shadow-[#382c3e] hover:cursor-pointer rounded-lg shadow-lg hover:shadow-3xl transition-all bg-gradient-to-r from-highlight to-accent"
-                        >
-                            <div className="flex justify-between items-center">
-                                <Link href={`/tournament/${tournament.id}`} className="flex-1">
-                                    <div>
-                                        <h2 className="text-xl font-bold text-white">{tournament.name}</h2>
-                                        <p className="text-gray-200">{tournament.description}</p>
-                                    </div>
-                                </Link>
-                                <div className="flex items-center space-x-4">
-                                    {onAction && (
-                                        <button
-                                            onClick={() => onAction(tournament.id)}
-                                            className="px-4 py-2 bg-deep text-white rounded-lg hover:bg-highlight transition-colors transform"
-                                        >
-                                            {actionLabel}
-                                        </button>
-                                    )}
-                                    {deleteView ? (
-                                        <Checkbox checked={deleteIndexes.includes(tournament.id)} onChange={() => { handleCheckboxClick(tournament.id) }} />
-                                    ) : (
-                                        <button
-                                            onClick={() => setDeleteSelection(tournament.id)}
-                                            className="p-2 bg-[rgba(0,0,0,0)] transition-duration-200 text-white rounded-full hover:bg-[#e24d4d] transition-colors transform"
-                                        >
-                                            {title == "Organizing Tournaments" && "🗑️"} 
-                                        </button>
-                                    )}
-
+                {sortedTournaments.length > 0 ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {sortedTournaments.map((tournament) => (
+                            <motion.div
+                                key={tournament.id}
+                                whileHover={{ scale: 1.02 }}
+                                className="rounded-lg overflow-hidden shadow-lg hover:shadow-2xl transition-all bg-gradient-to-r from-[#2a1a66] to-[#3f2c84] relative"
+                            >
+                                <div className="h-28 bg-gradient-to-r from-highlight to-accent flex items-center justify-center">
+                                    <h2 className="text-2xl font-bold text-white px-4 text-center">{tournament.name}</h2>
                                 </div>
-                            </div>
-                        </motion.div>
-                    ))
+
+                                <div className="p-5">
+                                    <p className="text-gray-200 mb-4 h-12 overflow-hidden text-ellipsis">
+                                        {tournament.description || "No description provided."}
+                                    </p>
+
+                                    <div className="flex justify-between items-center mt-4">
+                                        <Link
+                                            href={`/tournament/${tournament.id}`}
+                                            className="px-4 py-2 bg-highlight hover:bg-[#8569ea] text-white rounded-lg transition-colors transform font-medium"
+                                        >
+                                            View Details
+                                        </Link>
+
+                                        <div className="flex items-center">
+                                            {onAction && (
+                                                <button
+                                                    onClick={() => onAction(tournament.id)}
+                                                    className="px-4 py-2 bg-[#2a1a66] border border-highlight text-white rounded-lg hover:bg-highlight transition-colors transform"
+                                                >
+                                                    {actionLabel}
+                                                </button>
+                                            )}
+
+                                            {title === "Organizing Tournaments" && (
+                                                deleteView ? (
+                                                    <Checkbox
+                                                        checked={deleteIndexes.includes(tournament.id)}
+                                                        onChange={() => handleCheckboxClick(tournament.id)}
+                                                    />
+                                                ) : (
+                                                    <div className="relative ml-3">
+                                                        <button
+                                                            className="p-2 text-white rounded-full hover:bg-[#3f2c84] transition-colors"
+                                                            onClick={() => setDeleteSelection(tournament.id)}
+                                                        >
+                                                            <FontAwesomeIcon icon={faEllipsisVertical} />
+                                                        </button>
+                                                    </div>
+                                                )
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            </motion.div>
+                        ))}
+                    </div>
                 ) : (
-                    <p className="text-gray-400 text-center">{emptyMessage}</p>
+                    <div className="bg-[#2a1a66] rounded-lg p-10 text-center">
+                        <p className="text-gray-300 text-lg mb-4">{emptyMessage}</p>
+                        {title === "Organizing Tournaments" && (
+                            <button
+                                onClick={() => setIsModalOpen(true)}
+                                className="px-6 py-3 bg-highlight hover:bg-[#8569ea] text-white rounded-lg transition-colors font-medium"
+                            >
+                                Create Your First Tournament
+                            </button>
+                        )}
+                    </div>
                 )}
             </div>
         );
     };
 
     return (
-        <div className="relative min-h-screen bg-background">
+        <div className="relative min-h-screen bg-[#160A3A] text-white">
             {loading ? (
-                <SpinningLoader></SpinningLoader>
+                <div className="flex justify-center items-center min-h-screen">
+                    <SpinningLoader></SpinningLoader>
+                </div>
             ) : (
-                <div>
-                    {/* Tabs */}
-                    <div className="flex justify-center mt-10">
-                        <div className="tabs flex space-x-4 bg-gradient-to-r from-secondary to-accent p-2 rounded-lg shadow-lg">
-                            {tabs.map((tab) => (
-                                <button
-                                    key={tab.id}
-                                    className={`px-6 py-3 text-lg font-semibold rounded-lg transition-all transform ${activeTab === tab.id
-                                        ? "bg-highlight text-white shadow-md"
-                                        : "bg-background text-gray-400 hover:bg-highlight hover:text-white"
-                                        }`}
-                                    onClick={() => setActiveTab(tab.id)}
-                                >
-                                    {tab.label}
-                                </button>
-                            ))}
-                        </div>
+                <div className="container mx-auto px-4 py-8">
+                    {/* Header */}
+                    <div className="mb-10">
+                        <h1 className="text-3xl font-bold text-center sm:text-left mb-2">Tournament Dashboard</h1>
+                        <p className="text-gray-300 text-center sm:text-left">Manage, participate, and track all your tournament activities</p>
+                    </div>
+
+                    {/* Stats overview */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+                        {tabs.map((tab) => (
+                            <motion.div
+                                key={tab.id}
+                                whileHover={{ y: -5 }}
+                                className={`p-6 rounded-lg cursor-pointer shadow-md ${activeTab === tab.id
+                                        ? "bg-gradient-to-r from-highlight to-accent"
+                                        : "bg-[#2a1a66] hover:bg-[#3f2c84]"
+                                    }`}
+                                onClick={() => setActiveTab(tab.id)}
+                            >
+                                <h2 className="text-xl font-semibold mb-2">{tab.label}</h2>
+                                <div className="flex justify-between items-center">
+                                    <span className="text-3xl font-bold">{tab.count}</span>
+                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${activeTab === tab.id ? "bg-white bg-opacity-20" : "bg-highlight"
+                                        }`}>
+                                        {tab.id === "organizing" && "🏆"}
+                                        {tab.id === "playing" && "🎮"}
+                                        {tab.id === "invitations" && "✉️"}
+                                    </div>
+                                </div>
+                            </motion.div>
+                        ))}
                     </div>
 
                     <AnimatePresence mode="wait">
@@ -440,71 +532,58 @@ export default function Home() {
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: -20 }}
                             transition={{ duration: 0.3 }}
-                            className="mt-8 px-4 sm:px-8 lg:px-16"
+                            className="mt-20"
                         >
                             {activeTab === "organizing" && (
-                                <div>
-                                    <TournamentList
-                                        title="Organizing Tournaments"
-                                        tournaments={organizingTournaments}
-                                        emptyMessage="You are not organizing any tournaments."
-                                        actionLabel="Manage"
-                                        setTournaments={setOrganizingTournaments}
-                                    />
-                                </div>
+                                <TournamentList
+                                    title="Organizing Tournaments"
+                                    tournaments={organizingTournaments}
+                                    emptyMessage="You are not organizing any tournaments yet."
+                                    actionLabel="Manage"
+                                    setTournaments={setOrganizingTournaments}
+                                />
                             )}
 
                             {activeTab === "playing" && (
-                                <div>
-                                    <TournamentList
-                                        title="Playing Tournaments"
-                                        tournaments={playingTournaments}
-                                        emptyMessage="You are not playing in any tournaments."
-                                        actionLabel="View"
-                                        setTournaments={setPlayingTournaments}
-                                    />
-                                </div>
+                                <TournamentList
+                                    title="Playing Tournaments"
+                                    tournaments={playingTournaments}
+                                    emptyMessage="You are not playing in any tournaments yet."
+                                    actionLabel="View"
+                                    setTournaments={setPlayingTournaments}
+                                />
                             )}
 
                             {activeTab === "invitations" && (
-                                <div>
-                                    <TournamentList
-                                        title="Invitations"
-                                        tournaments={invitations}
-                                        emptyMessage="You currently have no invitations."
-                                        onAction={handleAcceptInvitation}
-                                        actionLabel="Accept"
-                                        setTournaments={setInvitations}
-                                    />
-                                </div>
+                                <TournamentList
+                                    title="Tournament Invitations"
+                                    tournaments={invitations}
+                                    emptyMessage="You currently have no tournament invitations."
+                                    onAction={handleAcceptInvitation}
+                                    actionLabel="Accept"
+                                    setTournaments={setInvitations}
+                                />
                             )}
                         </motion.div>
                     </AnimatePresence>
 
-                    <motion.div
-                        className="fixed bottom-8 right-8 flex items-center gap-3 group" // Increased bottom, right, and gap
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.3 }}
+                    <motion.button
+                        className="fixed bottom-8 right-8 flex items-center gap-2 bg-highlight hover:bg-[#8569ea] text-white px-6 py-4 rounded-full shadow-lg transition-all duration-300 ease-in-out hover:shadow-xl"
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => setIsModalOpen(true)}
                     >
-                        <motion.div
-                            className="bg-[#43386e] text-white flex items-center px-4 py-3 rounded-full text-lg font-medium shadow-md cursor-pointer overflow-hidden"
-                            initial={{ width: "3.9rem" }}
-                            whileHover={{ width: "12rem" }}
-                            transition={{ type: "spring", stiffness: 150 }}
-                            onClick={() => setIsModalOpen(true)}
-                        >
-                            <FontAwesomeIcon
-                                icon={faPlusCircle}
-                                className="text-white text-3xl mr-4"
-                            />
-                            <span className="whitespace-nowrap">Create New</span>
-                        </motion.div>
-                    </motion.div>
+                        <FontAwesomeIcon
+                            icon={faPlusCircle}
+                            className="text-white text-xl"
+                        />
+                        <span className="font-medium">New Tournament</span>
+                    </motion.button>
                 </div>
             )}
 
             <CreateTournament isModalOpen={isModalOpen} setIsModalOpen={setIsModalOpen} ref={modalRef} />
+            <Footer />
         </div>
     );
 }
