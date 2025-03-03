@@ -44,7 +44,7 @@ export const MatchupModal = ({ isOpen, setOpen, matchup }: MatchupModalProps) =>
 
     useEffect(() => {
         async function LookupNextMatch() {
-            if (!isOpen) {return}
+            if (!isOpen) { return }
 
             const { data } = await supabase.from("tournament_matches").select("*")
                 .eq("tournament_id", matchup.tournament_id)
@@ -102,7 +102,7 @@ export const MatchupModal = ({ isOpen, setOpen, matchup }: MatchupModalProps) =>
         }
     };
 
-    const handleAddPlayer = (player : BracketPlayer, index : number) => {
+    const handleAddPlayer = (player: BracketPlayer, index: number) => {
         const players: BracketPlayer[] = editedMatchup.players || [];
         const playerIndex = index;
 
@@ -128,7 +128,7 @@ export const MatchupModal = ({ isOpen, setOpen, matchup }: MatchupModalProps) =>
 
         players[playerIndex] = player;
 
-        setEditedMatchup((prev) => ({...prev, players:players}))
+        setEditedMatchup((prev) => ({ ...prev, players: players }))
     }
 
 
@@ -168,11 +168,13 @@ export const MatchupModal = ({ isOpen, setOpen, matchup }: MatchupModalProps) =>
 
             if (existingMatchup) {
                 console.log("Found existing matchup, updating players");
-                const players: BracketPlayer[] = existingMatchup.players || [];
+                const currentMatchupPlayers: BracketPlayer[] = existingMatchup.players || [];
                 const playerIndex = 1 - editedMatchup.match_number % 2
 
-                while (players.length < 2) {
-                    players.push({
+                // Adds in placeholder players as needed
+
+                while (currentMatchupPlayers.length < 2) {
+                    currentMatchupPlayers.push({
                         uuid: "",
                         name: "",
                         email: "",
@@ -180,9 +182,9 @@ export const MatchupModal = ({ isOpen, setOpen, matchup }: MatchupModalProps) =>
                     });
                 }
 
-                if (playerIndex >= players.length) {
-                    for (let i = players.length; i < playerIndex; i++) {
-                        players.push({
+                if (playerIndex >= currentMatchupPlayers.length) {
+                    for (let i = currentMatchupPlayers.length; i < playerIndex; i++) {
+                        currentMatchupPlayers.push({
                             uuid: "",
                             name: "",
                             email: "",
@@ -191,11 +193,19 @@ export const MatchupModal = ({ isOpen, setOpen, matchup }: MatchupModalProps) =>
                     }
                 }
 
-                players[playerIndex] = player;
+                // If the player has not previously been added to the matchup, add them
+
+                if (!currentMatchupPlayers.find(p => p.uuid === playerUuid)) {
+                    currentMatchupPlayers[playerIndex] = player;
+                }
+                // Otherwise, nothing needs to change
+                else {
+                    console.log("Player already in matchup, skipping update");
+                }
 
                 const { error: updateError } = await supabase
                     .from("tournament_matches")
-                    .update({ players: players })
+                    .update({ players: currentMatchupPlayers })
                     .eq("id", existingMatchup.id);
 
                 if (updateError) {
@@ -339,7 +349,7 @@ export const MatchupModal = ({ isOpen, setOpen, matchup }: MatchupModalProps) =>
                                     )}
                                     {addPlayersIndex == index && (
                                         <div className="w-full">
-                                            <PlayerManagementTabs tournamentID={matchup.tournament_id} onClose={(player : BracketPlayer) => handleAddPlayer(player, index)} />
+                                            <PlayerManagementTabs tournamentID={matchup.tournament_id} onClose={(player: BracketPlayer) => handleAddPlayer(player, index)} />
                                         </div>
                                     )
                                     }
