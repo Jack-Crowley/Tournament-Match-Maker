@@ -2,16 +2,22 @@
 
 import { Player } from "@/types/playerTypes";
 import { Checkbox, CheckboxWithEvent } from "./checkbox";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useMessage } from "@/context/messageContext";
 import { createClient } from "@/utils/supabase/client";
 import { Tournament } from "@/types/tournamentTypes";
 import { PlayerModal } from "./modals/editPlayersModal";
 import { ConfirmModal, ConfirmModalInformation } from "./modals/confirmationModal";
 
-export const PlayersTable = ({ players, setPlayers, otherPlayers, setOtherPlayers, type, tournament }: { players: Player[], setPlayers: (players: Player[]) => void, otherPlayers: Player[], setOtherPlayers: React.Dispatch<React.SetStateAction<Player[]>>, type: string, tournament: Tournament }) => {
+export const PlayersTable = ({ players, setPlayers, otherPlayers, setOtherPlayers, type, tournament, permission_level }: { permission_level: string, players: Player[], setPlayers: (players: Player[]) => void, otherPlayers: Player[], setOtherPlayers: React.Dispatch<React.SetStateAction<Player[]>>, type: string, tournament: Tournament }) => {
     const [selectedPlayers, setSelectedPlayers] = useState<Set<string>>(new Set())
     const [modalPlayer, setModalPlayer] = useState<Player | null>(null)
+
+    const [canDelete, setCanDelete] = useState<boolean>(false)
+
+    useEffect(() => {
+        setCanDelete(permission_level == "admin" || permission_level == "owner")
+    }, [permission_level])
 
     const [confirmModalInfo, setConfirmModalInfo] = useState<ConfirmModalInformation | null>(null)
 
@@ -115,41 +121,45 @@ export const PlayersTable = ({ players, setPlayers, otherPlayers, setOtherPlayer
                 <div className={`mb-6 ${type == "active" ? "" : "mt-12"} mx-auto`}>
                     <div className="flex justify-between items-center mb-6">
                         <h2 className="text-[#7458da] font-bold text-2xl">{type == "active" ? "Registered Players" : "Waitlist"}</h2>
-                        <div className="space-x-4">
+                        {canDelete && (
+                            <div className="space-x-4">
 
-                            <button
-                                className={`px-4 py-2 border-2 transition-all duration-300 ease-in-out rounded-lg text-white transform ${selectedPlayers.size > 0
-                                    ? "bg-[#1f1f1f] border-[#222222] hover:bg-[#171717] hover:border-[#171717]"
-                                    : "border-[#000000] bg-[#1717178d] cursor-not-allowed"
-                                    }`}
-                                onClick={() => handleBulkSwitch()}
-                            >
-                                {type == "active" ? "Move to Waitlist" : "Bring out of Waitlist"}
-                            </button>
-                            <button
-                                className={`px-4 py-2 border-2 transition-all duration-300 ease-in-out rounded-lg text-white transform ${selectedPlayers.size > 0
-                                    ? "bg-[#c02a2a] border-[#c02a2a] hover:bg-[#a32424] hover:border-[#a32424]"
-                                    : "border-[#c02a2a8b] bg-[#4512127b] cursor-not-allowed"
-                                    }`}
-                                onClick={() => handleBulkDelete()}
-                            >
-                                Delete
-                            </button>
-                        </div>
+                                <button
+                                    className={`px-4 py-2 border-2 transition-all duration-300 ease-in-out rounded-lg text-white transform ${selectedPlayers.size > 0
+                                        ? "bg-[#1f1f1f] border-[#222222] hover:bg-[#171717] hover:border-[#171717]"
+                                        : "border-[#000000] bg-[#1717178d] cursor-not-allowed"
+                                        }`}
+                                    onClick={() => handleBulkSwitch()}
+                                >
+                                    {type == "active" ? "Move to Waitlist" : "Bring out of Waitlist"}
+                                </button>
+                                <button
+                                    className={`px-4 py-2 border-2 transition-all duration-300 ease-in-out rounded-lg text-white transform ${selectedPlayers.size > 0
+                                        ? "bg-[#c02a2a] border-[#c02a2a] hover:bg-[#a32424] hover:border-[#a32424]"
+                                        : "border-[#c02a2a8b] bg-[#4512127b] cursor-not-allowed"
+                                        }`}
+                                    onClick={() => handleBulkDelete()}
+                                >
+                                    Delete
+                                </button>
+                            </div>
+                        )}
                     </div>
 
                     <table className="w-full mx-auto bg-deep rounded-lg shadow-lg">
                         <thead className="bg-[#1b113d]">
                             <tr>
-                                <th className="p-3 text-left text-white w-10">
-                                    <Checkbox deep={true} checked={selectedPlayers.size === players.length} onChange={() => {
-                                        if (selectedPlayers.size != players.length) {
-                                            setSelectedPlayers(new Set(players.map(player => player.id)));
-                                        } else {
-                                            setSelectedPlayers(new Set());
-                                        }
-                                    }} />
-                                </th>
+                                {canDelete && (
+                                    <th className="p-3 text-left text-white w-10">
+                                        <Checkbox deep={true} checked={selectedPlayers.size === players.length} onChange={() => {
+                                            if (selectedPlayers.size != players.length) {
+                                                setSelectedPlayers(new Set(players.map(player => player.id)));
+                                            } else {
+                                                setSelectedPlayers(new Set());
+                                            }
+                                        }} />
+                                    </th>
+                                )}
                                 <th className="p-3 text-left text-white truncate max-w-[150px]">Name</th>
                                 {tournament?.skill_fields.map((skill, index) => (
                                     <th key={index} className="p-3 text-left text-white truncate max-w-[150px] overflow-hidden text-ellipsis">
@@ -169,15 +179,17 @@ export const PlayersTable = ({ players, setPlayers, otherPlayers, setOtherPlayer
                                     }}
                                     className={`hover:bg-[#2a1b5f] bg-[#22154F] ${modalPlayer && modalPlayer.id == player.id ? "bg-[#2a1b5f]" : ""} transition-colors duration-50 cursor-pointer`}
                                 >
-                                    <td className="p-3">
-                                        <CheckboxWithEvent
-                                            checked={selectedPlayers.has(player.id)}
-                                            onChange={(e) => {
-                                                e.stopPropagation();
-                                                handleSelectPlayer(player.id);
-                                            }}
-                                        />
-                                    </td>
+                                    {canDelete && (
+                                        <td className="p-3">
+                                            <CheckboxWithEvent
+                                                checked={selectedPlayers.has(player.id)}
+                                                onChange={(e) => {
+                                                    e.stopPropagation();
+                                                    handleSelectPlayer(player.id);
+                                                }}
+                                            />
+                                        </td>
+                                    )}
                                     <td className={`p-3 ${player.is_anonymous ? "text-white" : "text-[#c8c8c8]"}`}>{player.player_name}</td>
                                     {tournament?.skill_fields.map((skill, index) => (
                                         <td key={index} className="p-3">{player.skills[skill] ? player.skills[skill] : "N/A"}</td>

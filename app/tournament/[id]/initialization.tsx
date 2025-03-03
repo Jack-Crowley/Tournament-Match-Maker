@@ -17,15 +17,16 @@ import { TournamentModal } from "@/components/modals/tournamentEditModal";
 import { AddPlaceholderPlayersModal } from "@/components/modals/addGeneratedPlayers";
 import { PlayersTable } from "@/components/playersTable";
 import { ConfirmModal, ConfirmModalInformation } from "@/components/modals/confirmationModal";
+import { User } from "@/types/userType";
 
-export default function Initialization({ refreshTournament }: { refreshTournament: () => void }) {
+export default function Initialization({ refreshTournament, user }: { user : User, refreshTournament: () => void }) {
     const supabase = createClient();
     const client = useClient();
     const [tournament, setTournament] = useState<Tournament | null>(null);
-    const [director, setDirector] = useState<boolean>(false);
     const [loading, setLoading] = useState<boolean>(true);
     const [joinLink, setJoinLink] = useState<null | string>(null);
     const [showQRCode, setShowQRCode] = useState<boolean>(false);
+    const [starting, setStarting] = useState<boolean>(false);
 
     const [confirmModalInfo, setConfirmModalInfo] = useState<ConfirmModalInformation | null>(null);
     const [activePlayers, setActivePlayers] = useState<Player[]>([]);
@@ -66,11 +67,6 @@ export default function Initialization({ refreshTournament }: { refreshTournamen
                 } else {
                     setActivePlayers(data1.filter(player => player.type == "active"));
                     setWaitlistedPlayers(data1.filter(player => player.type == "waitlist"));
-                }
-
-                const uuid = client.session?.user.id;
-                if (data && uuid == data.owner) {
-                    setDirector(true);
                 }
             } catch (error) {
                 triggerMessage("An unexpected error occurred", "red");
@@ -140,8 +136,12 @@ export default function Initialization({ refreshTournament }: { refreshTournamen
     };
 
     const handleStartTournament = async () => {
-        if (!tournament) return;
+        if (starting) return;
 
+        setStarting(true)
+
+        if (!tournament) return;
+        
         if (tournament.max_players && activePlayers.length > tournament.max_players) {
             const waitlistSwitchConfirm: ConfirmModalInformation = {
                 title: "Maximum Player Limit Exceeded",
@@ -151,6 +151,7 @@ export default function Initialization({ refreshTournament }: { refreshTournamen
             };
 
             setConfirmModalInfo(waitlistSwitchConfirm);
+            setStarting(false)
             return;
         }
 
@@ -303,7 +304,7 @@ export default function Initialization({ refreshTournament }: { refreshTournamen
                 <div className="relative px-6 pt-8 md:px-10">
                     <div className="flex items-center justify-between">
                         <h1 className="text-[#7458da] font-bold text-3xl md:text-4xl text-center">{tournament.name}</h1>
-                        {director && (
+                        {(user.permission_level == "owner" || user.permission_level == "admin") && (
                             <button
                                 onClick={() => setIsTournamentEditModalOpen(true)}
                                 className="text-[#7458da] hover:text-[#604BAC] transition-colors p-2 rounded-full hover:bg-[#2a1a66]"
@@ -363,7 +364,7 @@ export default function Initialization({ refreshTournament }: { refreshTournamen
                     )}
 
 
-                    {director && (
+                    {(user.permission_level == "owner" || user.permission_level == "admin") && (
                         <div className="bg-[#2a1a66] rounded-xl p-6 shadow-md mb-8">
                             <h2 className="text-[#7458da] font-bold text-2xl mb-6">Player Registration</h2>
 
@@ -457,6 +458,7 @@ export default function Initialization({ refreshTournament }: { refreshTournamen
                                 setOtherPlayers={setWaitlistedPlayers}
                                 type="active"
                                 tournament={tournament}
+                                permission_level={user.permission_level}
                             />
 
                             <PlayersTable
@@ -466,13 +468,12 @@ export default function Initialization({ refreshTournament }: { refreshTournamen
                                 setOtherPlayers={setActivePlayers}
                                 type="waitlist"
                                 tournament={tournament}
+                                permission_level={user.permission_level}
                             />
                         </div>
                     )}
 
-
-
-                    {director && (
+                    {(user.permission_level == "owner" || user.permission_level == "admin") && (
                         <div className="flex flex-wrap justify-center gap-4 mb-6">
                             <ActionButton
                                 onClick={() => setIsPlaceholderPlayersModalOpen(true)}
@@ -491,7 +492,7 @@ export default function Initialization({ refreshTournament }: { refreshTournamen
                                 <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
                                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
                                 </svg>
-                                Start Tournament
+                                {starting ? "Working..." : "Start Tournament"}
                             </ActionButton>
                         </div>
                     )}
@@ -510,8 +511,8 @@ export default function Initialization({ refreshTournament }: { refreshTournamen
                 isOpen={isPlaceholderPlayersModalOpen}
                 setOpen={setIsPlaceholderPlayersModalOpen}
                 tournament={tournament}
-                addActivePlayers={((players : any) => {setActivePlayers((prev) => [...prev, ...players])})}
-                addWaitlistPlayers={((players : any) => {setWaitlistedPlayers((prev) => [...prev, ...players])})}
+                addActivePlayers={((players: any) => { setActivePlayers((prev) => [...prev, ...players]) })}
+                addWaitlistPlayers={((players: any) => { setWaitlistedPlayers((prev) => [...prev, ...players]) })}
             />
         </div>
     );

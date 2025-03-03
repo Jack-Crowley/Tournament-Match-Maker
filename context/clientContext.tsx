@@ -4,6 +4,7 @@ import { createContext, useState, useContext, useEffect, ReactNode } from "react
 import { createClient } from "@/utils/supabase/client";
 import { SupabaseClient, Session } from "@supabase/supabase-js";
 import { useRouter, usePathname } from "next/navigation";
+import { SpinningLoader } from "@/components/loading";
 
 type ClientContextType = {
     client: SupabaseClient;
@@ -59,8 +60,6 @@ export function ClientProvider({ children }: { children: ReactNode }) {
 
         return () => subscription?.unsubscribe();
     }, [client, router, pathname]);
-
-    if (loading) return <p>Loading...</p>;
 
     return (
         <ClientContext.Provider value={{ client, session, authChange, setAuthChange, admin }}>
