@@ -1,23 +1,26 @@
 "use client"
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { Auth } from '@supabase/auth-ui-react';
 import { ThemeSupa } from '@supabase/auth-ui-shared';
 import { createClient } from '@/utils/supabase/client';
 import ReCAPTCHA from 'react-google-recaptcha';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { SpinningLoader } from '@/components/loading';
 
-const LoginPage = () => {
+const LoginPageContent = () => {
   const supabase = createClient();
   const [captchaValue, setCaptchaValue] = useState<string | null>(null);
-  const [wind, setWindow] = useState<null | any>(null)
-
+  const [wind, setWindow] = useState<null | any>(null);
   const router = useRouter();
-
+  const searchParams = useSearchParams();
+  
+  // Get redirectTo from URL params or use previously stored path
+  const redirectParam = searchParams?.get('redirectTo');
+  
   useEffect(() => {
-    setWindow(window)
-  }, [])
+    setWindow(window);
+  }, []);
 
   const handleAnonymousSignIn = async () => {
     if (!captchaValue) {
@@ -25,13 +28,29 @@ const LoginPage = () => {
       return;
     }
 
-    const { error } = await supabase.auth.signInAnonymously();
-    if (error) {
-      console.error('Error signing in anonymously:', error.message);
-    } else {
-      router.push("/")
-      console.log('Signed in anonymously');
+    try {
+      const { data, error } = await supabase.auth.signInAnonymously();
+      
+      if (error) {
+        console.error('Error signing in anonymously:', error.message);
+        return;
+      }
+      
+      if (data.session) {
+        const redirectTo = redirectParam || localStorage.getItem('previousPath') || '/account';
+        
+        localStorage.removeItem('previousPath');
+        console.log('Signed in anonymously, redirecting to:', redirectTo);
+        router.push(redirectTo);
+      }
+    } catch (err) {
+      console.error('Unexpected error during anonymous sign-in:', err);
     }
+  };
+
+  const getRedirectUrl = () => {
+    const destination = redirectParam || localStorage.getItem('previousPath') || '/account';
+    return `${window.location.origin}/auth/callback?redirectTo=${encodeURIComponent(destination)}`;
   };
 
   return (
@@ -61,7 +80,7 @@ const LoginPage = () => {
                   },
                 }}
                 theme="dark"
-                redirectTo={`${window.location.origin}/auth/callback`}
+                redirectTo={getRedirectUrl()}
               />
             </div>
 
@@ -86,17 +105,17 @@ const LoginPage = () => {
 
           <style>
             {`
-      .supabase-auth-ui_ui-anchor {
-        color: #ffffff !important; /* Change to your desired color */
-        font-size: 14px;
-      }
-      .supabase-auth-ui_ui-anchor:hover {
-        color: #dedede !important; /* Change to your desired hover color */
-      }
-
-      .supabase-auth-ui_ui-label {
-      color: white;}
-    `}
+              .supabase-auth-ui_ui-anchor {
+                color: #ffffff !important;
+                font-size: 14px;
+              }
+              .supabase-auth-ui_ui-anchor:hover {
+                color: #dedede !important;
+              }
+              .supabase-auth-ui_ui-label {
+                color: white;
+              }
+            `}
           </style>
         </div>
       ) : (
@@ -106,5 +125,12 @@ const LoginPage = () => {
   )
 }
 
+const LoginPage = () => {
+  return (
+    <Suspense fallback={<SpinningLoader />}>
+      <LoginPageContent />
+    </Suspense>
+  );
+};
 
 export default LoginPage;

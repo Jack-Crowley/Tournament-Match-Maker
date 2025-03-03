@@ -510,6 +510,8 @@ export default function Initialization({ refreshTournament }: { refreshTournamen
                 isOpen={isPlaceholderPlayersModalOpen}
                 setOpen={setIsPlaceholderPlayersModalOpen}
                 tournament={tournament}
+                addActivePlayers={((players : any) => {setActivePlayers((prev) => [...prev, ...players])})}
+                addWaitlistPlayers={((players : any) => {setWaitlistedPlayers((prev) => [...prev, ...players])})}
             />
         </div>
     );

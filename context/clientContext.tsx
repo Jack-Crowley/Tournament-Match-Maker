@@ -1,17 +1,15 @@
 "use client";
 
-import { createContext, useState, useContext, useEffect, ReactNode } from 'react';
-import { createClient } from '@/utils/supabase/client'
-import { SupabaseClient, Session } from '@supabase/supabase-js';
-import { useRouter } from 'next/navigation';
-import { faFileShield } from '@fortawesome/free-solid-svg-icons';
-import { usePathname } from 'next/navigation';
+import { createContext, useState, useContext, useEffect, ReactNode } from "react";
+import { createClient } from "@/utils/supabase/client";
+import { SupabaseClient, Session } from "@supabase/supabase-js";
+import { useRouter, usePathname } from "next/navigation";
 
 type ClientContextType = {
     client: SupabaseClient;
     session: Session | null;
     authChange: number;
-    setAuthChange: any;
+    setAuthChange: React.Dispatch<React.SetStateAction<number>>;
     admin: boolean;
 };
 
@@ -20,54 +18,52 @@ const ClientContext = createContext<ClientContextType | null>(null);
 export function ClientProvider({ children }: { children: ReactNode }) {
     const [client] = useState<SupabaseClient>(createClient());
     const [session, setSession] = useState<Session | null>(null);
-    const [signedIn, setSignedIn] = useState<boolean>(false)
-    const [authChange, SetAuthChange] = useState<number>(0)
-    const [admin, setAdmin] = useState<boolean>(false)
+    const [authChange, setAuthChange] = useState<number>(0);
+    const [admin, setAdmin] = useState<boolean>(false);
+    const [loading, setLoading] = useState<boolean>(true);
+
     const router = useRouter();
     const pathname = usePathname();
 
     useEffect(() => {
         const fetchSession = async () => {
+            setLoading(true);
             try {
                 const { data: { session } } = await client.auth.getSession();
                 setSession(session);
 
-                if (!session) {
-                    router.push('/login');
-                    return;
+                if (!session && pathname !== "/login" && pathname !== "/auth/callback" && pathname !== "/") {
+                    localStorage.setItem("previousPath", pathname);
+                    router.push("/login");
                 }
-
-                setSignedIn(true);
-
             } catch (err) {
-                console.log(err)
-                // router.push('/login');
+                console.error("Error fetching session:", err);
+            } finally {
+                setLoading(false);
             }
         };
 
         fetchSession();
 
-        client.auth.onAuthStateChange((event, session) => {
-            if (event === 'SIGNED_OUT') {
-                console.log(event)
-            }
-            if (session && !signedIn && pathname === '/login') {
-                setSignedIn(true);
-                router.push('/account');
+        const { data: { subscription } } = client.auth.onAuthStateChange((event, session) => {
+            console.log("Auth event:", event);
+
+            if (event === "SIGNED_OUT") {
+                setSession(null);
+                router.push("/login");
+            } else if ((event === "SIGNED_IN" || event === "USER_UPDATED") && session) {
+                setSession(session);
+                setAuthChange(prev => prev + 1);
             }
         });
-    }, [client, router]);
 
-    const value: ClientContextType = {
-        client,
-        session,
-        authChange,
-        admin,
-        setAuthChange: SetAuthChange
-    };
+        return () => subscription?.unsubscribe();
+    }, [client, router, pathname]);
+
+    if (loading) return <p>Loading...</p>;
 
     return (
-        <ClientContext.Provider value={value}>
+        <ClientContext.Provider value={{ client, session, authChange, setAuthChange, admin }}>
             {children}
         </ClientContext.Provider>
     );
@@ -75,8 +71,8 @@ export function ClientProvider({ children }: { children: ReactNode }) {
 
 export function useClient(): ClientContextType {
     const context = useContext(ClientContext);
-    if (context === null) {
-        throw new Error('useClient must be used within a ClientProvider');
+    if (!context) {
+        throw new Error("useClient must be used within a ClientProvider");
     }
     return context;
 }

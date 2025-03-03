@@ -87,7 +87,7 @@ export const ViewTournament = ({ tournamentID }: { tournamentID: number }) => {
         }   
 
         loadPlayer()
-    }, [])
+    }, [client.session?.user, supabase, tournamentID])
 
     useEffect(() => {
         async function LoadBracket() {
@@ -130,7 +130,7 @@ export const ViewTournament = ({ tournamentID }: { tournamentID: number }) => {
     }
 
     return (
-        <div className="relative">
+        <div className={`relative ${userPermission?.anonymous ? "one" : "two"}`}>
             <SideNavbar tab={activeTab} setTab={setActiveTab} />
             {/* <button
                 className="absolute top-4 right-4 px-6 py-3 text-lg font-semibold rounded-lg transition-all transform bg-background text-gray-400 hover:bg-highlight hover:text-white shadow-md z-50 pointer-events-auto"

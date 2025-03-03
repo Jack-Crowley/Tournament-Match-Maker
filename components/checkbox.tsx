@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 export const Checkbox = ({ checked, onChange, deep=false }: { deep?:boolean, checked: boolean; onChange: () => void }) => {
   return (
     <motion.div
-      className={`relative w-5 h-5 rounded-md border-2 ${deep ? "border-deep" : "border-soft"} flex items-center justify-center cursor-pointer`}
+      className={`ml-3 relative w-5 h-5 rounded-md border-2 ${deep ? "border-deep" : "border-soft"} flex items-center justify-center cursor-pointer`}
       style={{ backgroundColor: checked ? deep ? "#31216b" : "#7864c0" : "transparent" }}
       onClick={onChange}
       whileHover={{ scale: 1.1 }}
