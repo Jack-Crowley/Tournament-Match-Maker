@@ -339,7 +339,7 @@ export const MatchupModal = ({ isOpen, setOpen, matchup }: MatchupModalProps) =>
                                     )}
                                     {addPlayersIndex == index && (
                                         <div className="w-full">
-                                            <PlayerManagementTabs tournamentID={matchup.tournament_id} matchup={matchup} index={index} onClose={(player : BracketPlayer) => handleAddPlayer(player, index)} />
+                                            <PlayerManagementTabs tournamentID={matchup.tournament_id} onClose={(player : BracketPlayer) => handleAddPlayer(player, index)} />
                                         </div>
                                     )
                                     }

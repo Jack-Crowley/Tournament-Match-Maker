@@ -33,6 +33,10 @@ export function ClientProvider({ children }: { children: ReactNode }) {
                 setSession(session);
 
                 if (!session) {
+                    // Store current path before redirecting to login
+                    if (pathname !== '/login' && pathname !== '/auth/callback') {
+                        localStorage.setItem('previousPath', pathname);
+                    }
                     router.push('/login');
                     return;
                 }
@@ -47,16 +51,32 @@ export function ClientProvider({ children }: { children: ReactNode }) {
 
         fetchSession();
 
-        client.auth.onAuthStateChange((event, session) => {
+        // Set up auth state change listener
+        const { data: { subscription } } = client.auth.onAuthStateChange((event, session) => {
+            console.log("Auth event:", event);
+            
             if (event === 'SIGNED_OUT') {
-                console.log(event)
-            }
-            if (session && !signedIn && pathname === '/login') {
+                setSignedIn(false);
+                setSession(null);
+                
+                // For sign out, we still want to redirect to login
+                router.push('/login');
+            } 
+            else if ((event === 'SIGNED_IN' || event === 'USER_UPDATED') && session) {
+                // Just update the session state - no automatic redirects
+                setSession(session);
                 setSignedIn(true);
-                router.push('/account');
+                
+                // Trigger auth change for components that need to react
+                SetAuthChange(prev => prev + 1);
             }
         });
-    }, [client, router]);
+
+        // Cleanup subscription
+        return () => {
+            subscription.unsubscribe();
+        };
+    }, [client, router, pathname]);
 
     const value: ClientContextType = {
         client,

@@ -2,15 +2,15 @@
 
 import { useEffect, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faUserClock, faUserSlash, faUserPlus, faSearch, faExclamationCircle, faInfoCircle } from "@fortawesome/free-solid-svg-icons";
-import { Player, TournamentPlayer } from "@/types/playerTypes";
+import { faUserClock, faUserSlash, faUserPlus, faSearch, faExclamationCircle } from "@fortawesome/free-solid-svg-icons";
+import {  TournamentPlayer } from "@/types/playerTypes";
 import { createClient } from "@/utils/supabase/client";
 import { useMessage } from "@/context/messageContext";
 import { motion, AnimatePresence } from "framer-motion";
-import { BracketPlayer, Matchup } from "@/types/bracketTypes";
+import { BracketPlayer } from "@/types/bracketTypes";
 import { v4 } from "uuid";
 
-export const PlayerManagementTabs = ({ tournamentID, matchup, index, onClose }: { tournamentID: number, matchup: Matchup, index: number, onClose: (player:BracketPlayer) => void }) => {
+export const PlayerManagementTabs = ({ tournamentID, onClose }: { tournamentID: number, onClose: (player:BracketPlayer) => void }) => {
     const [activeTab, setActiveTab] = useState("waitlist");
     const [waitlistPlayers, setWaitlistPlayers] = useState<TournamentPlayer[]>([]);
     const [inactivePlayers, setInactivePlayers] = useState<TournamentPlayer[]>([]);
@@ -68,6 +68,8 @@ export const PlayerManagementTabs = ({ tournamentID, matchup, index, onClose }: 
         setSearchQuery("");
         setSelectedPlayer(null);
         setDisplayLimit(5);
+
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [tournamentID, supabase, activeTab]);
 
     const handleTabChange = (tab: string) => {

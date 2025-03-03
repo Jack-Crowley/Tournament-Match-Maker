@@ -1,20 +1,9 @@
 "use client"
 
-import { useClient } from "@/context/clientContext";
 import Image from "next/legacy/image"
 import Link from 'next/link';
-import { useEffect, useState } from "react";
 
 export default function Home() {
-  const client = useClient()
-  const [loggedIn, setLoggedIn] = useState(false)
-  
-  useEffect(() => {
-    if (client.session && client.session.user) {
-      setLoggedIn(true)
-    }
-  }, [client])
-
   return (
     <div className="w-full justify-center">
       <div className="hidden md:grid sm:grid-cols-2 min-h-[calc(100vh-160px)] w-full">
@@ -29,7 +18,7 @@ export default function Home() {
             <h2 className="text-7xl font-black uppercase tracking-wider bg-gradient-to-r from-[#ecd4f7] to-[#FF9CEE] bg-clip-text text-transparent">
               Win
             </h2>
-            <Link href={loggedIn ? `/tournaments` : '/login'}>
+            <Link href='/tournaments'>
               <button className="mt-8 px-8 py-4 bg-[#604BAC] rounded-full text-[#160A3A] font-bold text-xl hover:opacity-90 transition-opacity w-fit">
                 Get Started!
               </button>
@@ -75,7 +64,7 @@ export default function Home() {
             <h2 className="text-5xl text-center font-black uppercase tracking-wider bg-gradient-to-r from-[#ecd4f7] to-[#FF9CEE] bg-clip-text text-transparent">
               Win
             </h2>
-            <Link href={loggedIn ? `/tournaments` : '/login'}>
+            <Link href={'/tournaments'}>
               <button className="ml-[20%] width-[60%] mt-8 px-8 py-4 bg-[#604BAC] rounded-full text-[#160A3A] font-bold text-xl hover:opacity-90 transition-opacity w-fit">
                 Get Started!
               </button>
