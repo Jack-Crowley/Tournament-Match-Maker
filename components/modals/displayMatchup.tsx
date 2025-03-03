@@ -2,12 +2,10 @@
 
 import { useEffect, useRef, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faEnvelope, faTrash } from "@fortawesome/free-solid-svg-icons";
+import { faEnvelope, faTrash, faPlus, faCrown, faTimes } from "@fortawesome/free-solid-svg-icons";
 import { BracketPlayer, Matchup } from "@/types/bracketTypes";
 import { createClient } from "@/utils/supabase/client";
-import { faPlus } from "@fortawesome/free-solid-svg-icons/faPlus";
-import { motion } from "framer-motion";
-import { faCrown } from "@fortawesome/free-solid-svg-icons/faCrown";
+import { motion, AnimatePresence } from "framer-motion";
 import { PlayerManagementTabs } from "../playerManagementTabs";
 
 interface MatchupModalProps {
@@ -18,17 +16,18 @@ interface MatchupModalProps {
 
 export const MatchupModal = ({ isOpen, setOpen, matchup }: MatchupModalProps) => {
     const [editedMatchup, setEditedMatchup] = useState<Matchup>(matchup);
-    const [addPlayersIndex, setAddPlayersIndex] = useState<number>(-1)
+    const [addPlayersIndex, setAddPlayersIndex] = useState<number>(-1);
+    const [isLoading, setIsLoading] = useState<boolean>(false);
     const modalRef = useRef<HTMLDivElement>(null);
     const supabase = createClient();
 
-    const [locked, setLocked] = useState<boolean>(false)
-    const [removedPlayersList, setRemovedPlayersList] = useState<number[]>([])
+    const [locked, setLocked] = useState<boolean>(false);
+    const [removedPlayersList, setRemovedPlayersList] = useState<number[]>([]);
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
             if (modalRef.current && !modalRef.current.contains(event.target as Node)) {
-                setEditedMatchup(matchup)
+                setEditedMatchup(matchup);
                 setOpen(false);
             }
         };
@@ -44,27 +43,31 @@ export const MatchupModal = ({ isOpen, setOpen, matchup }: MatchupModalProps) =>
 
     useEffect(() => {
         async function LookupNextMatch() {
-            if (!isOpen) {return}
+            if (!isOpen) return;
 
-            const { data } = await supabase.from("tournament_matches").select("*")
+            const { data } = await supabase
+                .from("tournament_matches")
+                .select("*")
                 .eq("tournament_id", matchup.tournament_id)
                 .eq("match_number", Math.ceil(matchup.match_number / 2))
-                .eq("round", matchup.round + 1).single()
+                .eq("round", matchup.round + 1)
+                .single();
 
-
-            setLocked(data && data.winner)
+            setLocked(data && data.winner);
         }
 
         setEditedMatchup(matchup);
-        setRemovedPlayersList([])
-        LookupNextMatch()
+        setRemovedPlayersList([]);
+        setAddPlayersIndex(-1);
+        LookupNextMatch();
     }, [matchup, supabase, isOpen]);
 
     const OpenAddPlayerDropdown = (index: number) => {
-        setAddPlayersIndex(index)
-    }
+        setAddPlayersIndex(index === addPlayersIndex ? -1 : index);
+    };
 
     const updateMatch = async () => {
+        setIsLoading(true);
         const winnerUUID = editedMatchup.winner;
         try {
             const { error } = await supabase
@@ -75,17 +78,17 @@ export const MatchupModal = ({ isOpen, setOpen, matchup }: MatchupModalProps) =>
                 })
                 .eq("id", String(matchup.id));
 
-            for (let i = 0; i < removedPlayersList.length; i++) {
-                const playerIndex: number = removedPlayersList[i];
-
+            for (const playerIndex of removedPlayersList) {
                 if (matchup.round > 1) {
-                    const { error } = await supabase.from("tournament_matches").update({ winner: null })
-                        .eq("match_number", matchup.match_number * 2 - playerIndex % 2 + 1)
+                    const { error } = await supabase
+                        .from("tournament_matches")
+                        .update({ winner: null })
+                        .eq("match_number", matchup.match_number * 2 - (playerIndex % 2) + 1)
                         .eq("round", matchup.round - 1)
-                        .eq("tournament_id", matchup.tournament_id)
+                        .eq("tournament_id", matchup.tournament_id);
 
                     if (error) {
-                        console.log(error)
+                        console.error("Error updating previous match:", error);
                     }
                 }
             }
@@ -93,19 +96,21 @@ export const MatchupModal = ({ isOpen, setOpen, matchup }: MatchupModalProps) =>
             if (error) {
                 console.error("Error updating matchup:", error);
             } else {
-                if (winnerUUID) propagatePlayer(winnerUUID);
+                if (winnerUUID) await propagatePlayer(winnerUUID);
                 setEditedMatchup((prev) => ({ ...prev, winnerUUID: winnerUUID }));
+                console.log("Matchup updated successfully");
                 setOpen(false);
             }
         } catch (err) {
             console.error("Unexpected error:", err);
+        } finally {
+            setIsLoading(false);
         }
     };
 
-    const handleAddPlayer = (player : BracketPlayer, index : number) => {
-        const players: BracketPlayer[] = editedMatchup.players || [];
-        const playerIndex = index;
-
+    const handleAddPlayer = (player: BracketPlayer, index: number) => {
+        const players: BracketPlayer[] = [...(editedMatchup.players || [])];
+        
         while (players.length < 2) {
             players.push({
                 uuid: "",
@@ -115,37 +120,27 @@ export const MatchupModal = ({ isOpen, setOpen, matchup }: MatchupModalProps) =>
             });
         }
 
-        if (playerIndex >= players.length) {
-            for (let i = players.length; i < playerIndex; i++) {
-                players.push({
-                    uuid: "",
-                    name: "",
-                    email: "",
-                    account_type: "placeholder",
-                });
-            }
-        }
-
-        players[playerIndex] = player;
-
-        setEditedMatchup((prev) => ({...prev, players:players}))
-    }
-
+        players[index] = player;
+        setEditedMatchup((prev) => ({ ...prev, players }));
+        setAddPlayersIndex(-1);
+    };
 
     const changeWinner = (playerUUID: string) => {
-        console.log("chaning winner")
-        const winner = editedMatchup.players.find(player => player.uuid === playerUUID);
+        const winner = editedMatchup.players.find((player) => player.uuid === playerUUID);
         if (!winner) {
-            return console.error("No player found? for winner");
+            console.error("Player not found");
+            return;
         }
 
         setEditedMatchup((prev) => ({ ...prev, winner: playerUUID }));
-        console.log("the new winner is in matchup", editedMatchup);
     };
 
     const propagatePlayer = async (playerUuid: string) => {
-        const player: BracketPlayer | undefined = editedMatchup.players.find(player => player.uuid === playerUuid);
-        if (!player) return console.error("Player not found for propagation");
+        const player = editedMatchup.players.find((player) => player.uuid === playerUuid);
+        if (!player) {
+            console.error("Player not found for propagation");
+            return;
+        }
 
         const round = editedMatchup.round + 1;
         const matchNumber = Math.ceil(editedMatchup.match_number / 2);
@@ -167,9 +162,8 @@ export const MatchupModal = ({ isOpen, setOpen, matchup }: MatchupModalProps) =>
             const existingMatchup: Matchup | null = data ? (data as Matchup) : null;
 
             if (existingMatchup) {
-                console.log("Found existing matchup, updating players");
-                const players: BracketPlayer[] = existingMatchup.players || [];
-                const playerIndex = 1 - editedMatchup.match_number % 2
+                const players: BracketPlayer[] = [...(existingMatchup.players || [])];
+                const playerIndex = 1 - (editedMatchup.match_number % 2);
 
                 while (players.length < 2) {
                     players.push({
@@ -180,35 +174,28 @@ export const MatchupModal = ({ isOpen, setOpen, matchup }: MatchupModalProps) =>
                     });
                 }
 
-                if (playerIndex >= players.length) {
-                    for (let i = players.length; i < playerIndex; i++) {
-                        players.push({
-                            uuid: "",
-                            name: "",
-                            email: "",
-                            account_type: "placeholder",
-                        });
-                    }
-                }
-
                 players[playerIndex] = player;
 
                 const { error: updateError } = await supabase
                     .from("tournament_matches")
-                    .update({ players: players })
+                    .update({ players })
                     .eq("id", existingMatchup.id);
 
                 if (updateError) {
                     console.error("Error updating players in existing matchup:", updateError.message);
-                } else {
-                    console.log("Updated existing matchup by replacing placeholder player");
                 }
             } else {
-                console.log("No existing matchup found, inserting new matchup");
-
-                const placeHolderPlayer: BracketPlayer = { uuid: "", name: "", email: "", account_type: "placeholder" };
+                const placeholderPlayer: BracketPlayer = {
+                    uuid: "",
+                    name: "",
+                    email: "",
+                    account_type: "placeholder",
+                };
+                
                 player.score = 0;
-                const players = editedMatchup.match_number % 2 === 0 ? [placeHolderPlayer, player] : [player, placeHolderPlayer];
+                const players = editedMatchup.match_number % 2 === 0 
+                    ? [placeholderPlayer, player] 
+                    : [player, placeholderPlayer];
 
                 const newMatchup = {
                     tournament_id: matchup.tournament_id,
@@ -223,8 +210,6 @@ export const MatchupModal = ({ isOpen, setOpen, matchup }: MatchupModalProps) =>
 
                 if (insertError) {
                     console.error("Error inserting new matchup:", insertError.message);
-                } else {
-                    console.log("Inserted new matchup successfully");
                 }
             }
         } catch (err) {
@@ -232,154 +217,206 @@ export const MatchupModal = ({ isOpen, setOpen, matchup }: MatchupModalProps) =>
         }
     };
 
-    const removePlayer = async (playerUuid: string) => {
-        const updatedPlayers = editedMatchup.players.map(player =>
-            player.uuid === playerUuid ? { uuid: "", name: "", email: "", account_type: "placeholder" } : player
-        );
+    const removePlayer = (playerUuid: string) => {
+        const playerIndex = editedMatchup.players.findIndex(player => player.uuid === playerUuid);
+        if (playerIndex === -1) return;
+        
+        const updatedPlayers = [...editedMatchup.players];
+        updatedPlayers[playerIndex] = {
+            uuid: "",
+            name: "",
+            email: "",
+            account_type: "placeholder"
+        };
 
-        setRemovedPlayersList(prev => [...prev, editedMatchup.players.map(player => player.uuid).indexOf(playerUuid)])
-
-        setEditedMatchup((prev) => ({ ...prev, players: updatedPlayers }));
+        setRemovedPlayersList(prev => [...prev, playerIndex]);
+        setEditedMatchup((prev: any) => ({ 
+            ...prev, 
+            players: updatedPlayers,
+            winner: prev.winner === playerUuid ? null : prev.winner
+        }));
     };
-
 
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div ref={modalRef} className="bg-[#1E1E1E] p-6 rounded-lg shadow-lg max-w-lg w-full mx-4 overflow-y-auto max-h-[90vh]">
-                <h2 className="text-xl font-bold mb-4 text-white">Edit Matchup</h2>
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <motion.div
+                ref={modalRef}
+                className="bg-gradient-to-b from-[#252525] to-[#1E1E1E] p-6 rounded-xl shadow-2xl w-full max-w-lg overflow-y-auto max-h-[90vh] border border-[#333333]"
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.9 }}
+                transition={{ type: "spring", damping: 25, stiffness: 300 }}
+            >
+                <div className="flex justify-between items-center mb-6">
+                    <h2 className="text-2xl font-bold text-white">
+                        {locked ? "Match Details" : "Edit Matchup"}
+                    </h2>
+                    <button 
+                        onClick={() => { setOpen(false); setEditedMatchup(matchup); }}
+                        className="text-gray-400 hover:text-white transition-colors"
+                    >
+                        <FontAwesomeIcon icon={faTimes} size="lg" />
+                    </button>
+                </div>
 
                 <div className="space-y-4">
                     {editedMatchup.players.map((player, index) => (
-                        <div key={player.uuid} className=" ">
+                        <div key={index} className="mb-4">
                             {player.name ? (
-                                <div className="flex items-center justify-between bg-[#2A2A2A] p-3 rounded-lg">
+                                <motion.div 
+                                    className="flex items-center justify-between bg-[#2A2A2A] p-4 rounded-xl border border-[#3A3A3A] shadow-md"
+                                    initial={{ opacity: 0, x: -20 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    transition={{ delay: index * 0.1 }}
+                                >
                                     <div className="flex items-center space-x-4">
-                                        <motion.div
-                                            className="relative hover:cursor-pointer"
+                                        <motion.button
+                                            className={`relative p-2 rounded-full ${player.uuid === editedMatchup.winner ? 'bg-yellow-500/20' : ''}`}
                                             whileHover={{ scale: 1.1 }}
-                                            transition={{ type: "spring", stiffness: 300 }}
+                                            whileTap={{ scale: 0.95 }}
+                                            disabled={locked}
+                                            onClick={() => !locked && changeWinner(player.uuid)}
                                         >
-                                            {player.uuid === editedMatchup.winner ? (
-                                                <FontAwesomeIcon
-                                                    icon={faCrown}
-                                                    className="text-yellow-400"
-                                                    size="2x"
-                                                />
-                                            ) : (
-                                                <motion.div
-                                                    initial={{ color: "rgba(0,0,0,0)" }}
-                                                    whileHover={{ color: `${locked ? "rgba(0,0,0,0)" : "rgba(255, 255, 0, 0.2)"}`, stroke: "rgba(255, 255, 255, 0.5)" }}
-                                                    onClick={() => { if (!locked) changeWinner(player.uuid) }}
-                                                >
-                                                    <FontAwesomeIcon
-                                                        icon={faCrown}
-                                                        className="stroke-2 stroke-white"
-                                                        size="2x"
-                                                    />
-                                                </motion.div>
+                                            <FontAwesomeIcon
+                                                icon={faCrown}
+                                                className={player.uuid === editedMatchup.winner 
+                                                    ? "text-yellow-400" 
+                                                    : "text-gray-500 hover:text-yellow-400"}
+                                                size="lg"
+                                            />
+                                        </motion.button>
+                                        <div className="flex flex-col">
+                                            <span className="font-medium text-white">{player.name}</span>
+                                            {player.account_type === "logged_in" && (
+                                                <span className="text-sm text-gray-400">{player.email}</span>
                                             )}
-                                        </motion.div>
-                                        <span className=" text-white">{player.name}</span>
-                                        {player.account_type === "logged_in" && (
-                                            <span className="text-sm text-gray-400">{player.email}</span>
-                                        )}
+                                        </div>
                                     </div>
-                                    <div className="flex items-center space-x-4">
-                                        {locked ? (
-                                            <input
-                                                type="number"
-                                                value={player.score}
-                                                readOnly
-                                                className="w-20 p-2 bg-[#1f1f1f] border-b-2 border-[#7458DA] text-white rounded-lg focus:outline-none focus:border-[#604BAC]"
-                                            />
-                                        ) : (
-                                            <input
-                                                type="number"
-                                                value={player.score}
-                                                onChange={(e) => {
-                                                    const newScore = parseInt(e.target.value) || 0;
-                                                    setEditedMatchup(prev => ({
-                                                        ...prev,
-                                                        players: prev.players.map(p =>
-                                                            p.uuid === player.uuid ? { ...p, score: newScore } : p
-                                                        )
-                                                    }));
-                                                }}
-                                                className="w-20 p-2 bg-[#3A3A3A] border-b-2 border-[#7458DA] text-white rounded-lg focus:outline-none focus:border-[#604BAC]"
-                                            />
-                                        )}
+                                    <div className="flex items-center space-x-3">
+                                        <input
+                                            type="number"
+                                            value={player.score || 0}
+                                            readOnly={locked}
+                                            onChange={(e) => {
+                                                const newScore = parseInt(e.target.value) || 0;
+                                                setEditedMatchup(prev => ({
+                                                    ...prev,
+                                                    players: prev.players.map(p =>
+                                                        p.uuid === player.uuid ? { ...p, score: newScore } : p
+                                                    )
+                                                }));
+                                            }}
+                                            className={`w-20 p-2 ${locked 
+                                                ? 'bg-[#1f1f1f] text-gray-400 cursor-not-allowed' 
+                                                : 'bg-[#3A3A3A] hover:bg-[#444444]'
+                                            } border-b-2 border-[#7458DA] text-white rounded-lg focus:outline-none focus:border-[#604BAC] transition-colors`}
+                                        />
 
                                         {player.account_type === "logged_in" && (
-                                            <button className="p-2 bg-[#604BAC] rounded-lg text-white hover:bg-[#7458DA]">
+                                            <motion.button 
+                                                className="p-2 bg-[#604BAC] rounded-lg text-white hover:bg-[#7458DA] transition-colors"
+                                                whileHover={{ scale: 1.05 }}
+                                                whileTap={{ scale: 0.95 }}
+                                            >
                                                 <FontAwesomeIcon icon={faEnvelope} />
-                                            </button>
+                                            </motion.button>
                                         )}
-                                        <button className={`p-2 ${!locked
-                                            ? "bg-[#c02a2a] border-[#c02a2a] hover:bg-[#a32424] hover:border-[#a32424]"
-                                            : "border-[#c02a2a8b] bg-[#4512127b] cursor-not-allowed"
-                                            } rounded-lg text-white border-[1px]`} onClick={() => { if (!locked) removePlayer(player.uuid) }}>
+                                        <motion.button 
+                                            className={`p-2 ${!locked
+                                                ? "bg-[#c02a2a] border-[#c02a2a] hover:bg-[#a32424]"
+                                                : "bg-[#4512127b] border-[#c02a2a8b] cursor-not-allowed opacity-50"
+                                                } rounded-lg text-white border transition-colors`}
+                                            onClick={() => { if (!locked) removePlayer(player.uuid) }}
+                                            disabled={locked}
+                                            whileHover={!locked ? { scale: 1.05 } : {}}
+                                            whileTap={!locked ? { scale: 0.95 } : {}}
+                                        >
                                             <FontAwesomeIcon icon={faTrash} />
-                                        </button>
+                                        </motion.button>
                                     </div>
-                                </div>
+                                </motion.div>
                             ) : (
                                 <div className="w-full">
                                     {!locked && (
                                         <motion.button
-                                            whileHover={{ scale: 1.05 }}
-                                            whileTap={{ scale: 0.95 }}
+                                            whileHover={{ scale: 1.03 }}
+                                            whileTap={{ scale: 0.97 }}
                                             onClick={() => OpenAddPlayerDropdown(index)}
-                                            className="flex w-full items-center justify-center px-6 py-3 bg-[#342373] text-white rounded-lg shadow-lg hover:bg-[#674dc8] transition-colors duration-200"
+                                            className={`flex w-full items-center justify-center px-6 py-4 ${
+                                                addPlayersIndex === index 
+                                                    ? "bg-[#4A327F] border-[#7458DA]" 
+                                                    : "bg-[#342373] border-transparent hover:bg-[#3D2A87]"
+                                            } text-white rounded-xl shadow-lg transition-all duration-200 border-2`}
                                         >
-                                            <FontAwesomeIcon icon={faPlus} className="text-white text-lg" />
-                                            <span className="ml-2 text-white">Add Player</span>
+                                            <FontAwesomeIcon icon={faPlus} className="text-white" />
+                                            <span className="ml-2 font-medium">
+                                                {addPlayersIndex === index ? "Cancel" : "Add Player"}
+                                            </span>
                                         </motion.button>
                                     )}
-                                    {addPlayersIndex == index && (
-                                        <div className="w-full">
-                                            <PlayerManagementTabs tournamentID={matchup.tournament_id} onClose={(player : BracketPlayer) => handleAddPlayer(player, index)} />
-                                        </div>
-                                    )
-                                    }
+                                    <AnimatePresence>
+                                        {addPlayersIndex === index && (
+                                            <motion.div 
+                                                className="w-full mt-3 bg-[#2A2A2A] p-4 rounded-xl border border-[#3A3A3A]"
+                                                initial={{ opacity: 0, height: 0 }}
+                                                animate={{ opacity: 1, height: "auto" }}
+                                                exit={{ opacity: 0, height: 0 }}
+                                                transition={{ duration: 0.2 }}
+                                            >
+                                                <PlayerManagementTabs
+                                                    tournamentID={matchup.tournament_id}
+                                                    onClose={(player: BracketPlayer) => handleAddPlayer(player, index)}
+                                                />
+                                            </motion.div>
+                                        )}
+                                    </AnimatePresence>
                                 </div>
                             )}
-
                         </div>
                     ))}
                 </div>
 
-
                 {locked ? (
-                    <div className="text-center w-full mt-5">
-                        <h1>This match has been locked as the next match in the series has already had a winner declared</h1>
-                        <button
-                            className="mt-5 bg-[#2f2f2f] text-white px-4 py-2 rounded-lg hover:bg-[#3C3C3C] transition-colors"
-                            onClick={() => { setOpen(false); setEditedMatchup(matchup) }}
+                    <div className="text-center w-full mt-6">
+                        <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4 mb-5">
+                            <p className="text-yellow-200 text-sm">
+                                This match has been locked because the next match in the tournament already has a winner declared.
+                            </p>
+                        </div>
+                        <motion.button
+                            className="mt-2 bg-[#3A3A3A] text-white px-6 py-3 rounded-xl hover:bg-[#4A4A4A] transition-colors font-medium"
+                            onClick={() => { setOpen(false); setEditedMatchup(matchup); }}
+                            whileHover={{ scale: 1.03 }}
+                            whileTap={{ scale: 0.97 }}
                         >
-                            Go Back
-                        </button>
+                            Close
+                        </motion.button>
                     </div>
-
                 ) : (
                     <div className="mt-8 space-x-4 flex justify-end">
-                        <button
-                            className="bg-[#2C2C2C] text-white px-4 py-2 rounded-lg hover:bg-[#3C3C3C] transition-colors"
-                            onClick={() => { setOpen(false); setEditedMatchup(matchup) }}
+                        <motion.button
+                            className="bg-[#2C2C2C] text-white px-5 py-3 rounded-xl hover:bg-[#3C3C3C] transition-colors font-medium"
+                            onClick={() => { setOpen(false); setEditedMatchup(matchup); }}
+                            whileHover={{ scale: 1.03 }}
+                            whileTap={{ scale: 0.97 }}
+                            disabled={isLoading}
                         >
                             Cancel
-                        </button>
-                        <button
-                            className="bg-[#7458DA] text-white px-4 py-2 rounded-lg hover:bg-[#604BAC] transition-colors"
-                            onClick={() => updateMatch()}
+                        </motion.button>
+                        <motion.button
+                            className={`bg-gradient-to-r from-[#7458DA] to-[#604BAC] text-white px-5 py-3 rounded-xl hover:opacity-90 transition-all font-medium ${isLoading ? 'opacity-70' : ''}`}
+                            onClick={updateMatch}
+                            whileHover={{ scale: 1.03 }}
+                            whileTap={{ scale: 0.97 }}
+                            disabled={isLoading}
                         >
-                            Save Changes
-                        </button>
+                            {isLoading ? "Saving..." : "Save Changes"}
+                        </motion.button>
                     </div>
                 )}
-
-            </div>
+            </motion.div>
         </div>
     );
 };

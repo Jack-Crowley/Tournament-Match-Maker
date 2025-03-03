@@ -8,10 +8,15 @@ import { Tournament } from "@/types/tournamentTypes";
 import { SpinningLoader } from "@/components/loading";
 import { createClient } from "@/utils/supabase/client";
 import { useMessage } from "@/context/messageContext";
+import { User } from "@/types/userType";
+import { getPermissionLevelForTournament } from "@/utils/auth/getPermissionLevel";
+import { useClient } from "@/context/clientContext";
 
 export default function Home() {
     const [tournament, setTournament] = useState<Tournament | null>(null)
+    const [user, setUser] = useState<User | null>(null)
     const params = useParams();
+    const client = useClient()
     const id = params.id;
 
     const supabase = createClient()
@@ -33,6 +38,17 @@ export default function Home() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [supabase, id])
 
+    useEffect(() => {
+        async function loadPlayerPermission() {
+            const userObj = await getPermissionLevelForTournament(Number(id), client)
+
+            setUser(userObj)
+            console.log(userObj)
+        }
+
+        loadPlayerPermission()
+    }, [client, id])
+
     async function refreshTournament() {
         const { data, error } = await supabase.from("tournaments").select("*").eq("id", id).single()
 
@@ -47,18 +63,20 @@ export default function Home() {
     return (
         <div className="relative">
             <div>
-                {tournament ? (
+                {(tournament && user) ? (
                     <div>
                         {tournament.status == "initialization" && (
-                            <Initialization refreshTournament={refreshTournament}/>
+                            <Initialization refreshTournament={refreshTournament} user={user} />
                         )}
 
                         {tournament.status == "started" && (
-                            <ViewTournament tournamentID={Number(id)} />
+                            <ViewTournament tournamentID={Number(id)} user={user} />
                         )}
                     </div>
                 ) : (
-                    <SpinningLoader />
+                    <div>
+                        <SpinningLoader />
+                    </div>
                 )}
             </div>
         </div>

@@ -12,7 +12,6 @@ import { AnimatePresence, motion } from "framer-motion";
 import { AnnouncementSystem } from "../announcement";
 import { WaitlistView } from "./waitlistView";
 import { User } from "@/types/userType";
-import { useClient } from "@/context/clientContext";
 
 const NAV_ITEMS = [
     { key: "Bracket", icon: faTrophy },
@@ -41,53 +40,12 @@ const SideNavbar = ({ tab, setTab }: { tab: string, setTab: (state: string) => v
     );
 }
 
-export const ViewTournament = ({ tournamentID }: { tournamentID: number }) => {
+export const ViewTournament = ({ tournamentID, user}: { tournamentID: number, user: User }) => {
     const [bracket, setBracket] = useState<Bracket | null>(null)
     const [errorCode, setErrorCode] = useState<number | null>(null)
 
-    const [userPermission, setUserPermission] = useState<User | null>()
-    const client = useClient()
-
     const supabase = createClient()
     const [activeTab, setActiveTab] = useState("Bracket");
-
-    useEffect(() => {
-        async function loadPlayer() {
-            const uuid = client.session?.user.id;
-
-            if (!uuid) return;
-
-            const anonymous = client.session?.user.is_anonymous
-            if (anonymous == undefined) return;
-            let role = "none"
-
-            const {data, error} = await supabase.from("tournaments").select("*").eq("id", tournamentID).single()
-
-            if (error) {
-                console.log("Error fetching tournament")
-            }
-            else {
-                if (data.owner == uuid) {
-                    role = "owner"
-                }
-
-                const user = {
-                    uuid,
-                    anonymous,
-                    permission_level:role                    
-                }
-
-                setUserPermission(user)
-                return
-            }
-
-            
-
-
-        }   
-
-        loadPlayer()
-    }, [client.session?.user, supabase, tournamentID])
 
     useEffect(() => {
         async function LoadBracket() {
@@ -130,7 +88,7 @@ export const ViewTournament = ({ tournamentID }: { tournamentID: number }) => {
     }
 
     return (
-        <div className={`relative ${userPermission?.anonymous ? "one" : "two"}`}>
+        <div className={`relative}`}>
             <SideNavbar tab={activeTab} setTab={setActiveTab} />
             {/* <button
                 className="absolute top-4 right-4 px-6 py-3 text-lg font-semibold rounded-lg transition-all transform bg-background text-gray-400 hover:bg-highlight hover:text-white shadow-md z-50 pointer-events-auto"
@@ -150,11 +108,11 @@ export const ViewTournament = ({ tournamentID }: { tournamentID: number }) => {
                         className="mt-8 px-4 sm:px-8 lg:px-16"
                     >
                         {activeTab === "Bracket" && (
-                            <TournamentBracket bracket={bracket} />
+                            <TournamentBracket bracket={bracket} user={user} />
                         )}
 
                         {activeTab == "Waitlist" && (
-                            <WaitlistView tournamentID={tournamentID} bracket={bracket}/>
+                            <WaitlistView tournamentID={tournamentID} bracket={bracket} user={user}/>
                         )}
 
                         {activeTab === "Announcements" && (

@@ -270,22 +270,18 @@ export default function Home() {
         const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
         const [localSearchTerm, setLocalSearchTerm] = useState<string>(searchTerm);
 
-        // Use the parent's searchTerm as initial value
         useEffect(() => {
             setLocalSearchTerm(searchTerm);
         }, []);
 
-        // Handle search input changes without immediate filtering
         const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
             setLocalSearchTerm(e.target.value);
         };
 
-        // Apply the search filter when Enter is pressed or search button is clicked
         const applySearch = () => {
             setSearchTerm(localSearchTerm);
         };
 
-        // Apply search on Enter key
         const handleKeyDown = (e: React.KeyboardEvent) => {
             if (e.key === 'Enter') {
                 applySearch();
@@ -337,8 +333,9 @@ export default function Home() {
                 } else {
                     counter++;
                 }
-                setTournaments(tournaments.filter(a => a.id !== id))
             }
+
+            setTournaments(tournaments.filter(a => !deleteIndexes.includes(a.id)))
 
             if (counter > 0) {
                 triggerMessage(`${counter} Tournament${counter > 1 ? "s" : ""} deleted successfully`, "green");
@@ -362,12 +359,26 @@ export default function Home() {
             setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
         };
 
-        // Get proper empty state message based on searchTerm
         const getEmptyMessage = () => {
             if (searchTerm) {
                 return "No tournaments match your search criteria.";
             }
             return emptyMessage;
+        };
+
+        const renderStatusChip = (status : any) => {
+            const statusText = status || "initialization";
+            const isStarted = statusText === "started";
+            
+            return (
+                <div className={`absolute top-4 right-4 px-3 py-1 rounded-full text-xs font-semibold ${
+                    isStarted 
+                        ? "bg-[#3c0e51] text-white" 
+                        : "bg-[#672287] text-white"
+                }`}>
+                    {isStarted ? "Started" : "Initialization"}
+                </div>
+            );
         };
 
         return (
@@ -388,7 +399,7 @@ export default function Home() {
                                 onKeyDown={handleKeyDown}
                                 className="pl-10 pr-4 py-2 w-full rounded-lg bg-[#2a1a66] border border-[#3f3175] text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-highlight"
                             />
-                            <button 
+                            <button
                                 onClick={applySearch}
                                 className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white"
                             >
@@ -451,9 +462,18 @@ export default function Home() {
                             <motion.div
                                 key={tournament.id}
                                 whileHover={{ scale: 1.02 }}
-                                className="rounded-lg overflow-hidden shadow-lg hover:shadow-2xl transition-all bg-gradient-to-r from-[#2a1a66] to-[#3f2c84] relative"
+                                className={`rounded-lg overflow-hidden shadow-lg hover:shadow-2xl transition-all relative
+                              ${deleteIndexes.includes(tournament.id)
+                                        ? 'bg-gradient-to-r from-red-800 to-red-700'
+                                        : 'bg-gradient-to-r from-[#2a1a66] to-[#3f2c84]'}`}
                             >
-                                <div className="h-28 bg-gradient-to-r from-highlight to-accent flex items-center justify-center">
+                                {/* Status chip */}
+                                {renderStatusChip(tournament.status)}
+
+                                <div className={`h-28 flex items-center justify-center
+                              ${deleteIndexes.includes(tournament.id)
+                                        ? 'bg-gradient-to-r from-red-600 to-red-500'
+                                        : 'bg-gradient-to-r from-highlight to-accent'}`}>
                                     <h2 className="text-2xl font-bold text-white px-4 text-center">{tournament.name}</h2>
                                 </div>
 
@@ -463,18 +483,23 @@ export default function Home() {
                                     </p>
 
                                     <div className="flex justify-between items-center mt-4">
-                                        <Link
-                                            href={`/tournament/${tournament.id}`}
-                                            className="px-4 py-2 bg-highlight hover:bg-[#8569ea] text-white rounded-lg transition-colors transform font-medium"
-                                        >
-                                            View Details
-                                        </Link>
+                                        {!deleteView && (
+                                            <Link
+                                                href={`/tournament/${tournament.id}`}
+                                                className="px-4 py-2 bg-highlight hover:bg-[#8569ea] text-white rounded-lg transition-colors transform font-medium"
+                                            >
+                                                View Details
+                                            </Link>
+                                        )}
 
                                         <div className="flex items-center">
                                             {onAction && (
                                                 <button
                                                     onClick={() => onAction(tournament.id)}
-                                                    className="px-4 py-2 bg-[#2a1a66] border border-highlight text-white rounded-lg hover:bg-highlight transition-colors transform"
+                                                    className={`px-4 py-2 text-white rounded-lg transition-colors transform
+                                                  ${deleteIndexes.includes(tournament.id)
+                                                            ? 'bg-red-700 border border-red-500 hover:bg-red-600'
+                                                            : 'bg-[#2a1a66] border border-highlight hover:bg-highlight'}`}
                                                 >
                                                     {actionLabel}
                                                 </button>
@@ -541,8 +566,8 @@ export default function Home() {
                                 key={tab.id}
                                 whileHover={{ y: -5 }}
                                 className={`p-6 rounded-lg cursor-pointer shadow-md ${activeTab === tab.id
-                                        ? "bg-gradient-to-r from-highlight to-accent"
-                                        : "bg-[#2a1a66] hover:bg-[#3f2c84]"
+                                    ? "bg-gradient-to-r from-highlight to-accent"
+                                    : "bg-[#2a1a66] hover:bg-[#3f2c84]"
                                     }`}
                                 onClick={() => setActiveTab(tab.id)}
                             >

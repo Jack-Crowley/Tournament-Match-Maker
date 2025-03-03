@@ -17,12 +17,12 @@ import { TournamentModal } from "@/components/modals/tournamentEditModal";
 import { AddPlaceholderPlayersModal } from "@/components/modals/addGeneratedPlayers";
 import { PlayersTable } from "@/components/playersTable";
 import { ConfirmModal, ConfirmModalInformation } from "@/components/modals/confirmationModal";
+import { User } from "@/types/userType";
 
-export default function Initialization({ refreshTournament }: { refreshTournament: () => void }) {
+export default function Initialization({ refreshTournament, user }: { user : User, refreshTournament: () => void }) {
     const supabase = createClient();
     const client = useClient();
     const [tournament, setTournament] = useState<Tournament | null>(null);
-    const [director, setDirector] = useState<boolean>(false);
     const [loading, setLoading] = useState<boolean>(true);
     const [joinLink, setJoinLink] = useState<null | string>(null);
     const [showQRCode, setShowQRCode] = useState<boolean>(false);
@@ -67,11 +67,6 @@ export default function Initialization({ refreshTournament }: { refreshTournamen
                 } else {
                     setActivePlayers(data1.filter(player => player.type == "active"));
                     setWaitlistedPlayers(data1.filter(player => player.type == "waitlist"));
-                }
-
-                const uuid = client.session?.user.id;
-                if (data && uuid == data.owner) {
-                    setDirector(true);
                 }
             } catch (error) {
                 triggerMessage("An unexpected error occurred", "red");
@@ -309,7 +304,7 @@ export default function Initialization({ refreshTournament }: { refreshTournamen
                 <div className="relative px-6 pt-8 md:px-10">
                     <div className="flex items-center justify-between">
                         <h1 className="text-[#7458da] font-bold text-3xl md:text-4xl text-center">{tournament.name}</h1>
-                        {director && (
+                        {(user.permission_level == "owner" || user.permission_level == "admin") && (
                             <button
                                 onClick={() => setIsTournamentEditModalOpen(true)}
                                 className="text-[#7458da] hover:text-[#604BAC] transition-colors p-2 rounded-full hover:bg-[#2a1a66]"
@@ -369,7 +364,7 @@ export default function Initialization({ refreshTournament }: { refreshTournamen
                     )}
 
 
-                    {director && (
+                    {(user.permission_level == "owner" || user.permission_level == "admin") && (
                         <div className="bg-[#2a1a66] rounded-xl p-6 shadow-md mb-8">
                             <h2 className="text-[#7458da] font-bold text-2xl mb-6">Player Registration</h2>
 
@@ -463,6 +458,7 @@ export default function Initialization({ refreshTournament }: { refreshTournamen
                                 setOtherPlayers={setWaitlistedPlayers}
                                 type="active"
                                 tournament={tournament}
+                                permission_level={user.permission_level}
                             />
 
                             <PlayersTable
@@ -472,13 +468,12 @@ export default function Initialization({ refreshTournament }: { refreshTournamen
                                 setOtherPlayers={setActivePlayers}
                                 type="waitlist"
                                 tournament={tournament}
+                                permission_level={user.permission_level}
                             />
                         </div>
                     )}
 
-
-
-                    {director && (
+                    {(user.permission_level == "owner" || user.permission_level == "admin") && (
                         <div className="flex flex-wrap justify-center gap-4 mb-6">
                             <ActionButton
                                 onClick={() => setIsPlaceholderPlayersModalOpen(true)}

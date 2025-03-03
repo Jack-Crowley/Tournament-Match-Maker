@@ -9,6 +9,7 @@ import { faUserPlus } from "@fortawesome/free-solid-svg-icons/faUserPlus";
 import { addPlayerToMatchupFromWaitlist } from "@/utils/bracket/bracket";
 import { Tournament } from "@/types/tournamentTypes";
 import { useMessage } from "@/context/messageContext";
+import { User } from "@/types/userType";
 
 const AddPlayerButton = ({ onAddPlayer }: { onAddPlayer: () => void }) => {
   return (
@@ -41,15 +42,17 @@ const MatchupElement = ({
   newPlayer = null,
   tournament = null,
   onClose = null,
+  user,
 }: {
   match: Matchup;
   viewType?: "single" | "add-player";
   newPlayer?: BracketPlayer | null;
   tournament?: Tournament | null;
   onClose?: (() => void) | null;
+  user: User;
 }) => {
   const [isMatchupModalOpen, setIsMatchupModalOpen] = useState<boolean>(false);
-  const { triggerMessage } = useMessage?.() || { triggerMessage: () => {} };
+  const { triggerMessage } = useMessage?.() || { triggerMessage: () => { } };
 
   function openModal() {
     if (viewType === "single") {
@@ -59,12 +62,12 @@ const MatchupElement = ({
 
   const addPlayerFromWaitlist = async (index: number) => {
     if (viewType !== "add-player" || !tournament || !newPlayer || !onClose) return;
-    
+
     const { success, errorCode } = await addPlayerToMatchupFromWaitlist(
-      tournament, 
-      match.match_number, 
-      match.round, 
-      newPlayer, 
+      tournament,
+      match.match_number,
+      match.round,
+      newPlayer,
       index
     );
 
@@ -82,7 +85,7 @@ const MatchupElement = ({
         className={`${viewType === "single" ? "w-44" : "w-40"} bg-secondary rounded-lg shadow-xl overflow-hidden z-10 hover:cursor-pointer transition-all duration-300`}
         whileHover={viewType === "single" ? { scale: 1.05 } : undefined}
         transition={{ type: "spring", stiffness: 300 }}
-        onClick={viewType === "single" ? openModal : undefined}
+        onClick={(viewType === "single" && (user.permission_level != "player" && user.permission_level != "viewer")) ? openModal : undefined}
       >
         {match.players.map((player, index) => (
           <div
@@ -154,10 +157,12 @@ const BracketCreator = ({
   newPlayer = null,
   tournament = null,
   onClose = null,
+  user,
 }: {
   roundIndex: number;
   matchIndex: number;
   bracket: Bracket;
+  user: User;
   viewType?: "single" | "add-player";
   newPlayer?: BracketPlayer | null;
   tournament?: Tournament | null;
@@ -187,12 +192,13 @@ const BracketCreator = ({
 
   if (roundIndex === 0) {
     return (
-      <MatchupElement 
-        match={bracket.rounds[roundIndex].matches[matchIndex]} 
+      <MatchupElement
+        match={bracket.rounds[roundIndex].matches[matchIndex]}
         viewType={viewType}
         newPlayer={newPlayer}
         tournament={tournament}
         onClose={onClose}
+        user={user}
       />
     );
   }
@@ -211,6 +217,7 @@ const BracketCreator = ({
           newPlayer={newPlayer}
           tournament={tournament}
           onClose={onClose}
+          user={user}
         />
         <BracketCreator
           matchIndex={matchIndex * 2 + 1}
@@ -220,6 +227,7 @@ const BracketCreator = ({
           newPlayer={newPlayer}
           tournament={tournament}
           onClose={onClose}
+          user={user}
         />
         {box && (
           <div>
@@ -271,30 +279,33 @@ const BracketCreator = ({
         newPlayer={newPlayer}
         tournament={tournament}
         onClose={onClose}
+        user={user}
       />
     </div>
   );
 };
 
-const TournamentBracket = ({ 
+const TournamentBracket = ({
   bracket,
   viewType = "single",
   newPlayer = null,
   tournament = null,
   onClose = null,
-}: { 
+  user,
+}: {
   bracket: Bracket;
   viewType?: "single" | "add-player";
   newPlayer?: BracketPlayer | null;
   tournament?: Tournament | null;
   onClose?: (() => void) | null;
+  user: User
 }) => {
   if (!bracket || !bracket.rounds || bracket.rounds.length === 0) {
     return <div className="flex justify-center items-center h-full">No tournament data available</div>;
   }
 
-  const containerClass = viewType === "single" 
-    ? "mt-12 ml-[8%] h-[89vh] overflow-auto pb-16" 
+  const containerClass = viewType === "single"
+    ? "mt-12 ml-[8%] h-[89vh] overflow-auto pb-16"
     : "mt-[50px] ml-[8%] h-[89vh]";
 
   return (
@@ -307,6 +318,7 @@ const TournamentBracket = ({
         newPlayer={newPlayer}
         tournament={tournament}
         onClose={onClose}
+        user={user}
       />
     </div>
   );
