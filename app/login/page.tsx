@@ -47,10 +47,10 @@ const LoginPageContent = () => {
     }
   };
 
-  const getRedirectUrl = () => {
-    const destination = redirectParam || localStorage.getItem('previousPath') || '/account';
-    return `${window.location.origin}/auth/callback?redirectTo=${encodeURIComponent(destination)}`;
-  };
+  // const getRedirectUrl = () => {
+  //   const destination = redirectParam || localStorage.getItem('previousPath') || '/account';
+  //   return `${window.location.origin}/auth/callback?redirectTo=${encodeURIComponent(destination)}`;
+  // };
 
   return (
     <div className="w-full min-h-screen flex justify-center items-center bg-[#160A3A] p-4">
