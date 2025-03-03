@@ -1,13 +1,14 @@
 "use client"
 
 import { useMessage } from "@/context/messageContext";
+import { TournamentPlayer } from "@/types/playerTypes";
 import { Tournament } from "@/types/tournamentTypes";
 import { createClient } from "@/utils/supabase/client";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChangeEvent, useState } from "react";
 import { v4 as uuidv4 } from 'uuid';
 
-export const AddPlaceholderPlayersModal = ({ isOpen, setOpen, tournament }: { tournament: Tournament, isOpen: boolean, setOpen: (state: boolean) => void, }) => {
+export const AddPlaceholderPlayersModal = ({ isOpen, setOpen, tournament, addActivePlayers, addWaitlistPlayers }: { addActivePlayers : (player : TournamentPlayer) => void, addWaitlistPlayers : (player : TournamentPlayer) => void, tournament: Tournament, isOpen: boolean, setOpen: (state: boolean) => void, }) => {
     const [prefix, setPrefix] = useState<string>("")
     const [numberOfPlayers, setNumberOfPlayers] = useState<number | ''>('')
     const supabase = createClient()
@@ -44,6 +45,8 @@ export const AddPlaceholderPlayersModal = ({ isOpen, setOpen, tournament }: { to
 
         let playersAdded = 0
 
+        const players : any= []
+
         for (let i = 1; i <= numberOfPlayers; i++) {
             let playerName = `${prefix}${i}`;
             let counter = i;
@@ -65,10 +68,16 @@ export const AddPlaceholderPlayersModal = ({ isOpen, setOpen, tournament }: { to
                 type:calculatePlayerType(playersAmount)
             };
 
-            const { error } = await supabase
+
+            const { data, error } = await supabase
                 .from('tournament_players')
                 .insert([update])
                 .select();
+
+            if (data) {
+                players.push(data[0])
+            }
+
 
             if (error) {
                 triggerMessage(`Error adding player ${playerName}: ${error.message}`, "red");
@@ -77,6 +86,10 @@ export const AddPlaceholderPlayersModal = ({ isOpen, setOpen, tournament }: { to
                 playersAmount++;
             }
         }
+
+        addActivePlayers(players.filter((player : any) => player.type == "active"))
+        addWaitlistPlayers(players.filter((player : any) => player.type == "waitlist"))
+
         triggerMessage(`Successfully added ${playersAdded} player${playersAdded>1 && "s"}!`, "green");
 
         setOpen(false);
