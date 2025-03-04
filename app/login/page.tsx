@@ -15,7 +15,6 @@ const LoginPageContent = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   
-  // Get redirectTo from URL params or use previously stored path
   const redirectParam = searchParams?.get('redirectTo');
   
   useEffect(() => {
@@ -48,10 +47,10 @@ const LoginPageContent = () => {
     }
   };
 
-  const getRedirectUrl = () => {
-    const destination = redirectParam || localStorage.getItem('previousPath') || '/account';
-    return `${window.location.origin}/auth/callback?redirectTo=${encodeURIComponent(destination)}`;
-  };
+  // const getRedirectUrl = () => {
+  //   const destination = redirectParam || localStorage.getItem('previousPath') || '/account';
+  //   return `${window.location.origin}/auth/callback?redirectTo=${encodeURIComponent(destination)}`;
+  // };
 
   return (
     <div className="w-full min-h-screen flex justify-center items-center bg-[#160A3A] p-4">
@@ -80,7 +79,7 @@ const LoginPageContent = () => {
                   },
                 }}
                 theme="dark"
-                redirectTo={getRedirectUrl()}
+                redirectTo={`${window.location.origin}/auth/callback`}
               />
             </div>
 
