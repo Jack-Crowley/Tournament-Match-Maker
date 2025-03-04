@@ -97,11 +97,14 @@ const MatchupElement = ({
                 className={`p-4 ${viewType === "single" ? "flex justify-between" : ""} font-bold border-l-8 
                   ${match.winner
                     ? player.uuid === match.winner
-                      ? "border-[#baa6f6] text-[#baa6f6]"
-                      : `border-[#1e153e] text-[#271c4e]`
-                    : "border-soft text-[#2e225b]"} 
+                      ? "border-winner_text text-winner_text"
+                      : `border-loser_text text-loser_text`
+                    : "border-soft text-player_text"} 
                   bg-opacity-90 hover:bg-opacity-100 transition-all duration-200 ${player.name === "" && "text-secondary"}`}
               >
+                {/* //                       ? "border-[#baa6f6] text-[#baa6f6]"
+                // : `border-[#1e153e] text-[#271c4e]` */}
+                {/* // : "border-soft text-[#2e225b]"}  */}
                 {viewType === "single" ? (
                   <>
                     <span className="truncate mr-2">{player.name}</span>

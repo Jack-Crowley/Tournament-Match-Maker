@@ -93,8 +93,6 @@ export const MatchupModal = ({ isOpen, setOpen, matchup }: MatchupModalProps) =>
     };
 
     const updateMatch = async () => {
-        // TODO
-        // The losers should become an inactive player 
         setIsLoading(true);
         const winnerUUID = editedMatchup.winner;
         try {
@@ -120,7 +118,6 @@ export const MatchupModal = ({ isOpen, setOpen, matchup }: MatchupModalProps) =>
             }
 
 
-
             const { error } = await supabase
                 .from("tournament_matches")
                 .update({
@@ -131,24 +128,24 @@ export const MatchupModal = ({ isOpen, setOpen, matchup }: MatchupModalProps) =>
 
             for (const playerIndex of removedPlayersList) {
 
-            // Losers becoming inactive. First lets check if the players exist still:
-            if (playerIndex[0] === player1?.member_uuid) {
-                // update the database
-                const { error } = await supabase
-                    .from("tournament_players")
-                    .update({
-                        type: player1?.type,
-                    })
-                    .eq("member_uuid", player1?.member_uuid);
-            }
-            if (playerIndex[0] === player2?.member_uuid) {
-                const { error } = await supabase
-                    .from("tournament_players")
-                    .update({
-                        type: player2?.type,
-                    })
-                    .eq("member_uuid", player2?.member_uuid);
-            }
+                // Losers becoming inactive. First lets check if the players exist still:
+                if (playerIndex[0] === player1?.member_uuid) {
+                    // update the database
+                    const { error } = await supabase
+                        .from("tournament_players")
+                        .update({
+                            type: player1?.type,
+                        })
+                        .eq("member_uuid", player1?.member_uuid);
+                }
+                if (playerIndex[0] === player2?.member_uuid) {
+                    const { error } = await supabase
+                        .from("tournament_players")
+                        .update({
+                            type: player2?.type,
+                        })
+                        .eq("member_uuid", player2?.member_uuid);
+                }
 
 
                 if (matchup.round > 1) {
@@ -369,7 +366,7 @@ export const MatchupModal = ({ isOpen, setOpen, matchup }: MatchupModalProps) =>
         setPlayer1((prev) => {
             if (prev) {
                 if (prev.member_uuid === playerUuid) {
-                    console.log("player1 is changing!", {...prev, type: "inactive"});
+                    console.log("player1 is changing!", { ...prev, type: "inactive" });
                     return { ...prev, type: "inactive" };
                 }
                 else {
