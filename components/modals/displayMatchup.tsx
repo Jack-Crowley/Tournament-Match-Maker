@@ -7,6 +7,7 @@ import { BracketPlayer, Matchup } from "@/types/bracketTypes";
 import { createClient } from "@/utils/supabase/client";
 import { motion, AnimatePresence } from "framer-motion";
 import { PlayerManagementTabs } from "../playerManagementTabs";
+import { TournamentPlayer } from "@/types/playerTypes";
 
 interface MatchupModalProps {
     isOpen: boolean;
@@ -16,13 +17,15 @@ interface MatchupModalProps {
 
 export const MatchupModal = ({ isOpen, setOpen, matchup }: MatchupModalProps) => {
     const [editedMatchup, setEditedMatchup] = useState<Matchup>(matchup);
+    const [player1, setPlayer1] = useState<TournamentPlayer | null>();
+    const [player2, setPlayer2] = useState<TournamentPlayer | null>();
     const [addPlayersIndex, setAddPlayersIndex] = useState<number>(-1);
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const modalRef = useRef<HTMLDivElement>(null);
     const supabase = createClient();
 
     const [locked, setLocked] = useState<boolean>(false);
-    const [removedPlayersList, setRemovedPlayersList] = useState<number[]>([]);
+    const [removedPlayersList, setRemovedPlayersList] = useState<[string, number][]>([]);
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -62,14 +65,62 @@ export const MatchupModal = ({ isOpen, setOpen, matchup }: MatchupModalProps) =>
         LookupNextMatch();
     }, [matchup, supabase, isOpen]);
 
+    useEffect(() => {
+        // Retrieve the rows of player1 and player2 if they exist. 
+
+        async function fetchPlayerData() {
+            const { data: data1, error: error1 } = await supabase
+                .from("tournament_players")
+                .select("*")
+                .eq("member_uuid", matchup.players[0].uuid)
+                .single();
+            const { data: data2, error: error2 } = await supabase
+                .from("tournament_players")
+                .select("*")
+                .eq("member_uuid", matchup.players[1].uuid)
+                .single();
+            if (error1 || error2) {
+                console.log("we should be good here in fetchPlayerData")
+            }
+            setPlayer1(data1);
+            setPlayer2(data2);
+        }
+        fetchPlayerData();
+    }, [isOpen]);
+
     const OpenAddPlayerDropdown = (index: number) => {
         setAddPlayersIndex(index === addPlayersIndex ? -1 : index);
     };
 
     const updateMatch = async () => {
+        // TODO
+        // The losers should become an inactive player 
         setIsLoading(true);
         const winnerUUID = editedMatchup.winner;
         try {
+
+            // Losers becoming inactive. First lets check if the players exist still:
+            if (editedMatchup.players.find(player => player.uuid === player1?.member_uuid)) {
+                // update the database
+                const { error } = await supabase
+                    .from("tournament_players")
+                    .update({
+                        type: player1?.type,
+                    })
+                    .eq("member_uuid", player1?.member_uuid);
+
+            }
+            if (editedMatchup.players.find(player => player.uuid === player2?.member_uuid)) {
+                const { error } = await supabase
+                    .from("tournament_players")
+                    .update({
+                        type: player2?.type,
+                    })
+                    .eq("member_uuid", player2?.member_uuid);
+            }
+
+
+
             const { error } = await supabase
                 .from("tournament_matches")
                 .update({
@@ -79,11 +130,32 @@ export const MatchupModal = ({ isOpen, setOpen, matchup }: MatchupModalProps) =>
                 .eq("id", String(matchup.id));
 
             for (const playerIndex of removedPlayersList) {
+
+            // Losers becoming inactive. First lets check if the players exist still:
+            if (playerIndex[0] === player1?.member_uuid) {
+                // update the database
+                const { error } = await supabase
+                    .from("tournament_players")
+                    .update({
+                        type: player1?.type,
+                    })
+                    .eq("member_uuid", player1?.member_uuid);
+            }
+            if (playerIndex[0] === player2?.member_uuid) {
+                const { error } = await supabase
+                    .from("tournament_players")
+                    .update({
+                        type: player2?.type,
+                    })
+                    .eq("member_uuid", player2?.member_uuid);
+            }
+
+
                 if (matchup.round > 1) {
                     const { error } = await supabase
                         .from("tournament_matches")
                         .update({ winner: null })
-                        .eq("match_number", matchup.match_number * 2 - (playerIndex % 2) + 1)
+                        .eq("match_number", matchup.match_number * 2 - (playerIndex[1] % 2) + 1)
                         .eq("round", matchup.round - 1)
                         .eq("tournament_id", matchup.tournament_id);
 
@@ -98,7 +170,7 @@ export const MatchupModal = ({ isOpen, setOpen, matchup }: MatchupModalProps) =>
             } else {
                 if (winnerUUID) await propagatePlayer(winnerUUID);
                 setEditedMatchup((prev) => ({ ...prev, winnerUUID: winnerUUID }));
-                console.log("Matchup updated successfully");
+                // console.log("Matchup updated successfully");
                 setOpen(false);
             }
         } catch (err) {
@@ -146,7 +218,29 @@ export const MatchupModal = ({ isOpen, setOpen, matchup }: MatchupModalProps) =>
         }
 
         setEditedMatchup((prev) => ({ ...prev, winner: playerUUID }));
+        setPlayer1((prev) => {
+            if (prev) {
+                if (prev.member_uuid !== playerUUID) {
+                    return { ...prev, type: "inactive" };
+                }
+                else {
+                    return { ...prev, type: "active" };
+                }
+            }
+        });
+        setPlayer2((prev) => {
+            if (prev) {
+                if (prev.member_uuid !== playerUUID) {
+                    return { ...prev, type: "inactive" };
+                }
+                else {
+                    return { ...prev, type: "active" };
+                }
+            }
+        });
+
     };
+
 
     const propagatePlayer = async (playerUuid: string) => {
         const player = editedMatchup.players.find((player) => player.uuid === playerUuid);
@@ -175,7 +269,7 @@ export const MatchupModal = ({ isOpen, setOpen, matchup }: MatchupModalProps) =>
             const existingMatchup: Matchup | null = data ? (data as Matchup) : null;
 
             if (existingMatchup) {
-                console.log("Found existing matchup, updating players");
+                // console.log("Found existing matchup, updating players");
                 const currentMatchupPlayers: BracketPlayer[] = existingMatchup.players || [];
                 const playerIndex = 1 - editedMatchup.match_number % 2
 
@@ -226,10 +320,10 @@ export const MatchupModal = ({ isOpen, setOpen, matchup }: MatchupModalProps) =>
                     email: "",
                     account_type: "placeholder",
                 };
-                
+
                 player.score = 0;
-                const players = editedMatchup.match_number % 2 === 0 
-                    ? [placeholderPlayer, player] 
+                const players = editedMatchup.match_number % 2 === 0
+                    ? [placeholderPlayer, player]
                     : [player, placeholderPlayer];
 
                 const newMatchup = {
@@ -254,8 +348,9 @@ export const MatchupModal = ({ isOpen, setOpen, matchup }: MatchupModalProps) =>
 
     const removePlayer = (playerUuid: string) => {
         const playerIndex = editedMatchup.players.findIndex(player => player.uuid === playerUuid);
+
         if (playerIndex === -1) return;
-        
+
         const updatedPlayers = [...editedMatchup.players];
         updatedPlayers[playerIndex] = {
             uuid: "",
@@ -264,12 +359,35 @@ export const MatchupModal = ({ isOpen, setOpen, matchup }: MatchupModalProps) =>
             account_type: "placeholder"
         };
 
-        setRemovedPlayersList(prev => [...prev, playerIndex]);
-        setEditedMatchup((prev: any) => ({ 
-            ...prev, 
+        setRemovedPlayersList(prev => [...prev, [playerUuid, playerIndex]]);
+        setEditedMatchup((prev: any) => ({
+            ...prev,
             players: updatedPlayers,
             winner: prev.winner === playerUuid ? null : prev.winner
         }));
+
+        setPlayer1((prev) => {
+            if (prev) {
+                if (prev.member_uuid === playerUuid) {
+                    console.log("player1 is changing!", {...prev, type: "inactive"});
+                    return { ...prev, type: "inactive" };
+                }
+                else {
+                    return { ...prev, type: "active" };
+                }
+            }
+        });
+        setPlayer2((prev) => {
+            if (prev) {
+                if (prev.member_uuid === playerUuid) {
+                    return { ...prev, type: "inactive" };
+                }
+                else {
+                    return { ...prev, type: "active" };
+                }
+            }
+        });
+
     };
 
     if (!isOpen) return null;
@@ -288,7 +406,7 @@ export const MatchupModal = ({ isOpen, setOpen, matchup }: MatchupModalProps) =>
                     <h2 className="text-2xl font-bold text-white">
                         {locked ? "Match Details" : "Edit Matchup"}
                     </h2>
-                    <button 
+                    <button
                         onClick={() => { setOpen(false); setEditedMatchup(matchup); }}
                         className="text-gray-400 hover:text-white transition-colors"
                     >
@@ -300,7 +418,7 @@ export const MatchupModal = ({ isOpen, setOpen, matchup }: MatchupModalProps) =>
                     {editedMatchup.players.map((player, index) => (
                         <div key={index} className="mb-4">
                             {player.name ? (
-                                <motion.div 
+                                <motion.div
                                     className="flex items-center justify-between bg-[#2A2A2A] p-4 rounded-xl border border-[#3A3A3A] shadow-md"
                                     initial={{ opacity: 0, x: -20 }}
                                     animate={{ opacity: 1, x: 0 }}
@@ -316,8 +434,8 @@ export const MatchupModal = ({ isOpen, setOpen, matchup }: MatchupModalProps) =>
                                         >
                                             <FontAwesomeIcon
                                                 icon={faCrown}
-                                                className={player.uuid === editedMatchup.winner 
-                                                    ? "text-yellow-400" 
+                                                className={player.uuid === editedMatchup.winner
+                                                    ? "text-yellow-400"
                                                     : "text-gray-500 hover:text-yellow-400"}
                                                 size="lg"
                                             />
@@ -343,14 +461,14 @@ export const MatchupModal = ({ isOpen, setOpen, matchup }: MatchupModalProps) =>
                                                     )
                                                 }));
                                             }}
-                                            className={`w-20 p-2 ${locked 
-                                                ? 'bg-[#1f1f1f] text-gray-400 cursor-not-allowed' 
+                                            className={`w-20 p-2 ${locked
+                                                ? 'bg-[#1f1f1f] text-gray-400 cursor-not-allowed'
                                                 : 'bg-[#3A3A3A] hover:bg-[#444444]'
-                                            } border-b-2 border-[#7458DA] text-white rounded-lg focus:outline-none focus:border-[#604BAC] transition-colors`}
+                                                } border-b-2 border-[#7458DA] text-white rounded-lg focus:outline-none focus:border-[#604BAC] transition-colors`}
                                         />
 
                                         {player.account_type === "logged_in" && (
-                                            <motion.button 
+                                            <motion.button
                                                 className="p-2 bg-[#604BAC] rounded-lg text-white hover:bg-[#7458DA] transition-colors"
                                                 whileHover={{ scale: 1.05 }}
                                                 whileTap={{ scale: 0.95 }}
@@ -358,7 +476,7 @@ export const MatchupModal = ({ isOpen, setOpen, matchup }: MatchupModalProps) =>
                                                 <FontAwesomeIcon icon={faEnvelope} />
                                             </motion.button>
                                         )}
-                                        <motion.button 
+                                        <motion.button
                                             className={`p-2 ${!locked
                                                 ? "bg-[#c02a2a] border-[#c02a2a] hover:bg-[#a32424]"
                                                 : "bg-[#4512127b] border-[#c02a2a8b] cursor-not-allowed opacity-50"
@@ -379,11 +497,10 @@ export const MatchupModal = ({ isOpen, setOpen, matchup }: MatchupModalProps) =>
                                             whileHover={{ scale: 1.03 }}
                                             whileTap={{ scale: 0.97 }}
                                             onClick={() => OpenAddPlayerDropdown(index)}
-                                            className={`flex w-full items-center justify-center px-6 py-4 ${
-                                                addPlayersIndex === index 
-                                                    ? "bg-[#4A327F] border-[#7458DA]" 
-                                                    : "bg-[#342373] border-transparent hover:bg-[#3D2A87]"
-                                            } text-white rounded-xl shadow-lg transition-all duration-200 border-2`}
+                                            className={`flex w-full items-center justify-center px-6 py-4 ${addPlayersIndex === index
+                                                ? "bg-[#4A327F] border-[#7458DA]"
+                                                : "bg-[#342373] border-transparent hover:bg-[#3D2A87]"
+                                                } text-white rounded-xl shadow-lg transition-all duration-200 border-2`}
                                         >
                                             <FontAwesomeIcon icon={faPlus} className="text-white" />
                                             <span className="ml-2 font-medium">
@@ -393,7 +510,7 @@ export const MatchupModal = ({ isOpen, setOpen, matchup }: MatchupModalProps) =>
                                     )}
                                     <AnimatePresence>
                                         {addPlayersIndex === index && (
-                                            <motion.div 
+                                            <motion.div
                                                 className="w-full mt-3 bg-[#2A2A2A] p-4 rounded-xl border border-[#3A3A3A]"
                                                 initial={{ opacity: 0, height: 0 }}
                                                 animate={{ opacity: 1, height: "auto" }}
