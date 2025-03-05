@@ -67,9 +67,8 @@ export const ViewTournament = ({ tournamentID, user}: { tournamentID: number, us
                     schema: "public",
                     table: "tournament_matches",
                 },
-                async (payload) => {
-                    // console.log("Tournament match table updated:", payload);
-                    await LoadBracket(); // Fetch the latest bracket when a match changes
+                async () => {
+                    await LoadBracket();
                 }
             )
             .subscribe();
