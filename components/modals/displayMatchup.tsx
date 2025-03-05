@@ -3,19 +3,23 @@
 import { useEffect, useRef, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faEnvelope, faTrash, faPlus, faCrown, faTimes } from "@fortawesome/free-solid-svg-icons";
-import { BracketPlayer, Matchup } from "@/types/bracketTypes";
+import { Bracket, BracketPlayer, Matchup } from "@/types/bracketTypes";
 import { createClient } from "@/utils/supabase/client";
 import { motion, AnimatePresence } from "framer-motion";
 import { PlayerManagementTabs } from "../playerManagementTabs";
 import { TournamentPlayer } from "@/types/playerTypes";
+import TournamentBracket from "../tournamentViews/single/bracketView";
+import { User } from "@/types/userType";
+import { Tournament } from "@/types/tournamentTypes";
 
 interface MatchupModalProps {
     isOpen: boolean;
     setOpen: (state: boolean) => void;
     matchup: Matchup;
+    user: User;
 }
 
-export const MatchupModal = ({ isOpen, setOpen, matchup }: MatchupModalProps) => {
+export const MatchupModal = ({ isOpen, setOpen, matchup, user}: MatchupModalProps) => {
     const [editedMatchup, setEditedMatchup] = useState<Matchup>(matchup);
     const [player1, setPlayer1] = useState<TournamentPlayer | null>();
     const [player2, setPlayer2] = useState<TournamentPlayer | null>();
@@ -26,6 +30,7 @@ export const MatchupModal = ({ isOpen, setOpen, matchup }: MatchupModalProps) =>
 
     const [locked, setLocked] = useState<boolean>(false);
     const [removedPlayersList, setRemovedPlayersList] = useState<[string, number][]>([]);
+
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -386,6 +391,7 @@ export const MatchupModal = ({ isOpen, setOpen, matchup }: MatchupModalProps) =>
         });
 
     };
+    
 
     if (!isOpen) return null;
 
@@ -473,6 +479,7 @@ export const MatchupModal = ({ isOpen, setOpen, matchup }: MatchupModalProps) =>
                                                 <FontAwesomeIcon icon={faEnvelope} />
                                             </motion.button>
                                         )}
+
                                         <motion.button
                                             className={`p-2 ${!locked
                                                 ? "bg-[#c02a2a] border-[#c02a2a] hover:bg-[#a32424]"

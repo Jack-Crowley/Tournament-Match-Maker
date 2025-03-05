@@ -12,6 +12,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { AnnouncementSystem } from "../announcement";
 import { WaitlistView } from "./waitlistView";
 import { User } from "@/types/userType";
+import { Tournament } from "@/types/tournamentTypes";
 
 const NAV_ITEMS = [
     { key: "Bracket", icon: faTrophy },
@@ -40,7 +41,7 @@ const SideNavbar = ({ tab, setTab }: { tab: string, setTab: (state: string) => v
     );
 }
 
-export const ViewTournament = ({ tournamentID, user}: { tournamentID: number, user: User }) => {
+export const ViewTournament = ({ tournamentID, user }: { tournamentID: number, user: User }) => {
     const [bracket, setBracket] = useState<Bracket | null>(null)
     const [errorCode, setErrorCode] = useState<number | null>(null)
 
@@ -55,7 +56,6 @@ export const ViewTournament = ({ tournamentID, user}: { tournamentID: number, us
         }
 
         LoadBracket()
-
 
         // ** Subscribe to Supabase real-time updates **
         const subscription = supabase
@@ -108,20 +108,20 @@ export const ViewTournament = ({ tournamentID, user}: { tournamentID: number, us
                         className="mt-8 px-4 sm:px-8 lg:px-16"
                     >
                         {activeTab === "Bracket" && (
-                            <TournamentBracket bracket={bracket} user={user} />
+                            <TournamentBracket bracket={bracket} tournamentID={tournamentID} user={user} />
                         )}
 
                         {activeTab == "Waitlist" && (
-                            <WaitlistView tournamentID={tournamentID} bracket={bracket} user={user}/>
+                            <WaitlistView tournamentID={tournamentID} bracket={bracket} user={user} />
                         )}
 
                         {activeTab === "Announcements" && (
-                            <AnnouncementSystem tournamentID={tournamentID}/>
+                            <AnnouncementSystem tournamentID={tournamentID} />
                         )}
                     </motion.div>
                 </AnimatePresence>
             ) : (
-                <SpinningLoader  />
+                <SpinningLoader />
             )}
         </div>
     )
