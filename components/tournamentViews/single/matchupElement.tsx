@@ -179,11 +179,6 @@ export const MatchupElement = ({
                 bg-opacity-90 hover:bg-opacity-100 transition-all duration-200`}
                             >
                                 {renderPlayerContent(player, index)}
-                            </div>
-                        ) : (
-                            renderPlayerContent(player, index)
-                        )}
-
                         <motion.button
                             className="p-2 bg-[#7458DA] rounded-lg text-white hover:bg-[#604BAC] transition-colors"
                             whileHover={{ scale: 1.05 }}
@@ -195,6 +190,11 @@ export const MatchupElement = ({
                         >
                             Move
                         </motion.button>
+                            </div>
+                        ) : (
+                            renderPlayerContent(player, index)
+                        )}
+
                         {index !== match.players.length - 1 && <div className="h-px bg-primary opacity-50"></div>}
                     </div>
                 ))}

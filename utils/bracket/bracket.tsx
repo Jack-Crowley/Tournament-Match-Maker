@@ -20,9 +20,7 @@ export const moveOrSwapPlayerToMatchup = async (
 
     console.log("destination match number", destinationMatchNumber)
 
-
     const supabase = createClient();
-
 
     // Fetch the destination match (where the player is being added)
     const { data: destinationMatch, error: destinationMatchError } = await supabase
@@ -69,15 +67,18 @@ export const moveOrSwapPlayerToMatchup = async (
     const swappedPlayer = destinationPlayers[destinationIndex];
     destinationPlayers[destinationIndex] = movingPlayer;
 
-    // Remove player from the from match
-    fromPlayers = fromPlayers.filter((p) => p.uuid !== movingPlayer.uuid);
-    if (swappedPlayer.uuid) {
-        // If another player was in the destination slot, put them back in the from match at the same index
-        while (fromPlayers.length < 2) {
-            fromPlayers.push({ uuid: "", name: "", email: "", account_type: "placeholder" });
-        }
-        fromPlayers[destinationIndex] = swappedPlayer;
-    }
+    fromPlayers[fromPlayers.findIndex((p) => p.uuid === movingPlayer.uuid)] = swappedPlayer;
+
+
+    // // Remove player from the from match
+    // fromPlayers = fromPlayers.filter((p) => p.uuid !== movingPlayer.uuid);
+    // if (swappedPlayer.uuid) {
+    //     // If another player was in the destination slot, put them back in the from match at the same index
+    //     while (fromPlayers.length < 2) {
+    //         fromPlayers.push({ uuid: "", name: "", email: "", account_type: "placeholder" });
+    //     }
+    //     fromPlayers[destinationIndex] = swappedPlayer;
+    // }
 
     // Update both matches in the database
     const { error: updateFromMatchError } = await supabase
