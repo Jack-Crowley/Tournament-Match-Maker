@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Bracket, BracketPlayer, Matchup } from "@/types/bracketTypes";
 import { MatchupModal } from "@/components/modals/displayMatchup";
 import { motion } from "framer-motion";
@@ -8,9 +8,62 @@ import { addPlayerToMatchupFromWaitlist, moveOrSwapPlayerToMatchup } from "@/uti
 import { Tournament } from "@/types/tournamentTypes";
 import { useMessage } from "@/context/messageContext";
 import { User } from "@/types/userType";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faArrowRight, faArrowsAlt, faExchangeAlt } from "@fortawesome/free-solid-svg-icons";
 
 import { AddPlayerButton, MovingPlayer, OnMovePlayer } from "./bracketView";
+import { TournamentPlayer } from "@/types/playerTypes";
 
+interface ContextMenuProps {
+    x: number;
+    y: number;
+    player: BracketPlayer;
+    round: number;
+    matchNumber: number;
+    index: number;
+    onMovePlayer: OnMovePlayer;
+    onClose: () => void;
+}
+
+const ContextMenu = ({ x, y, player, round, matchNumber, index, onMovePlayer, onClose }: ContextMenuProps) => {
+    const menuRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+                onClose();
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [onClose]);
+
+    return (
+        <div
+            ref={menuRef}
+            className="fixed bg-deep rounded-md shadow-lg z-50 overflow-hidden"
+            style={{
+                left: `${x}px`,
+                top: `${y}px`,
+                minWidth: '150px'
+            }}
+        >
+            <div
+                className="px-4 py-2 hover:bg-[#7458DA] hover:text-white cursor-pointer flex items-center gap-2"
+                onClick={() => {
+                    onMovePlayer({ player, fromRound: round, fromMatch: matchNumber, fromIndex: index });
+                    onClose();
+                }}
+            >
+                <FontAwesomeIcon icon={faArrowsAlt} />
+                Move Player
+            </div>
+        </div>
+    );
+};
 
 interface MatchupElementProps {
     match: Matchup;
@@ -23,6 +76,7 @@ interface MatchupElementProps {
     onClose: (() => void) | null;
     user: User;
 }
+
 export const MatchupElement = ({
     match,
     viewType = "single",
@@ -35,20 +89,61 @@ export const MatchupElement = ({
     user,
 }: MatchupElementProps) => {
     const [isMatchupModalOpen, setIsMatchupModalOpen] = useState<boolean>(false);
+    const [contextMenu, setContextMenu] = useState<{
+        visible: boolean;
+        x: number;
+        y: number;
+        player: BracketPlayer;
+        index: number;
+    } | null>(null);
     const { triggerMessage } = useMessage?.() || { triggerMessage: () => { } };
 
     function openModal() {
         if (viewType === "single") {
-            console.log("we setIsmAthcingmodelopen to true");
             setIsMatchupModalOpen(true);
         }
     }
+
+    const handleContextMenu = (e: React.MouseEvent, player: BracketPlayer, index: number) => {
+        if (!player.name || viewType !== "single" || (user.permission_level === "player" || user.permission_level === "viewer")) {
+            return;
+        }
+
+        e.preventDefault();
+
+        setContextMenu({
+            visible: true,
+            x: e.pageX,
+            y: e.pageY-20,
+            player,
+            index,
+        });
+    };
+
+    useEffect(() => {
+        const handleClickOutside = () => {
+            if (contextMenu?.visible) {
+                setContextMenu(null);
+            }
+        };
+
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape' && contextMenu?.visible) {
+                setContextMenu(null);
+            }
+        };
+
+        document.addEventListener('click', handleClickOutside);
+        document.addEventListener('keydown', handleKeyDown);
+
+        return () => {
+            document.removeEventListener('click', handleClickOutside);
+            document.removeEventListener('keydown', handleKeyDown);
+        };
+    }, [contextMenu]);
+
     const handleMoveHere = async (destIndex: number) => {
-        console.log("handleMoveHere", destIndex, match)
-        console.log("but moving player is ", movingPlayer)
-        console.log("tournament is a poor old ", tournament)
         if (!movingPlayer || !tournament) return;
-    
 
         const { success, errorCode } = await moveOrSwapPlayerToMatchup(
             tournament,
@@ -60,13 +155,12 @@ export const MatchupElement = ({
 
         if (success) {
             triggerMessage("Player moved/swapped successfully!", "green");
-            onMovePlayer(null); // Reset moving state
+            onMovePlayer(null);
         }
         else {
             triggerMessage(`Failed to move/swap player. Error code: ${errorCode}`, "red");
         }
     };
-
 
     const addPlayerFromWaitlist = async (index: number) => {
         if (viewType !== "add-player" || !tournament || !newPlayer || !onClose) return;
@@ -125,11 +219,11 @@ export const MatchupElement = ({
 
             case "move-player":
                 if (movingPlayer) {
-                    console.log("moving player!!!!!", movingPlayer);
                     return (
                         <MovePlayerButton
                             onMovePlayer={() => handleMoveHere(index)}
-                            existingPlayer={player.name}
+                            existingPlayer={player}
+                            selectedPlayer={movingPlayer}
                         />
                     );
                 }
@@ -142,23 +236,16 @@ export const MatchupElement = ({
         }
     };
 
-
     return (
         <div className="flex justify-center items-center flex-shrink-0">
             <motion.div
                 className={`${viewType === "single" ? "w-44" : "w-40"} bg-secondary rounded-lg shadow-xl overflow-hidden z-10 hover:cursor-pointer transition-all duration-300`}
                 whileHover={viewType === "single" ? { scale: 1.05 } : undefined}
                 transition={{ type: "spring", stiffness: 300 }}
-                onClick={() => {
-                    if (viewType === "single" && (user.permission_level !== "player" && user.permission_level !== "viewer")) {
-                        console.log("open modal!")
+                onClick={(e) => {
+                    // Prevent click propagation when right-clicking
+                    if (e.button !== 2 && viewType === "single" && (user.permission_level !== "player" && user.permission_level !== "viewer")) {
                         openModal();
-                    }
-                    else if (viewType === "move-player") {
-                        console.log("moving player");
-                    }
-                    else {
-                        console.log("no permission to open modal")
                     }
                 }}
             >
@@ -166,8 +253,9 @@ export const MatchupElement = ({
                     <div
                         key={index}
                         className={`relative ${match.winner && (player.uuid === match.winner ? "bg-[#98979b20]" : "bg-[#120b2950]")}`}
+                        onContextMenu={(e) => handleContextMenu(e, player, index)}
                     >
-                        {player.name ? (
+                        {(player.name && viewType == "single") ? (
                             <div
                                 className={`p-4 ${viewType === "single" ? "flex justify-between" : ""} font-bold border-l-8 
                 ${match.winner
@@ -179,17 +267,6 @@ export const MatchupElement = ({
                 bg-opacity-90 hover:bg-opacity-100 transition-all duration-200`}
                             >
                                 {renderPlayerContent(player, index)}
-                        <motion.button
-                            className="p-2 bg-[#7458DA] rounded-lg text-white hover:bg-[#604BAC] transition-colors"
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                            onClick={() => {
-                                triggerMessage("Move player button clicked", "blue");
-                                onMovePlayer({ player, fromRound: match.round, fromMatch: match.match_number, fromIndex: index });
-                            }}
-                        >
-                            Move
-                        </motion.button>
                             </div>
                         ) : (
                             renderPlayerContent(player, index)
@@ -198,109 +275,51 @@ export const MatchupElement = ({
                         {index !== match.players.length - 1 && <div className="h-px bg-primary opacity-50"></div>}
                     </div>
                 ))}
-
-
             </motion.div>
+
             {viewType === "single" && (
                 <MatchupModal matchup={match} isOpen={isMatchupModalOpen} setOpen={setIsMatchupModalOpen} user={user} />
             )}
+
+            {contextMenu && contextMenu.visible && (
+                <ContextMenu
+                    x={contextMenu.x}
+                    y={contextMenu.y}
+                    player={contextMenu.player}
+                    round={match.round}
+                    matchNumber={match.match_number}
+                    index={contextMenu.index}
+                    onMovePlayer={onMovePlayer}
+                    onClose={() => setContextMenu(null)}
+                />
+            )}
         </div>
     );
-
-
-    // return (
-    //     <div className="flex justify-center items-center flex-shrink-0">
-    //         <motion.div
-    //             className={`${viewType === "single" ? "w-44" : "w-40"} bg-secondary rounded-lg shadow-xl overflow-hidden z-10 hover:cursor-pointer transition-all duration-300`}
-    //             whileHover={viewType === "single" ? { scale: 1.05 } : undefined}
-    //             transition={{ type: "spring", stiffness: 300 }}
-    //             onClick={(viewType === "single" && (user.permission_level != "player" && user.permission_level != "viewer")) ? openModal : undefined}
-    //         >
-    //             {match.players.map((player, index) => (
-    //                 <div
-    //                     key={index}
-    //                     className={`${match.winner && (player.uuid === match.winner ? "bg-[#98979b20]" : "bg-[#120b2950]")}`}
-    //                 >
-    //                     {player.name ? (
-    //                         <div
-    //                             className={`p-4 ${viewType === "single" ? "flex justify-between" : ""} font-bold border-l-8 
-    //               ${match.winner
-    //                                     ? player.uuid === match.winner
-    //                                         ? "border-winner_text text-winner_text"
-    //                                         : `border-loser_text text-loser_text`
-    //                                     : "border-soft text-player_text"} 
-    //               bg-opacity-90 hover:bg-opacity-100 transition-all duration-200 ${player.name === "" && "text-secondary"}`}
-    //                         >
-    //                             {/* //                       ? "border-[#baa6f6] text-[#baa6f6]"
-    //             // : `border-[#1e153e] text-[#271c4e]` */}
-    //                             {/* // : "border-soft text-[#2e225b]"}  */}
-    //                             {viewType === "single" ? (
-    //                                 <>
-    //                                     <span className="truncate mr-2">{player.name}</span>
-    //                                     <div
-    //                                         className={`w-6 h-6 flex items-center justify-center flex-shrink-0
-    //                       ${match.winner
-    //                                                 ? player.uuid === match.winner
-    //                                                     ? "bg-[#baa6f6a2]"
-    //                                                     : "bg-[#1e153e9b]"
-    //                                                 : "bg-soft"} 
-    //                       text-white rounded-full text-sm font-bold`}
-    //                                     >
-    //                                         {player.score ? player.score : 0}
-    //                                     </div>
-    //                                 </>
-    //                             ) : (
-    //                                 player.name
-    //                             )}
-    //                         </div>
-    //                     ) : (
-    //                         viewType === "add-player" ? (
-    //                             <AddPlayerButton onAddPlayer={() => addPlayerFromWaitlist(index)} />
-    //                         ) : (
-    //                             <div
-    //                                 className={`p-4 font-bold border-l-8 
-    //                 ${match.winner
-    //                                         ? "border-[#1e153e] text-[rgba(0,0,0,0)]"
-    //                                         : "border-soft text-[#2e225b00]"} 
-    //                 bg-opacity-90 transition-all`}
-    //                             >
-    //                                 Placeholder
-    //                             </div>
-    //                         )
-    //                     )}
-    //                     {index !== match.players.length - 1 && (
-    //                         <div className="h-px bg-primary opacity-50"></div>
-    //                     )}
-    //                 </div>
-    //             ))}
-    //         </motion.div>
-    //         {viewType === "single" && (
-    //             <MatchupModal matchup={match} isOpen={isMatchupModalOpen} setOpen={setIsMatchupModalOpen} />
-    //         )}
-    //     </div>
-    // );
 };
-
-
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faArrowsAlt } from "@fortawesome/free-solid-svg-icons";
 
 export const MovePlayerButton = ({
     onMovePlayer,
-    existingPlayer
+    existingPlayer,
+    selectedPlayer,
 }: {
     onMovePlayer: () => void;
-    existingPlayer?: string | null;
+    existingPlayer: BracketPlayer;
+    selectedPlayer: MovingPlayer;
 }) => {
+    const isSamePlayer = existingPlayer.uuid === selectedPlayer.player.uuid;
     return (
         <motion.div
-            className="bg-[#4A90E2] hover:bg-[#5FA6F3] transition-colors duration-200"
-            onClick={onMovePlayer}
+            className={`transition-colors duration-200 ${isSamePlayer
+                    ? 'bg-purple-700 cursor-not-allowed'
+                    : existingPlayer.name
+                        ? 'bg-[#FFA559] hover:bg-[#FF9248]'
+                        : 'bg-blue-500 hover:bg-blue-600'
+                }`}
+            onClick={isSamePlayer ? undefined : onMovePlayer}
             style={{
                 padding: "10px 20px",
                 color: "white",
                 borderRadius: "5px",
-                cursor: "pointer",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -308,10 +327,17 @@ export const MovePlayerButton = ({
                 fontSize: "16px",
                 fontWeight: "bold",
             }}
-            whileHover={{ scale: 1.05 }}
+            whileHover={isSamePlayer ? {} : { scale: 1.05 }}
         >
-            <FontAwesomeIcon icon={faArrowsAlt} />
-            {existingPlayer ? `Swap with ${existingPlayer}` : "Move Here"}
+            {!isSamePlayer && (
+                <FontAwesomeIcon icon={existingPlayer.name ? faExchangeAlt : faArrowRight} />
+
+            )}
+            {isSamePlayer
+                ? "Current Position"
+                : existingPlayer.name
+                    ? `Swap with ${existingPlayer.name}`
+                    : "Move Here"}
         </motion.div>
     );
 };
