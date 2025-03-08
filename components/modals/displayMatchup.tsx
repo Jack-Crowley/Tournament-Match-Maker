@@ -3,19 +3,24 @@
 import { useEffect, useRef, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faEnvelope, faTrash, faPlus, faCrown, faTimes } from "@fortawesome/free-solid-svg-icons";
-import { BracketPlayer, Matchup } from "@/types/bracketTypes";
+import { Bracket, BracketPlayer, Matchup } from "@/types/bracketTypes";
 import { createClient } from "@/utils/supabase/client";
 import { motion, AnimatePresence } from "framer-motion";
 import { PlayerManagementTabs } from "../playerManagementTabs";
 import { TournamentPlayer } from "@/types/playerTypes";
+import TournamentBracket from "../tournamentViews/single/bracketView";
+import { User } from "@/types/userType";
+import { Tournament } from "@/types/tournamentTypes";
 
 interface MatchupModalProps {
     isOpen: boolean;
     setOpen: (state: boolean) => void;
     matchup: Matchup;
+    user: User;
 }
 
-export const MatchupModal = ({ isOpen, setOpen, matchup }: MatchupModalProps) => {
+export const MatchupModal = ({ isOpen, setOpen, matchup, user }: MatchupModalProps) => {
+    // TODO Handle duplicate names
     const [editedMatchup, setEditedMatchup] = useState<Matchup>(matchup);
     const [player1, setPlayer1] = useState<TournamentPlayer | null>();
     const [player2, setPlayer2] = useState<TournamentPlayer | null>();
@@ -26,6 +31,7 @@ export const MatchupModal = ({ isOpen, setOpen, matchup }: MatchupModalProps) =>
 
     const [locked, setLocked] = useState<boolean>(false);
     const [removedPlayersList, setRemovedPlayersList] = useState<[string, number][]>([]);
+
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -69,21 +75,37 @@ export const MatchupModal = ({ isOpen, setOpen, matchup }: MatchupModalProps) =>
         // Retrieve the rows of player1 and player2 if they exist. 
 
         async function fetchPlayerData() {
-            const { data: data1, error: error1 } = await supabase
-                .from("tournament_players")
-                .select("*")
-                .eq("member_uuid", matchup.players[0].uuid)
-                .single();
-            const { data: data2, error: error2 } = await supabase
-                .from("tournament_players")
-                .select("*")
-                .eq("member_uuid", matchup.players[1].uuid)
-                .single();
-            if (error1 || error2) {
-                console.log("we should be good here in fetchPlayerData")
+
+            if (!matchup.players[0].uuid) {
+                setPlayer1(null);
             }
-            setPlayer1(data1);
-            setPlayer2(data2);
+            else {
+                const { data: data1, error: error1 } = await supabase
+                    .from("tournament_players")
+                    .select("*")
+                    .eq("member_uuid", matchup.players[0].uuid)
+                    .single();
+                if (error1) {
+                    console.error("error fetching player 1", error1);
+                }
+                setPlayer1(data1);
+            }
+            if (!matchup.players[1].uuid) {
+                setPlayer2(null);
+            }
+            else {
+                const { data: data2, error: error2 } = await supabase
+                    .from("tournament_players")
+                    .select("*")
+                    .eq("member_uuid", matchup.players[1].uuid)
+                    .single();
+                if (error2) {
+                    console.error("error fetching player 2", error2);
+                }
+                else {
+                    setPlayer2(data2);
+                }
+            }
         }
         fetchPlayerData();
     }, [isOpen]);
@@ -387,6 +409,7 @@ export const MatchupModal = ({ isOpen, setOpen, matchup }: MatchupModalProps) =>
 
     };
 
+
     if (!isOpen) return null;
 
     return (
@@ -473,6 +496,7 @@ export const MatchupModal = ({ isOpen, setOpen, matchup }: MatchupModalProps) =>
                                                 <FontAwesomeIcon icon={faEnvelope} />
                                             </motion.button>
                                         )}
+
                                         <motion.button
                                             className={`p-2 ${!locked
                                                 ? "bg-[#c02a2a] border-[#c02a2a] hover:bg-[#a32424]"

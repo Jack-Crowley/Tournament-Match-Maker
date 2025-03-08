@@ -172,7 +172,8 @@ export default function JoinTournament() {
                 <SpinningLoader />
             ) : (
                 <div className="bg-[#2d2158] p-8 rounded-lg shadow-lg max-w-md w-full">
-                    <h2 className="text-[#7458da] font-bold text-2xl mb-6 text-center">Join Tournament</h2>
+                    {/* TODO GIVE ABILITY TO LOGIN HERE */}
+                    <h2 className="text-[#7458da] font-bold text-2xl mb-6 text-center">Enter your name to join</h2>
                     <form onSubmit={handleSubmit} className="space-y-6">
                         <div>
                             <label className="text-white block text-sm mb-2">Name</label>

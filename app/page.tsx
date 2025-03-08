@@ -4,8 +4,24 @@ import Link from "next/link";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTrophy, faUsers, faChartLine } from '@fortawesome/free-solid-svg-icons';
 import { Footer } from "@/components/footer";
+import { createClient } from "@/utils/supabase/client";
+import { useEffect, useState } from "react";
+
 
 export default function Homepage() {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  const supabase = createClient();
+
+  useEffect(() => {
+    const checkUser = async () => {
+      const { data } = await supabase.auth.getSession();
+      setIsLoggedIn(!data.session?.user?.is_anonymous);
+    };
+
+    checkUser();
+  }, []);
+
   return (
     <div className="min-h-screen bg-[#160A3A]">
       <section className="pt-16 pb-16 px-4 sm:px-6 lg:px-8">
@@ -19,14 +35,14 @@ export default function Homepage() {
                 Join a vibrant community of players and fans with TMM. Create, manage, and host tournaments effortlessly while staying updated on all the action.
               </p>
               <div className="flex flex-wrap gap-4">
-                <Link 
-                  href="/join" 
+                <Link
+                  href={isLoggedIn ? "/tournaments" : "/login"}
                   className="bg-[#7458da] hover:bg-[#604BAC] text-white px-8 py-3 rounded-lg transition-colors font-medium"
                 >
-                  Sign Up
+                  {isLoggedIn ? "Tournaments" : "Sign Up"}
                 </Link>
-                <Link 
-                  href="/how-it-works" 
+                <Link
+                  href="/how-it-works"
                   className="border border-[#7458da] text-white hover:bg-[#2a1a66] px-8 py-3 rounded-lg transition-colors font-medium"
                 >
                   Learn More
@@ -103,14 +119,14 @@ export default function Homepage() {
           </div>
 
           <div className="text-center mt-12">
-            <Link 
-              href="/sign-up" 
+            <Link
+              href={isLoggedIn ? "/tournaments" : "/join"}
               className="bg-[#7458da] hover:bg-[#604BAC] text-white px-8 py-3 rounded-lg transition-colors font-medium inline-block mx-2"
             >
-              Sign Up
+              {isLoggedIn ? "Tournaments" : "Sign Up"}
             </Link>
-            <Link 
-              href="/features" 
+            <Link
+              href="/features"
               className="border border-[#7458da] text-white hover:bg-[#2a1a66] px-8 py-3 rounded-lg transition-colors font-medium inline-block mx-2"
             >
               Learn More
@@ -188,14 +204,14 @@ export default function Homepage() {
                   Sign up today to create and manage your own tournaments with ease and efficiency!
                 </p>
                 <div className="flex flex-wrap gap-4">
-                  <Link 
-                    href="/join" 
+                  <Link
+                    href="/join"
                     className="bg-[#7458da] hover:bg-[#604BAC] text-white px-6 py-3 rounded-lg transition-colors font-medium"
                   >
                     Sign Up
                   </Link>
-                  <Link 
-                    href="/how-it-works" 
+                  <Link
+                    href="/how-it-works"
                     className="border border-[#7458da] text-white hover:bg-[#2a1a66] px-6 py-3 rounded-lg transition-colors font-medium"
                   >
                     Learn More
@@ -213,7 +229,7 @@ export default function Homepage() {
           </div>
         </div>
       </section>
-      <Footer/>
+      <Footer />
     </div>
   );
 }

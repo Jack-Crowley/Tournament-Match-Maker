@@ -38,6 +38,12 @@ const Navbar = () => {
                   Account
                 </Link>
                 <Link
+                  href="/tournament/join"
+                  className="bg-[#7458da] hover:bg-[#604BAC] text-white px-4 py-2 rounded-lg transition-colors"
+                >
+                  Join
+                </Link>
+                <Link
                   href="/tournaments"
                   className="bg-[#7458da] hover:bg-[#604BAC] text-white px-6 py-2 rounded-lg transition-colors"
                 >

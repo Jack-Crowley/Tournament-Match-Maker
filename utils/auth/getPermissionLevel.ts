@@ -31,7 +31,13 @@ export const getPermissionLevelForTournament = async (tournamentID: number, clie
         return user
     }
 
-    const {data:tournamentPermissions} = await supabase.from("tournament_organizers").select("*").eq("tournament_id", tournamentID).eq("member_uuid", uuid).eq("accepted", true).single()
+    console.log("given uuid is this: ", uuid)
+
+    const {data:tournamentPermissions, error} = await supabase.from("tournament_organizers").select("*").eq("tournament_id", tournamentID).eq("member_uuid", uuid).eq("accepted", true).single()
+    if (error) {
+        console.log("Error fetching tournament permissions")
+        return null
+    }
 
     if (tournamentPermissions) {
         const user = {
