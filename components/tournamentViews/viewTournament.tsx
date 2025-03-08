@@ -4,7 +4,7 @@ import TournamentBracket, { BracketViewType } from "@/components/tournamentViews
 import { Bracket } from "@/types/bracketTypes";
 import { useEffect, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faTrophy, faUserClock, faBullhorn, faEnvelope } from "@fortawesome/free-solid-svg-icons";
+import { faTrophy, faUserClock, faBullhorn, faEnvelope, faCog } from "@fortawesome/free-solid-svg-icons";
 import { fetchBracket } from "@/utils/bracket/bracket";
 import { SpinningLoader } from "../loading";
 import { createClient } from "@/utils/supabase/client";
@@ -13,12 +13,15 @@ import { AnnouncementSystem } from "../announcement";
 import { WaitlistView } from "./waitlistView";
 import { User } from "@/types/userType";
 import { Tournament } from "@/types/tournamentTypes";
+import { TournamentModal } from "../modals/tournamentEditModal";
+import { useMessage } from "@/context/messageContext";
 
 const NAV_ITEMS = [
     { key: "Bracket", icon: faTrophy },
     { key: "Waitlist", icon: faUserClock },
     { key: "Announcements", icon: faBullhorn },
     { key: "Messages", icon: faEnvelope },
+    { key: "Settings", icon: faCog }
 ];
 
 const SideNavbar = ({ tab, setTab }: { tab: string, setTab: (state: string) => void }) => {
@@ -43,6 +46,7 @@ const SideNavbar = ({ tab, setTab }: { tab: string, setTab: (state: string) => v
 export const ViewTournament = ({ tournamentID, user }: { tournamentID: number, user: User }) => {
     const [bracket, setBracket] = useState<Bracket | null>(null)
     const [errorCode, setErrorCode] = useState<number | null>(null)
+    const [tournament, setTournament] = useState<Tournament>();
 
     const supabase = createClient()
     const [activeTab, setActiveTab] = useState("Bracket");
@@ -55,7 +59,17 @@ export const ViewTournament = ({ tournamentID, user }: { tournamentID: number, u
             setErrorCode(errorCode);
         }
 
+        async function LoadTournament() {
+            const { data, error } = await supabase.from("tournaments").select("*").eq("id", tournamentID).single();
+            if (error) {
+                console.error("Error fetching tournament data", error);
+                return;
+            }
+            setTournament(data);
+        }
+
         LoadBracket()
+        LoadTournament()
 
         // ** Subscribe to Supabase real-time updates **
         const subscription = supabase
@@ -81,9 +95,26 @@ export const ViewTournament = ({ tournamentID, user }: { tournamentID: number, u
 
     }, [tournamentID, supabase])
 
-    if (errorCode) {
-        return <div>Error: {errorCode}</div>;
-    }
+    // ** Effect to update the tournament in the database whenever it changes **
+    useEffect(() => {
+        async function updateTournamentInDatabase() {
+            if (tournament) {
+                const { error } = await supabase
+                    .from("tournaments")
+                    .update(tournament)
+                    .eq("id", tournamentID);
+
+                if (error) {
+                    console.error("Error updating tournament in database", error);
+                } else {
+                    console.log("Tournament updated successfully in database");
+                }
+            }
+        }
+
+        updateTournamentInDatabase();
+    }, [tournament]);
+
 
     return (
         <div className={`relative}`}>
@@ -115,6 +146,14 @@ export const ViewTournament = ({ tournamentID, user }: { tournamentID: number, u
 
                         {activeTab === "Announcements" && (
                             <AnnouncementSystem tournamentID={tournamentID} />
+                        )}
+                        {activeTab === "Settings" && tournament && (
+                            <TournamentModal
+                                isOpen={true}
+                                onClose={() => (setActiveTab("Bracket"))}
+                                tournament={tournament}
+                                setTournament={setTournament}
+                            />
                         )}
                     </motion.div>
                 </AnimatePresence>

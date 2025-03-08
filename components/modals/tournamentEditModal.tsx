@@ -192,7 +192,7 @@ export const TournamentModal = ({
 
             onClose();
             setTournament(tournamentData[0]);
-            
+
             if (failCount > 0) {
                 triggerMessage(`Tournament updated with ${successCount} organizers. ${failCount} organizers failed.`, 'blue');
             } else {
@@ -256,11 +256,11 @@ export const TournamentModal = ({
                     >
                         <div className="flex justify-between items-center mb-6">
                             <h2 className="text-2xl font-bold text-white flex items-center">
-                                <FontAwesomeIcon icon={faEdit} className="mr-2 text-[#7458da]" /> 
+                                <FontAwesomeIcon icon={faEdit} className="mr-2 text-[#7458da]" />
                                 Edit Tournament
                             </h2>
-                            <button 
-                                onClick={onClose} 
+                            <button
+                                onClick={onClose}
                                 className="text-gray-400 hover:text-white transition-colors rounded-full p-1 hover:bg-[#303030]"
                             >
                                 <FontAwesomeIcon icon={faTimes} />
@@ -270,9 +270,8 @@ export const TournamentModal = ({
                         <div className="flex space-x-6 mb-6 border-b border-gray-700">
                             <button
                                 onClick={() => setActiveTab('info')}
-                                className={`pb-2 relative text-lg font-medium transition-colors ${
-                                    activeTab === 'info' ? 'text-white' : 'text-gray-400 hover:text-gray-200'
-                                }`}
+                                className={`pb-2 relative text-lg font-medium transition-colors ${activeTab === 'info' ? 'text-white' : 'text-gray-400 hover:text-gray-200'
+                                    }`}
                             >
                                 Tournament Information
                                 {activeTab === 'info' && (
@@ -284,9 +283,8 @@ export const TournamentModal = ({
                             </button>
                             <button
                                 onClick={() => setActiveTab('organizers')}
-                                className={`pb-2 relative text-lg font-medium transition-colors ${
-                                    activeTab === 'organizers' ? 'text-white' : 'text-gray-400 hover:text-gray-200'
-                                }`}
+                                className={`pb-2 relative text-lg font-medium transition-colors ${activeTab === 'organizers' ? 'text-white' : 'text-gray-400 hover:text-gray-200'
+                                    }`}
                             >
                                 Tournament Organizers
                                 {activeTab === 'organizers' && (
@@ -377,7 +375,11 @@ export const TournamentModal = ({
                                         onChange={(e: ChangeEvent<HTMLInputElement>) => setMaxPlayers(Number(e.target.value))}
                                         placeholder="Enter Maximum Players"
                                         className="w-full p-3 bg-[#2D2D2D] rounded-lg border-2 border-[#3A3A3A] text-white focus:outline-none focus:border-[#7458da] transition-colors"
+                                        disabled={tournament?.status === "started"} // Disable input if tournament status is "started"
                                     />
+                                    {tournament?.status === "started" && ( // Display text if tournament status is "started"
+                                        <p className="text-sm text-red-400 mt-1">Tournament has already started. Cannot change max players.</p>
+                                    )}
                                 </div>
 
                                 <div className="p-4 bg-[#252525] rounded-lg border border-[#3A3A3A]">
@@ -439,8 +441,8 @@ export const TournamentModal = ({
                                 {organizers.length > 0 ? (
                                     <div className="space-y-3 max-h-64 overflow-y-auto pr-2">
                                         {organizers.map((organizer, index) => (
-                                            <motion.div 
-                                                key={index} 
+                                            <motion.div
+                                                key={index}
                                                 className="flex items-center space-x-3 bg-[#2a2a2a] p-3 rounded-lg"
                                                 initial={{ opacity: 0, y: 5 }}
                                                 animate={{ opacity: 1, y: 0 }}
@@ -483,14 +485,14 @@ export const TournamentModal = ({
                         )}
 
                         <div className="mt-8 flex justify-end space-x-4">
-                            <button 
-                                onClick={onClose} 
+                            <button
+                                onClick={onClose}
                                 className="bg-[#3A3A3A] hover:bg-[#4A4A4A] text-white px-5 py-2 rounded-lg transition-colors flex items-center"
                             >
                                 <FontAwesomeIcon icon={faTimes} className="mr-1" /> Cancel
                             </button>
-                            <button 
-                                onClick={handleSave} 
+                            <button
+                                onClick={handleSave}
                                 disabled={isLoading}
                                 className={`bg-[#7458da] hover:bg-[#604BAC] text-white px-6 py-2 rounded-lg transition-colors flex items-center ${isLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
                             >
