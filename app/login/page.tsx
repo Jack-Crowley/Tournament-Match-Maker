@@ -36,7 +36,7 @@ const LoginPageContent = () => {
       }
       
       if (data.session) {
-        const redirectTo = redirectParam || localStorage.getItem('previousPath') || '/account';
+        const redirectTo = redirectParam || localStorage.getItem('previousPath') || '/';
         
         localStorage.removeItem('previousPath');
         console.log('Signed in anonymously, redirecting to:', redirectTo);
