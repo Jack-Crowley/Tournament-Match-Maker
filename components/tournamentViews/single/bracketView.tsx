@@ -49,7 +49,6 @@ export interface MovingPlayer {
     fromIndex: number;
 }
 
-// Function signature for handling player moves
 export type OnMovePlayer = (player: MovingPlayer | null) => void;
 
 
