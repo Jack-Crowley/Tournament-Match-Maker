@@ -9,12 +9,12 @@ import { Tournament } from "@/types/tournamentTypes";
 import { useMessage } from "@/context/messageContext";
 import { User } from "@/types/userType";
 
-import { AddPlayerButton, MovingPlayer, OnMovePlayer } from "./bracketView";
+import { AddPlayerButton, BracketViewType, MovingPlayer, OnMovePlayer } from "./bracketView";
 
 
 interface MatchupElementProps {
     match: Matchup;
-    viewType: "single" | "add-player" | "move-player";
+    viewType: BracketViewType;
     newPlayer: BracketPlayer | null;
     bracket?: Bracket | null;
     movingPlayer: MovingPlayer | null;
@@ -25,7 +25,7 @@ interface MatchupElementProps {
 }
 export const MatchupElement = ({
     match,
-    viewType = "single",
+    viewType = BracketViewType.Single,
     newPlayer = null,
     tournament = null,
     movingPlayer = null,
@@ -38,7 +38,7 @@ export const MatchupElement = ({
     const { triggerMessage } = useMessage?.() || { triggerMessage: () => { } };
 
     function openModal() {
-        if (viewType === "single") {
+        if (viewType === BracketViewType.Single) {
             console.log("we setIsmAthcingmodelopen to true");
             setIsMatchupModalOpen(true);
         }
@@ -65,11 +65,12 @@ export const MatchupElement = ({
         else {
             triggerMessage(`Failed to move/swap player. Error code: ${errorCode}`, "red");
         }
+        // setIsMatchupModalOpen(false);
     };
 
 
     const addPlayerFromWaitlist = async (index: number) => {
-        if (viewType !== "add-player" || !tournament || !newPlayer || !onClose) return;
+        if (viewType !== BracketViewType.AddPlayer || !tournament || !newPlayer || !onClose) return;
 
         const { success, errorCode } = await addPlayerToMatchupFromWaitlist(
             tournament,
@@ -89,7 +90,7 @@ export const MatchupElement = ({
 
     const renderPlayerContent = (player: BracketPlayer, index: number) => {
         switch (viewType) {
-            case "single":
+            case BracketViewType.Single:
                 if (!player.name) {
                     return (
                         <div
@@ -117,15 +118,28 @@ export const MatchupElement = ({
                         >
                             {player.score ?? 0}
                         </div>
+
+                        <motion.button
+                            className="p-2 bg-[#7458DA] rounded-lg text-white hover:bg-[#604BAC] transition-colors"
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            onClick={(event) => {
+                                triggerMessage("Move player button clicked", "blue");
+                                event.stopPropagation();
+                                onMovePlayer({ player, fromRound: match.round, fromMatch: match.match_number, fromIndex: index });
+                            }}
+                        >
+                            <FontAwesomeIcon icon={faArrowsAlt} />
+                        </motion.button>
                     </>
                 );
 
-            case "add-player":
+            case BracketViewType.AddPlayer:
                 return player.name ? player.name : <AddPlayerButton onAddPlayer={() => addPlayerFromWaitlist(index)} />;
 
-            case "move-player":
+            case BracketViewType.MovePlayer:
                 if (movingPlayer) {
-                    console.log("moving player!!!!!", movingPlayer);
+                    // console.log("moving player!!!!!", movingPlayer);
                     return (
                         <MovePlayerButton
                             onMovePlayer={() => handleMoveHere(index)}
@@ -134,7 +148,8 @@ export const MatchupElement = ({
                     );
                 }
                 else {
-                    return <p>YOLOO</p>
+                    triggerMessage("No player to move", "red");
+                    return <p>ERROR NO MOVING PLAYER</p>
                 }
 
             default:
@@ -146,16 +161,16 @@ export const MatchupElement = ({
     return (
         <div className="flex justify-center items-center flex-shrink-0">
             <motion.div
-                className={`${viewType === "single" ? "w-44" : "w-40"} bg-secondary rounded-lg shadow-xl overflow-hidden z-10 hover:cursor-pointer transition-all duration-300`}
-                whileHover={viewType === "single" ? { scale: 1.05 } : undefined}
-                transition={{ type: "spring", stiffness: 300 }}
+                className={`${viewType === BracketViewType.Single ? "w-60" : "w-60"} bg-secondary rounded-lg shadow-xl overflow-hidden z-10 hover:cursor-pointer transition-all duration-300`}
+                whileHover={viewType === BracketViewType.Single ? { scale: 1.05 } : undefined}
+                transition={{ type: "spring", stiffness: 130 }}
                 onClick={() => {
-                    if (viewType === "single" && (user.permission_level !== "player" && user.permission_level !== "viewer")) {
+                    if (viewType === BracketViewType.Single && (user.permission_level !== "player" && user.permission_level !== "viewer")) {
                         console.log("open modal!")
                         openModal();
                     }
                     else if (viewType === "move-player") {
-                        console.log("moving player");
+                        // console.log("moving player");
                     }
                     else {
                         console.log("no permission to open modal")
@@ -169,7 +184,7 @@ export const MatchupElement = ({
                     >
                         {player.name ? (
                             <div
-                                className={`p-4 ${viewType === "single" ? "flex justify-between" : ""} font-bold border-l-8 
+                                className={`p-4 ${viewType === BracketViewType.Single ? "flex justify-between" : ""} font-bold border-l-8 
                 ${match.winner
                                         ? player.uuid === match.winner
                                             ? "border-winner_text text-winner_text"
@@ -179,17 +194,6 @@ export const MatchupElement = ({
                 bg-opacity-90 hover:bg-opacity-100 transition-all duration-200`}
                             >
                                 {renderPlayerContent(player, index)}
-                        <motion.button
-                            className="p-2 bg-[#7458DA] rounded-lg text-white hover:bg-[#604BAC] transition-colors"
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                            onClick={() => {
-                                triggerMessage("Move player button clicked", "blue");
-                                onMovePlayer({ player, fromRound: match.round, fromMatch: match.match_number, fromIndex: index });
-                            }}
-                        >
-                            Move
-                        </motion.button>
                             </div>
                         ) : (
                             renderPlayerContent(player, index)
@@ -201,7 +205,7 @@ export const MatchupElement = ({
 
 
             </motion.div>
-            {viewType === "single" && (
+            {viewType === BracketViewType.Single && (
                 <MatchupModal matchup={match} isOpen={isMatchupModalOpen} setOpen={setIsMatchupModalOpen} user={user} />
             )}
         </div>
@@ -211,10 +215,10 @@ export const MatchupElement = ({
     // return (
     //     <div className="flex justify-center items-center flex-shrink-0">
     //         <motion.div
-    //             className={`${viewType === "single" ? "w-44" : "w-40"} bg-secondary rounded-lg shadow-xl overflow-hidden z-10 hover:cursor-pointer transition-all duration-300`}
-    //             whileHover={viewType === "single" ? { scale: 1.05 } : undefined}
+    //             className={`${viewType === BracketViewType.Single ? "w-44" : "w-40"} bg-secondary rounded-lg shadow-xl overflow-hidden z-10 hover:cursor-pointer transition-all duration-300`}
+    //             whileHover={viewType === BracketViewType.Single ? { scale: 1.05 } : undefined}
     //             transition={{ type: "spring", stiffness: 300 }}
-    //             onClick={(viewType === "single" && (user.permission_level != "player" && user.permission_level != "viewer")) ? openModal : undefined}
+    //             onClick={(viewType === BracketViewType.Single && (user.permission_level != "player" && user.permission_level != "viewer")) ? openModal : undefined}
     //         >
     //             {match.players.map((player, index) => (
     //                 <div
@@ -223,7 +227,7 @@ export const MatchupElement = ({
     //                 >
     //                     {player.name ? (
     //                         <div
-    //                             className={`p-4 ${viewType === "single" ? "flex justify-between" : ""} font-bold border-l-8 
+    //                             className={`p-4 ${viewType === BracketViewType.Single ? "flex justify-between" : ""} font-bold border-l-8 
     //               ${match.winner
     //                                     ? player.uuid === match.winner
     //                                         ? "border-winner_text text-winner_text"
@@ -234,7 +238,7 @@ export const MatchupElement = ({
     //                             {/* //                       ? "border-[#baa6f6] text-[#baa6f6]"
     //             // : `border-[#1e153e] text-[#271c4e]` */}
     //                             {/* // : "border-soft text-[#2e225b]"}  */}
-    //                             {viewType === "single" ? (
+    //                             {viewType === BracketViewType.Single ? (
     //                                 <>
     //                                     <span className="truncate mr-2">{player.name}</span>
     //                                     <div
@@ -274,7 +278,7 @@ export const MatchupElement = ({
     //                 </div>
     //             ))}
     //         </motion.div>
-    //         {viewType === "single" && (
+    //         {viewType === BracketViewType.Single && (
     //             <MatchupModal matchup={match} isOpen={isMatchupModalOpen} setOpen={setIsMatchupModalOpen} />
     //         )}
     //     </div>
@@ -283,7 +287,7 @@ export const MatchupElement = ({
 
 
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faArrowsAlt } from "@fortawesome/free-solid-svg-icons";
+import { faArrows, faArrowsAlt } from "@fortawesome/free-solid-svg-icons";
 
 export const MovePlayerButton = ({
     onMovePlayer,
@@ -311,7 +315,7 @@ export const MovePlayerButton = ({
             whileHover={{ scale: 1.05 }}
         >
             <FontAwesomeIcon icon={faArrowsAlt} />
-            {existingPlayer ? `Swap with ${existingPlayer}` : "Move Here"}
+            {existingPlayer ? `Swap ${existingPlayer}` : "Move Here"}
         </motion.div>
     );
 };

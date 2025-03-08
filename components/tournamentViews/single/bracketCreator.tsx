@@ -6,15 +6,16 @@ import { Bracket, BracketPlayer } from "@/types/bracketTypes";
 import { Tournament } from "@/types/tournamentTypes";
 import { User } from "@/types/userType";
 
-import {MovingPlayer, OnMovePlayer} from "./bracketView";
+import {MovingPlayer, OnMovePlayer, BracketViewType} from "./bracketView";
 import { MatchupElement } from "./matchupElement";
+
 
 
 export const BracketCreator = ({
     roundIndex,
     matchIndex,
     bracket,
-    viewType = "single",
+    viewType = BracketViewType.Single,
     newPlayer = null,
     movingPlayer,
     tournament = null,
@@ -26,7 +27,7 @@ export const BracketCreator = ({
     matchIndex: number;
     bracket: Bracket;
     user: User;
-    viewType?: "single" | "add-player" | "move-player";
+    viewType: BracketViewType;
     movingPlayer: MovingPlayer | null;
     onMovePlayer: OnMovePlayer;
     newPlayer?: BracketPlayer | null;
@@ -35,7 +36,7 @@ export const BracketCreator = ({
 }) => {
     const elementRef = useRef<HTMLDivElement | null>(null);
     const [box, setBox] = useState<DOMRect | null>(null);
-    const heightOffset = (bracket.rounds.length - roundIndex - 1) * (viewType === "single" ? 8 : 7);
+    const heightOffset = (bracket.rounds.length - roundIndex - 1) * (viewType === BracketViewType.Single ? 8 : 7);
     const connectionColor = "bg-primary";
     const connectionThickness = "2px";
     const connectionSpacing = "3rem";

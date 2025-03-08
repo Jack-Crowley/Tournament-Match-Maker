@@ -53,6 +53,11 @@ export interface MovingPlayer {
 export type OnMovePlayer = (player: MovingPlayer | null) => void;
 
 
+export enum BracketViewType {
+    Single = "single",
+    AddPlayer = "add-player",
+    MovePlayer = "move-player",
+}
 
 const TournamentBracket = ({
     bracket,
@@ -60,15 +65,19 @@ const TournamentBracket = ({
     tournamentID = null,
     onClose = null,
     user,
+    bracketViewType = BracketViewType.Single,
+    
 }: {
     bracket: Bracket;
     newPlayer?: BracketPlayer | null;
     tournamentID?: number | null;
     onClose?: (() => void) | null;
-    user: User
+    user: User;
+    bracketViewType: BracketViewType;
+
 }) => {
 
-    const [viewType, setViewType] = useState<"single" | "add-player" | "move-player">("single");
+    const [viewType, setViewType] = useState<BracketViewType>(bracketViewType);
 
     const [movingPlayer, setMovingPlayer] = useState<MovingPlayer | null>(null);
 
@@ -76,10 +85,10 @@ const TournamentBracket = ({
         console.log("TOURNAMENT BRACKET: MOVING PLAYER", player);
         if (player === null) {
             setMovingPlayer(null);
-            setViewType("single");
+            setViewType(BracketViewType.Single);
         } else {
             setMovingPlayer(player);
-            setViewType("move-player");
+            setViewType(BracketViewType.MovePlayer);
         }
     };
 
@@ -111,7 +120,7 @@ const TournamentBracket = ({
     }, [tournamentID]); // Runs when `tournamentID` changes
 
 
-    const containerClass = viewType === "single"
+    const containerClass = viewType === BracketViewType.Single
         ? "mt-12 ml-[8%] h-[89vh] overflow-auto pb-16"
         : "mt-[50px] ml-[8%] h-[89vh]";
 

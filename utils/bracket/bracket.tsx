@@ -35,6 +35,27 @@ export const moveOrSwapPlayerToMatchup = async (
         console.error("Error fetching destination match:", destinationMatchError);
         return { success: false, errorCode: 500 };
     }
+    // What if the destination match is the same as the source match
+    if (newPlayer.fromMatch === destinationMatchNumber && newPlayer.fromRound === destinationRoundNumber) {
+        console.log("Destination match is the same as source match");
+        // so all we need to do is swap the order of players. 
+        const { error: updateFromMatchError } = await supabase
+        .from("tournament_matches")
+        .upsert({
+            id: destinationMatch.id,
+            tournament_id: tournament.id,
+            round: destinationRoundNumber,
+            match_number: destinationMatchNumber,
+            players: destinationMatch.players.reverse(),
+        });
+        if (updateFromMatchError) {
+            console.error("Error updating match when its the same match??:", updateFromMatchError);
+            return { success: false, errorCode: 500 };
+        }
+        else {
+            return {success: true, errorCode: null};
+        }
+    }
 
     let destinationPlayers: BracketPlayer[] = destinationMatch?.players || [];
     while (destinationPlayers.length < 2) {

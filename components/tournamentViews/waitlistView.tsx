@@ -9,7 +9,7 @@ import { faUserClock, faExclamationCircle, faInfoCircle } from "@fortawesome/fre
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import TournamentBracket from "./single/bracketView";
+import TournamentBracket, { BracketViewType } from "./single/bracketView";
 import { User } from "@/types/userType";
 
 export const WaitlistView = ({ tournamentID, bracket, user }: { tournamentID: number, bracket: Bracket, user:User }) => {
@@ -78,7 +78,7 @@ export const WaitlistView = ({ tournamentID, bracket, user }: { tournamentID: nu
     return (
         <div>
             {isAdding && tournament ? (
-                <TournamentBracket user={user} viewType={`add-player`} tournament={tournament} bracket={bracket} newPlayer={activePlayer as unknown as BracketPlayer} onClose={addPlayerSuccess} />
+                <TournamentBracket user={user} bracketViewType={BracketViewType.AddPlayer} tournamentID={Number(tournament.id)} bracket={bracket} newPlayer={activePlayer as unknown as BracketPlayer} onClose={addPlayerSuccess} />
             ) : (
                 <motion.div
                     className="w-full max-w-6xl mx-auto bg-[#1F1346] p-6 md:p-12 rounded-2xl shadow-2xl"

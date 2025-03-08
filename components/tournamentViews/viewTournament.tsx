@@ -1,6 +1,6 @@
 "use client"
 
-import TournamentBracket from "@/components/tournamentViews/single/bracketView";
+import TournamentBracket, { BracketViewType } from "@/components/tournamentViews/single/bracketView";
 import { Bracket } from "@/types/bracketTypes";
 import { useEffect, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -22,7 +22,6 @@ const NAV_ITEMS = [
 ];
 
 const SideNavbar = ({ tab, setTab }: { tab: string, setTab: (state: string) => void }) => {
-
     return (
         <div className="fixed top-1/2 transform -translate-y-1/2 w-[8%] z-20 flex items-center justify-center">
             <nav className="z-20 bg-deep p-3 flex w-fit shadow-lg rounded-full flex-col gap-2 border border-soft">
@@ -108,7 +107,7 @@ export const ViewTournament = ({ tournamentID, user }: { tournamentID: number, u
                         className="mt-8 px-4 sm:px-8 lg:px-16"
                     >
                         {activeTab === "Bracket" && (
-                            <TournamentBracket bracket={bracket} tournamentID={tournamentID} user={user} />
+                            <TournamentBracket bracket={bracket} bracketViewType={BracketViewType.Single} tournamentID={tournamentID} user={user} />
                         )}
 
                         {activeTab == "Waitlist" && (
