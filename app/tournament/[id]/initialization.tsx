@@ -203,7 +203,8 @@ export default function Initialization({ refreshTournament, user }: { user : Use
         const { data: tournamentPlayers, error: playerError } = await supabase
             .from('tournament_players')
             .select('*')
-            .eq('tournament_id', tournament.id);
+            .eq('tournament_id', tournament.id)
+            .eq("type", "active");
 
         if (playerError) {
             triggerMessage("Error! You have no players in the database!!!", "red");
