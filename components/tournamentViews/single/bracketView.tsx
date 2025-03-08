@@ -7,6 +7,7 @@ import { motion } from "framer-motion";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faUserPlus } from "@fortawesome/free-solid-svg-icons/faUserPlus";
 import { addPlayerToMatchupFromWaitlist, moveOrSwapPlayerToMatchup } from "@/utils/bracket/bracket";
+
 import { Tournament } from "@/types/tournamentTypes";
 import { useMessage } from "@/context/messageContext";
 import { User } from "@/types/userType";

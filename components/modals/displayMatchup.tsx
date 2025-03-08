@@ -122,7 +122,7 @@ export const MatchupModal = ({ isOpen, setOpen, matchup, user }: MatchupModalPro
             // Losers becoming inactive. First lets check if the players exist still:
             if (editedMatchup.players.find(player => player.uuid === player1?.member_uuid)) {
                 // update the database
-                const { error } = await supabase
+                await supabase
                     .from("tournament_players")
                     .update({
                         type: player1?.type,
@@ -131,7 +131,7 @@ export const MatchupModal = ({ isOpen, setOpen, matchup, user }: MatchupModalPro
 
             }
             if (editedMatchup.players.find(player => player.uuid === player2?.member_uuid)) {
-                const { error } = await supabase
+                await supabase
                     .from("tournament_players")
                     .update({
                         type: player2?.type,
@@ -153,7 +153,7 @@ export const MatchupModal = ({ isOpen, setOpen, matchup, user }: MatchupModalPro
                 // Losers becoming inactive. First lets check if the players exist still:
                 if (playerIndex[0] === player1?.member_uuid) {
                     // update the database
-                    const { error } = await supabase
+                    await supabase
                         .from("tournament_players")
                         .update({
                             type: player1?.type,
@@ -161,7 +161,7 @@ export const MatchupModal = ({ isOpen, setOpen, matchup, user }: MatchupModalPro
                         .eq("member_uuid", player1?.member_uuid);
                 }
                 if (playerIndex[0] === player2?.member_uuid) {
-                    const { error } = await supabase
+                    await supabase
                         .from("tournament_players")
                         .update({
                             type: player2?.type,
