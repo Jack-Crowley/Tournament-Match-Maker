@@ -19,7 +19,8 @@ interface MatchupModalProps {
     user: User;
 }
 
-export const MatchupModal = ({ isOpen, setOpen, matchup, user}: MatchupModalProps) => {
+export const MatchupModal = ({ isOpen, setOpen, matchup, user }: MatchupModalProps) => {
+    // TODO Handle duplicate names
     const [editedMatchup, setEditedMatchup] = useState<Matchup>(matchup);
     const [player1, setPlayer1] = useState<TournamentPlayer | null>();
     const [player2, setPlayer2] = useState<TournamentPlayer | null>();
@@ -74,21 +75,37 @@ export const MatchupModal = ({ isOpen, setOpen, matchup, user}: MatchupModalProp
         // Retrieve the rows of player1 and player2 if they exist. 
 
         async function fetchPlayerData() {
-            const { data: data1, error: error1 } = await supabase
-                .from("tournament_players")
-                .select("*")
-                .eq("member_uuid", matchup.players[0].uuid)
-                .single();
-            const { data: data2, error: error2 } = await supabase
-                .from("tournament_players")
-                .select("*")
-                .eq("member_uuid", matchup.players[1].uuid)
-                .single();
-            if (error1 || error2) {
-                console.log("we should be good here in fetchPlayerData")
+
+            if (!matchup.players[0].uuid) {
+                setPlayer1(null);
             }
-            setPlayer1(data1);
-            setPlayer2(data2);
+            else {
+                const { data: data1, error: error1 } = await supabase
+                    .from("tournament_players")
+                    .select("*")
+                    .eq("member_uuid", matchup.players[0].uuid)
+                    .single();
+                if (error1) {
+                    console.error("error fetching player 1", error1);
+                }
+                setPlayer1(data1);
+            }
+            if (!matchup.players[1].uuid) {
+                setPlayer2(null);
+            }
+            else {
+                const { data: data2, error: error2 } = await supabase
+                    .from("tournament_players")
+                    .select("*")
+                    .eq("member_uuid", matchup.players[1].uuid)
+                    .single();
+                if (error2) {
+                    console.error("error fetching player 2", error2);
+                }
+                else {
+                    setPlayer2(data2);
+                }
+            }
         }
         fetchPlayerData();
     }, [isOpen]);
@@ -391,7 +408,7 @@ export const MatchupModal = ({ isOpen, setOpen, matchup, user}: MatchupModalProp
         });
 
     };
-    
+
 
     if (!isOpen) return null;
 
