@@ -49,6 +49,7 @@ export const ViewTournament = ({ tournamentID, user }: { tournamentID: number, u
 
     useEffect(() => {
         async function LoadBracket() {
+            console.log("We are currently loading the barcket!")
             const { bracket, errorCode } = await fetchBracket(tournamentID);
             setBracket(bracket);
             setErrorCode(errorCode);
@@ -77,8 +78,6 @@ export const ViewTournament = ({ tournamentID, user }: { tournamentID: number, u
         return () => {
             supabase.removeChannel(subscription);
         };
-
-
 
     }, [tournamentID, supabase])
 

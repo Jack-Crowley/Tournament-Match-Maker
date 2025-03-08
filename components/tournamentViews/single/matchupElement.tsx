@@ -219,7 +219,7 @@ export const MatchupElement = ({
                             whileHover={{ scale: 1.05 }}
                             whileTap={{ scale: 0.95 }}
                             onClick={(event) => {
-                                triggerMessage("Move player button clicked", "blue");
+                                // triggerMessage("Move player button clicked", "blue");
                                 event.stopPropagation();
                                 onMovePlayer({ player, fromRound: match.round, fromMatch: match.match_number, fromIndex: index });
                             }}
@@ -255,17 +255,12 @@ export const MatchupElement = ({
     return (
         <div className="flex justify-center items-center flex-shrink-0">
             <motion.div
-                className={`${viewType === "single" ? "w-44" : "w-40"} bg-secondary rounded-lg shadow-xl overflow-hidden z-10 hover:cursor-pointer transition-all duration-300`}
-                whileHover={viewType === "single" ? { scale: 1.05 } : undefined}
-                transition={{ type: "spring", stiffness: 300 }}
-                onClick={(e) => {
-                    // Prevent click propagation when right-clicking
-                    if (e.button !== 2 && viewType === "single" && (user.permission_level !== "player" && user.permission_level !== "viewer")) {
                 className={`${viewType === BracketViewType.Single ? "w-60" : "w-60"} bg-secondary rounded-lg shadow-xl overflow-hidden z-10 hover:cursor-pointer transition-all duration-300`}
                 whileHover={viewType === BracketViewType.Single ? { scale: 1.05 } : undefined}
                 transition={{ type: "spring", stiffness: 130 }}
-                onClick={() => {
-                    if (viewType === BracketViewType.Single && (user.permission_level !== "player" && user.permission_level !== "viewer")) {
+                onClick={(e) => {
+                    // Prevent click propagation when right-clicking
+                    if (e.button !== 2 && viewType === BracketViewType.Single && (user.permission_level !== "player" && user.permission_level !== "viewer")) {
                         console.log("open modal!")
                         openModal();
                     }

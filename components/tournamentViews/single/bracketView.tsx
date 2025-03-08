@@ -92,7 +92,6 @@ const TournamentBracket = ({
     };
 
 
-
     if (!bracket || !bracket.rounds || bracket.rounds.length === 0) {
         return <div className="flex justify-center items-center h-full">No tournament data available</div>;
     }

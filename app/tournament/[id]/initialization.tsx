@@ -140,6 +140,7 @@ export default function Initialization({ refreshTournament, user }: { user : Use
 
         setStarting(true)
 
+
         if (!tournament) return;
         
         if (tournament.max_players && activePlayers.length > tournament.max_players) {
@@ -199,7 +200,17 @@ export default function Initialization({ refreshTournament, user }: { user : Use
     const setupBracket = async () => {
         if (!tournament) return;
 
-        const formattedPlayers: BracketPlayer[] = activePlayers.map(player => ({
+        const { data: tournamentPlayers, error: playerError } = await supabase
+            .from('tournament_players')
+            .select('*')
+            .eq('tournament_id', tournament.id);
+
+        if (playerError) {
+            triggerMessage("Error! You have no players in the database!!!", "red");
+            return;
+        }
+
+        const formattedPlayers: BracketPlayer[] = tournamentPlayers.map(player => ({
             uuid: player.member_uuid,
             name: player.player_name || "Unknown",
             email: player.email || "",
