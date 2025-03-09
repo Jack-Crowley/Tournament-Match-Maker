@@ -15,6 +15,7 @@ import { User } from "@/types/userType";
 import { Tournament } from "@/types/tournamentTypes";
 import { TournamentModal } from "../modals/tournamentEditModal";
 import { useMessage } from "@/context/messageContext";
+import { MessagingSystem } from "../messanging";
 
 const NAV_ITEMS = [
     { key: "Bracket", icon: faTrophy },
@@ -146,6 +147,11 @@ export const ViewTournament = ({ tournamentID, user }: { tournamentID: number, u
                         {activeTab === "Announcements" && (
                             <AnnouncementSystem tournamentID={tournamentID} />
                         )}
+
+                        {activeTab === "Messages" && (
+                            <MessagingSystem tournamentID={tournamentID} user={user} />
+                        )}
+
                         {activeTab === "Settings" && tournament && (
                             <TournamentModal
                                 isOpen={true}

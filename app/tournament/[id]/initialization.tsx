@@ -41,6 +41,8 @@ export default function Initialization({ refreshTournament, user }: { user : Use
     const params = useParams();
     const id = params.id;
 
+    console.log(user)
+
     useEffect(() => {
         const fetchData = async () => {
             try {

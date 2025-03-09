@@ -67,7 +67,7 @@ export default function JoinTournament() {
             const { data:userData } = await supabase
                 .from('users')
                 .select('name')
-                .eq('id', client.session?.user.id)
+                .eq('uuid', client.session?.user.id)
                 .single();
 
             if (userData && userData.name) {
