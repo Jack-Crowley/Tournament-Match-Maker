@@ -120,6 +120,12 @@ export const MatchupElement = ({
             index,
         });
     };
+    const handleCancelMove = () => {
+        onMovePlayer(null);
+        // viewType = BracketViewType.Single;
+        triggerMessage("Move operation canceled", "yellow");
+    };
+
 
     useEffect(() => {
         const handleClickOutside = () => {
@@ -214,7 +220,7 @@ export const MatchupElement = ({
                             {player.score ?? 0}
                         </div>
 
-                        <motion.button
+                        {/* <motion.button
                             className="p-2 bg-[#7458DA] rounded-lg text-white hover:bg-[#604BAC] transition-colors"
                             whileHover={{ scale: 1.05 }}
                             whileTap={{ scale: 0.95 }}
@@ -225,7 +231,7 @@ export const MatchupElement = ({
                             }}
                         >
                             <FontAwesomeIcon icon={faArrowsAlt} />
-                        </motion.button>
+                        </motion.button> */}
                     </>
                 );
 
@@ -239,6 +245,7 @@ export const MatchupElement = ({
                             onMovePlayer={() => handleMoveHere(index)}
                             existingPlayer={player}
                             selectedPlayer={movingPlayer}
+                            onCancelMove={handleCancelMove}
                         />
                     );
                 }
@@ -321,10 +328,12 @@ export const MatchupElement = ({
 
 export const MovePlayerButton = ({
     onMovePlayer,
+    onCancelMove,
     existingPlayer,
     selectedPlayer,
 }: {
     onMovePlayer: () => void;
+    onCancelMove: () => void;
     existingPlayer: BracketPlayer;
     selectedPlayer: MovingPlayer;
 }) => {
@@ -360,6 +369,25 @@ export const MovePlayerButton = ({
                 : existingPlayer.name
                     ? `Swap with ${existingPlayer.name}`
                     : "Move Here"}
+            {isSamePlayer && <CancelMoveButton onCancelMove={onCancelMove} />}
+
         </motion.div>
+    );
+};
+
+export const CancelMoveButton = ({
+    onCancelMove,
+}: {
+    onCancelMove: () => void;
+}) => {
+    return (
+        <motion.button
+            className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white font-bold rounded-lg transition-all"
+            onClick={onCancelMove}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+        >
+            Cancel
+        </motion.button>
     );
 };
