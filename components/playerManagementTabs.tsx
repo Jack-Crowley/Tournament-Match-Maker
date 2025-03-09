@@ -30,8 +30,21 @@ export const PlayerManagementTabs = ({ tournamentID, onClose }: { tournamentID: 
             uuid: player.member_uuid,
             name: player.player_name,
             email: "",
-            account_type: player.type
+            account_type: "active",
         } 
+
+        // update the account type of the player
+        const { data, error } = await supabase
+            .from("tournament_players")
+            .update({ type: "active" })
+            .eq("id", player.id)
+            .single();
+
+        if (error) {
+            triggerMessage("Error moving player", "red");
+            console.error(error);
+            return;
+        }
 
         onClose(bracketPlayer)
     }
