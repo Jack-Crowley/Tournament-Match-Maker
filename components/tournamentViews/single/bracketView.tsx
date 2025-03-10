@@ -109,8 +109,7 @@ const TournamentBracket = ({
                 return;
             }
 
-
-            console.log("TOURNAMENT BRACKET: TOURNAMENT DATA", data);
+            // console.log("TOURNAMENT BRACKET: TOURNAMENT DATA", data);
 
             setTournament(data); // ✅ Store the tournament in state
         };

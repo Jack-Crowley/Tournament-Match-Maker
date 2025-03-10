@@ -140,6 +140,17 @@ export default function JoinTournament() {
             }
         }
 
+        if (tournament.status === "completed") {
+            triggerMessage("This tournament has already completed", "red")
+            setLoading(false)
+            return;
+        }
+        else if (tournament.status === "started") {
+            type = "waitlist"
+            triggerMessage("This tournament has already started, you will be added to the waitlist", "yellow")
+        }
+
+
         const update : any = {
             tournament_id: tournament.id,
             member_uuid: id,
@@ -153,8 +164,7 @@ export default function JoinTournament() {
             .from('tournament_players')
             .insert([
                 update
-            ])
-            .select();
+            ]);
 
         if (error) {
             triggerMessage("Error joining tournament: " + error.message, "red");

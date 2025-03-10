@@ -19,7 +19,7 @@ import { PlayersTable } from "@/components/playersTable";
 import { ConfirmModal, ConfirmModalInformation } from "@/components/modals/confirmationModal";
 import { User } from "@/types/userType";
 
-export default function Initialization({ refreshTournament, user }: { user : User, refreshTournament: () => void }) {
+export default function Initialization({ refreshTournament, user }: { user: User, refreshTournament: () => void }) {
     const supabase = createClient();
     const client = useClient();
     const [tournament, setTournament] = useState<Tournament | null>(null);
@@ -144,7 +144,7 @@ export default function Initialization({ refreshTournament, user }: { user : Use
 
 
         if (!tournament) return;
-        
+
         if (tournament.max_players && activePlayers.length > tournament.max_players) {
             const waitlistSwitchConfirm: ConfirmModalInformation = {
                 title: "Maximum Player Limit Exceeded",
@@ -159,6 +159,9 @@ export default function Initialization({ refreshTournament, user }: { user : Use
         }
 
         startTournamentAfterConfirmation();
+    };
+    const getMaxRounds = (numPlayers: number): number => {
+        return Math.ceil(Math.log2(numPlayers));
     };
 
     async function startTournamentAfterConfirmation() {
@@ -179,7 +182,7 @@ export default function Initialization({ refreshTournament, user }: { user : Use
                 triggerMessage(result.message, "green");
                 const { error } = await supabase
                     .from('tournaments')
-                    .update({ status: "started" })
+                    .update({ status: "started", max_rounds: getMaxRounds(activePlayers.length) })
                     .eq('id', id);
 
                 if (error) {
@@ -224,6 +227,8 @@ export default function Initialization({ refreshTournament, user }: { user : Use
         function seedPlayers(playersToSeed: BracketPlayer[]) {
             return [...playersToSeed].sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
         }
+
+
 
         function generateMatchups(players: BracketPlayer[]) {
             if (!tournament) return [];

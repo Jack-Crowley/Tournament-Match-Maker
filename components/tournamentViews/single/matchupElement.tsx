@@ -99,14 +99,16 @@ export const MatchupElement = ({
     const { triggerMessage } = useMessage?.() || { triggerMessage: () => { } };
 
     function openModal() {
-        if (viewType === BracketViewType.Single) {
-            console.log("we setIsmAthcingmodelopen to true");
+        if (viewType === BracketViewType.Single && tournament?.status !== "completed") {
+            console.log("Opening matchup modal...");
             setIsMatchupModalOpen(true);
+        } else {
+            triggerMessage("Tournament has ended. No modifications allowed.", "yellow");
         }
     }
 
     const handleContextMenu = (e: React.MouseEvent, player: BracketPlayer, index: number) => {
-        if (!player.name || viewType !== "single" || (user.permission_level === "player" || user.permission_level === "viewer")) {
+        if (!player.name || viewType !== "single" || (user.permission_level === "player" || user.permission_level === "viewer") || tournament?.status !== "started") {
             return;
         }
 
@@ -115,7 +117,7 @@ export const MatchupElement = ({
         setContextMenu({
             visible: true,
             x: e.pageX,
-            y: e.pageY-20,
+            y: e.pageY - 20,
             player,
             index,
         });
@@ -151,6 +153,11 @@ export const MatchupElement = ({
 
     const handleMoveHere = async (destIndex: number) => {
         if (!movingPlayer || !tournament) return;
+
+        if (tournament.status === "completed") {
+            triggerMessage("Tournament has ended. No modifications allowed.", "yellow");
+            return;
+        }
 
         const { success, errorCode } = await moveOrSwapPlayerToMatchup(
             tournament,
@@ -219,24 +226,13 @@ export const MatchupElement = ({
                         >
                             {player.score ?? 0}
                         </div>
-
-                        {/* <motion.button
-                            className="p-2 bg-[#7458DA] rounded-lg text-white hover:bg-[#604BAC] transition-colors"
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                            onClick={(event) => {
-                                // triggerMessage("Move player button clicked", "blue");
-                                event.stopPropagation();
-                                onMovePlayer({ player, fromRound: match.round, fromMatch: match.match_number, fromIndex: index });
-                            }}
-                        >
-                            <FontAwesomeIcon icon={faArrowsAlt} />
-                        </motion.button> */}
                     </>
                 );
 
             case BracketViewType.AddPlayer:
-                return player.name ? player.name : <AddPlayerButton onAddPlayer={() => addPlayerFromWaitlist(index)} />;
+                return player.name ?
+                <span className="truncate mr-2">{player.name}</span>
+                    : <AddPlayerButton onAddPlayer={() => addPlayerFromWaitlist(index)} />;
 
             case BracketViewType.MovePlayer:
                 if (movingPlayer) {
@@ -285,9 +281,9 @@ export const MatchupElement = ({
                         className={`relative ${match.winner && (player.uuid === match.winner ? "bg-[#98979b20]" : "bg-[#120b2950]")}`}
                         onContextMenu={(e) => handleContextMenu(e, player, index)}
                     >
-                        {(player.name && viewType == "single") ? (
+                        {(player.name && viewType == BracketViewType.Single || viewType == BracketViewType.AddPlayer) ? (
                             <div
-                                className={`p-4 ${viewType === BracketViewType.Single ? "flex justify-between" : ""} font-bold border-l-8 
+                                className={`p-4 flex justify-between font-bold border-l-8 
                 ${match.winner
                                         ? player.uuid === match.winner
                                             ? "border-winner_text text-winner_text"
@@ -341,10 +337,10 @@ export const MovePlayerButton = ({
     return (
         <motion.div
             className={`transition-colors duration-200 ${isSamePlayer
-                    ? 'bg-purple-700 cursor-not-allowed'
-                    : existingPlayer.name
-                        ? 'bg-[#FFA559] hover:bg-[#FF9248]'
-                        : 'bg-blue-500 hover:bg-blue-600'
+                ? 'bg-purple-700 cursor-not-allowed'
+                : existingPlayer.name
+                    ? 'bg-[#FFA559] hover:bg-[#FF9248]'
+                    : 'bg-blue-500 hover:bg-blue-600'
                 }`}
             onClick={isSamePlayer ? undefined : onMovePlayer}
             style={{

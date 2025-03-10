@@ -11,6 +11,7 @@ import { TournamentPlayer } from "@/types/playerTypes";
 import TournamentBracket from "../tournamentViews/single/bracketView";
 import { User } from "@/types/userType";
 import { Tournament } from "@/types/tournamentTypes";
+import { error } from "console";
 
 interface MatchupModalProps {
     isOpen: boolean;
@@ -270,6 +271,19 @@ export const MatchupModal = ({ isOpen, setOpen, matchup, user }: MatchupModalPro
 
         const round = editedMatchup.round + 1;
         const matchNumber = Math.ceil(editedMatchup.match_number / 2);
+        const { data: tournament_data, error: countError } = await supabase
+            .from("tournaments")
+            .select("max_rounds")
+            .eq("id", matchup.tournament_id)
+            .single();
+        
+        if (round > tournament_data?.max_rounds) {
+            return console.log("Tournament complete, no further matches to update");
+        }
+        if (countError) {
+            console.error("Error fetching tournament data:", countError.message);
+            return;
+        }
 
         try {
             const { data, error: fetchError } = await supabase

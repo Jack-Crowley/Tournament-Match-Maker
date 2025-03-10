@@ -7,6 +7,7 @@ export interface Tournament {
     allow_join: boolean;
     location: string;
     max_players: number | null;
+    max_rounds: number | null;
     time: string;
     owner: string;
     status: string;
