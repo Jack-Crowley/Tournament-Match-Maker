@@ -54,8 +54,8 @@ export const SideNavbar = ({ tab, setTab, tournament, user }: {
     }, []);
 
     return (
-        <div className="fixed top-1/2 transform -translate-y-1/2 left-8 z-20">
-            <nav className="bg-deep p-3 flex flex-col gap-2 rounded-full border-2 shadow-lg border-soft">
+        <div className={`fixed ${isMobile ? "bottom-0 left-0 right-0" : "top-1/2 transform -translate-y-1/2 left-8"} z-20`}>
+            <nav className={`z-20 bg-deep p-3 flex ${isMobile ? "flex-row justify-around" : "flex-col gap-2 rounded-full border-2"} w-full shadow-lg border-soft`}>
                 {NAV_ITEMS.map(({ key, icon }) => (
                     <button
                         key={key}
