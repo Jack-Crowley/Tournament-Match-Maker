@@ -190,7 +190,7 @@ export const PlayersTable = ({ players, setPlayers, otherPlayers, setOtherPlayer
                                             />
                                         </td>
                                     )}
-                                    <td className={`p-3 ${player.is_anonymous ? "text-white" : "text-[#c8c8c8]"}`}>{player.player_name}</td>
+                                    <td className={`p-3 ${!player.is_anonymous ? "text-white" : "text-[#c8c8c8]"}`}>{player.player_name}</td>
                                     {tournament?.skill_fields.map((skill, index) => (
                                         <td key={index} className="p-3">{player.skills[skill] ? player.skills[skill] : "N/A"}</td>
                                     ))}

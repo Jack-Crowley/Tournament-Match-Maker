@@ -97,10 +97,11 @@ export const MatchupModal = ({ isOpen, setOpen, matchup, user }: MatchupModalPro
                 const { data: data2, error: error2 } = await supabase
                     .from("tournament_players")
                     .select("*")
+                    .eq("tournament_id", matchup.tournament_id)
                     .eq("member_uuid", matchup.players[1].uuid)
                     .single();
                 if (error2) {
-                    console.error("error fetching player 2", error2);
+                    console.error("error fetching player 2", error2, matchup.players[1].uuid, matchup.round, matchup.match_number, matchup);
                 }
                 else {
                     setPlayer2(data2);
