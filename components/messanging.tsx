@@ -198,10 +198,12 @@ export const MessagingSystem = ({ tournamentID, user }: { tournamentID: number, 
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [chats, selectedChat])
 
-    useEffect(() => {
-        if (isAdmin === undefined) return;
-        const channelName = `private_messages_channel-${user.uuid}`
+    const [wentThrough, setWentThrough] = useState<boolean>(false)
 
+    useEffect(() => {
+        if (isAdmin === undefined || wentThrough) return;
+        const channelName = `private_messages_channel-${user.uuid}`
+        setWentThrough(true)
         const messageChannel = supabase
             .channel(channelName)
             .on('postgres_changes', {
@@ -212,7 +214,6 @@ export const MessagingSystem = ({ tournamentID, user }: { tournamentID: number, 
             }, (payload) => {
                 const message = payload.new as Message;
 
-                console.log(message)
                 if (!isAdmin && message.player_uuid != user.uuid) return;
 
                 setChats(prevChats => {
