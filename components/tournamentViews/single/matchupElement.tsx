@@ -103,7 +103,8 @@ export const MatchupElement = ({
 
     function openModal() {
         if (viewType === BracketViewType.Single && tournament?.status !== "completed") {
-            if (user.permission_level == "owner" || user.permission_level == "admin" || user.permission_level == "scorekeeper") {
+            console.log(user.permission_level)
+            if (["owner", "admin", "scorekeeper"].includes(user.permission_level.toLowerCase())) {
                 setIsMatchupModalOpen(true);
             }
         } else {
