@@ -100,8 +100,9 @@ export const MatchupElement = ({
 
     function openModal() {
         if (viewType === BracketViewType.Single && tournament?.status !== "completed") {
-            console.log("Opening matchup modal...");
-            setIsMatchupModalOpen(true);
+            if (user.permission_level == "owner" || user.permission_level == "admin" || user.permission_level == "scorekeeper") {
+                setIsMatchupModalOpen(true);
+            }
         } else {
             triggerMessage("Tournament has ended. No modifications allowed.", "yellow");
         }
@@ -231,7 +232,7 @@ export const MatchupElement = ({
 
             case BracketViewType.AddPlayer:
                 return player.name ?
-                <span className="truncate mr-2">{player.name}</span>
+                    <span className="truncate mr-2">{player.name}</span>
                     : <AddPlayerButton onAddPlayer={() => addPlayerFromWaitlist(index)} />;
 
             case BracketViewType.MovePlayer:

@@ -205,10 +205,10 @@ export default function Homepage() {
                 </p>
                 <div className="flex flex-wrap gap-4">
                   <Link
-                    href="/join"
-                    className="bg-[#7458da] hover:bg-[#604BAC] text-white px-6 py-3 rounded-lg transition-colors font-medium"
+                    href={isLoggedIn ? "/tournaments" : "/join"}
+                    className="bg-[#7458da] hover:bg-[#604BAC] text-white px-8 py-3 rounded-lg transition-colors font-medium inline-block mx-2"
                   >
-                    Sign Up
+                    {isLoggedIn ? "Tournaments" : "Sign Up"}
                   </Link>
                   <Link
                     href="/how-it-works"

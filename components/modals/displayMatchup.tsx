@@ -501,7 +501,7 @@ export const MatchupModal = ({ isOpen, setOpen, matchup, user }: MatchupModalPro
                                                 } border-b-2 border-[#7458DA] text-white rounded-lg focus:outline-none focus:border-[#604BAC] transition-colors`}
                                         />
 
-                                        {player.account_type === "logged_in" && (
+                                        {/* {player.account_type === "logged_in" && (
                                             <motion.button
                                                 className="p-2 bg-[#604BAC] rounded-lg text-white hover:bg-[#7458DA] transition-colors"
                                                 whileHover={{ scale: 1.05 }}
@@ -509,7 +509,7 @@ export const MatchupModal = ({ isOpen, setOpen, matchup, user }: MatchupModalPro
                                             >
                                                 <FontAwesomeIcon icon={faEnvelope} />
                                             </motion.button>
-                                        )}
+                                        )} */}
 
                                         <motion.button
                                             className={`p-2 ${!locked
