@@ -27,7 +27,6 @@ export const SideNavbar = ({ tab, setTab, tournament, user }: {
     user: User,
 }) => {
     const [isMobile, setIsMobile] = useState(false);
-    const isCompleted = tournament?.status === "completed";
 
     // Define nav items dynamically based on tournament status
     const NAV_ITEMS = [
