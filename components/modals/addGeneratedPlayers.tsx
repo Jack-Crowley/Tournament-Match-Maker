@@ -8,7 +8,16 @@ import { AnimatePresence, motion } from "framer-motion";
 import { ChangeEvent, useState } from "react";
 import { v4 as uuidv4 } from 'uuid';
 
-export const AddPlaceholderPlayersModal = ({ isOpen, setOpen, tournament, addActivePlayers, addWaitlistPlayers }: { addActivePlayers: (player: TournamentPlayer) => void, addWaitlistPlayers: (player: TournamentPlayer) => void, tournament: Tournament, isOpen: boolean, setOpen: (state: boolean) => void, }) => {
+export const AddPlaceholderPlayersModal = ({ isOpen, setOpen, tournament, addActivePlayers, addWaitlistPlayers }:
+    {
+        addActivePlayers: (players: TournamentPlayer[]) => void,
+        addWaitlistPlayers: (player: TournamentPlayer[]) => void,
+        tournament: Tournament,
+        isOpen: boolean,
+        setOpen: (state: boolean) => void,
+    }
+
+) => {
     const [working, setWorking] = useState<boolean>(false)
     const [prefix, setPrefix] = useState<string>("")
     const [numberOfPlayers, setNumberOfPlayers] = useState<number | ''>('')
@@ -25,34 +34,32 @@ export const AddPlaceholderPlayersModal = ({ isOpen, setOpen, tournament, addAct
 
     const handleSave = async () => {
         if (working) return;
+        setWorking(true);
 
-        setWorking(true)
-
-        if (!prefix || !numberOfPlayers) {
-            triggerMessage("Prefix and number of players are required", "red");
-            setWorking(false)
+        if (!prefix || !numberOfPlayers || numberOfPlayers <= 0) {
+            triggerMessage("Prefix and a valid number of players are required", "red");
+            setWorking(false);
             return;
         }
 
+        // Fetch existing players
         const { data: existingPlayers, error: existingPlayersError } = await supabase
-            .from('tournament_players')
-            .select('player_name')
-            .eq('tournament_id', tournament.id)
+            .from("tournament_players")
+            .select("player_name")
+            .eq("tournament_id", tournament.id);
 
         if (existingPlayersError) {
             triggerMessage("Error loading existing players: " + existingPlayersError.message, "red");
             setOpen(false);
+            setWorking(false);
             return;
         }
 
-        let playersAmount = existingPlayers.length
+        let playersAmount = existingPlayers.length;
+        const existingPlayerNames = new Set(existingPlayers.map((player) => player.player_name));
 
-        const existingPlayerNames = new Set(existingPlayers.map(player => player.player_name));
-
-        let playersAdded = 0
-
-        const players: any = []
-
+        // Prepare the new players array
+        const playersToInsert: any[] = [];
         for (let i = 1; i <= numberOfPlayers; i++) {
             let playerName = `${prefix}${i}`;
             let counter = i;
@@ -63,44 +70,39 @@ export const AddPlaceholderPlayersModal = ({ isOpen, setOpen, tournament, addAct
             }
 
             existingPlayerNames.add(playerName);
-
-            const update = {
-                tournament_id: tournament.id,
+            playersToInsert.push({
+                tournament_id: Number(tournament.id),
                 member_uuid: uuidv4(),
                 player_name: playerName,
-                skills: {},
+                skills: JSON.parse('{}'),
+                tournament_director: false,
                 is_anonymous: true,
+                last_update: new Date().toISOString(),
                 placeholder_player: true,
-                type: calculatePlayerType(playersAmount)
-            };
+                type: calculatePlayerType(playersAmount),
+            });
 
-
-            const { data, error } = await supabase
-                .from('tournament_players')
-                .insert([update])
-                .select();
-
-            if (data) {
-                players.push(data[0])
-            }
-
-
-            if (error) {
-                triggerMessage(`Error adding player ${playerName}: ${error.message}`, "red");
-            } else {
-                playersAdded++;
-                playersAmount++;
-            }
+            playersAmount++;
         }
 
-        addActivePlayers(players.filter((player: any) => player.type == "active"))
-        addWaitlistPlayers(players.filter((player: any) => player.type == "waitlist"))
+        // **Insert all players in one batch request**
+        const { data, error } = await supabase.from("tournament_players").insert(playersToInsert).select();
 
-        triggerMessage(`Successfully added ${playersAdded} player${playersAdded > 1 && "s"}!`, "green");
+        if (error) {
+            triggerMessage(`Error adding players: ${error.message}`, "red");
+        } else if (data) {
+            triggerMessage(`Successfully added ${data.length} player${data.length > 1 ? "s" : ""}!`, "green");
+
+            const playersToInsert = data as TournamentPlayer[];
+            // Update UI with added players
+            addActivePlayers(playersToInsert.filter((player) => player.type === "active"));
+            addWaitlistPlayers(playersToInsert.filter((player) => player.type === "waitlist"));
+        }
 
         setOpen(false);
-        setWorking(false)
+        setWorking(false);
     };
+
 
     return (
         <AnimatePresence>
