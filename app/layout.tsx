@@ -22,7 +22,7 @@ export default function RootLayout({
               <Navbar/>
             )}
 
-            <div className="mt-[10vh]">{children}</div>
+            <div className={`${pathname != "/login" && ('mt-[10vh]')}`}>{children}</div>
           </MessageProvider>
         </body>
       </html>
