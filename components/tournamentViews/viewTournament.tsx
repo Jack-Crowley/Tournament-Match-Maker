@@ -261,7 +261,7 @@ export const ViewTournament = ({ tournamentID, user }: { tournamentID: number, u
                         )}
 
                         {activeTab === "Announcements" && (
-                            <AnnouncementSystem tournamentID={tournamentID} />
+                            <AnnouncementSystem tournamentID={tournamentID} user={user} />
                         )}
 
                         {activeTab === "Messages" && (

@@ -9,6 +9,7 @@ import { useClient } from '@/context/clientContext';
 import { DeleteModal } from './modals/delete';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faBullhorn, faCheck, faCircle, faTrash, faPlus, faSortUp, faSortDown } from '@fortawesome/free-solid-svg-icons';
+import { User } from '@/types/userType';
 
 interface Announcement {
     id?: string;
@@ -20,7 +21,7 @@ interface Announcement {
 
 type SortOption = 'newest' | 'oldest' | 'unread';
 
-export const AnnouncementSystem = ({ tournamentID }: { tournamentID: number }) => {
+export const AnnouncementSystem = ({ tournamentID, user }: { tournamentID: number, user: User }) => {
     const [loading, setLoading] = useState<boolean>(true);
     const [announcements, setAnnouncements] = useState<Announcement[]>([]);
     const [displayedAnnouncements, setDisplayedAnnouncements] = useState<Announcement[]>([]);
@@ -46,7 +47,7 @@ export const AnnouncementSystem = ({ tournamentID }: { tournamentID: number }) =
 
     const getSortedAnnouncements = (announcementsToSort: Announcement[], option: SortOption) => {
         const sorted = [...announcementsToSort];
-        
+
         switch (option) {
             case 'newest':
                 return sorted.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
@@ -120,7 +121,7 @@ export const AnnouncementSystem = ({ tournamentID }: { tournamentID: number }) =
                     setAnnouncements(prev => prev.filter(a => a.id !== payload.old.id));
                     setDisplayedAnnouncements(prev => prev.filter(a => a.id !== payload.old.id));
                 } else if (payload.eventType === 'UPDATE') {
-                    loadAnnouncements(); 
+                    loadAnnouncements();
                 }
             })
             .subscribe();
@@ -164,18 +165,18 @@ export const AnnouncementSystem = ({ tournamentID }: { tournamentID: number }) =
             if (error) {
                 triggerMessage("Failed to create announcement", "red");
             } else {
-                await supabase.from("announcements_seen").insert({member_uuid: userID, seen: true, announcement_id: data[0].id});
-                
+                await supabase.from("announcements_seen").insert({ member_uuid: userID, seen: true, announcement_id: data[0].id });
+
                 const newAnnouncementWithStatus = {
-                    ...data[0], 
+                    ...data[0],
                     isRead: true
                 };
-                
+
                 setAnnouncements(prev => [newAnnouncementWithStatus, ...prev]);
-                setDisplayedAnnouncements(prev => 
+                setDisplayedAnnouncements(prev =>
                     getSortedAnnouncements([newAnnouncementWithStatus, ...prev.filter(a => a.id !== data[0].id)], sortOption)
                 );
-                
+
                 triggerMessage("Announcement created successfully", "green");
                 setNewAnnouncement({ title: '', content: '' });
             }
@@ -194,11 +195,11 @@ export const AnnouncementSystem = ({ tournamentID }: { tournamentID: number }) =
         if (!announcement) return;
 
         const newReadStatus = !announcement.isRead;
-        
-        const updatedAnnouncements = announcements.map(a => 
+
+        const updatedAnnouncements = announcements.map(a =>
             a.id === announcement_id ? { ...a, isRead: newReadStatus } : a
         );
-        
+
         setAnnouncements(updatedAnnouncements);
         setDisplayedAnnouncements(getSortedAnnouncements(updatedAnnouncements, sortOption));
 
@@ -228,10 +229,10 @@ export const AnnouncementSystem = ({ tournamentID }: { tournamentID: number }) =
             }
         } catch (error) {
             console.error("Error updating read status:", error);
-            setAnnouncements(prev => 
+            setAnnouncements(prev =>
                 prev.map(a => a.id === announcement_id ? { ...a, isRead: !newReadStatus } : a)
             );
-            setDisplayedAnnouncements(prev => 
+            setDisplayedAnnouncements(prev =>
                 getSortedAnnouncements(prev.map(a => a.id === announcement_id ? { ...a, isRead: !newReadStatus } : a), sortOption)
             );
         }
@@ -280,39 +281,40 @@ export const AnnouncementSystem = ({ tournamentID }: { tournamentID: number }) =
                 </div>
 
                 <div className="p-6 md:p-8">
-                    <div className="bg-[#2a1a66] rounded-xl p-6 shadow-md mb-8">
-                        <h2 className="text-[#7458da] font-bold text-2xl mb-4">Create New Announcement</h2>
-                        <div className="space-y-4">
-                            <input
-                                type="text"
-                                placeholder="Title"
-                                value={newAnnouncement.title}
-                                onChange={(e) => setNewAnnouncement({ ...newAnnouncement, title: e.target.value })}
-                                className="w-full p-3 rounded-lg bg-[#201644] text-white focus:outline-none focus:ring-2 focus:ring-[#7458da]"
-                            />
-                            <textarea
-                                placeholder="Content"
-                                value={newAnnouncement.content}
-                                onChange={(e) => setNewAnnouncement({ ...newAnnouncement, content: e.target.value })}
-                                className="w-full p-3 rounded-lg bg-[#201644] text-white focus:outline-none focus:ring-2 focus:ring-[#7458da]"
-                                rows={4}
-                            />
-                            <button
-                                onClick={addAnnouncement}
-                                disabled={isUpdating}
-                                className={`w-full bg-[#7458da] text-white px-4 py-3 rounded-lg hover:bg-[#604BAC] transition-colors flex items-center justify-center ${
-                                    isUpdating ? 'opacity-70 cursor-not-allowed' : ''
-                                }`}
-                            >
-                                {isUpdating ? (
-                                    <span className="inline-block h-4 w-4 mr-2 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-                                ) : (
-                                    <FontAwesomeIcon icon={faPlus} className="mr-2" />
-                                )}
-                                Add Announcement
-                            </button>
+                    {["owner", "admin"].includes(user.permission_level.toLowerCase()) && (
+                        <div className="bg-[#2a1a66] rounded-xl p-6 shadow-md mb-8">
+                            <h2 className="text-[#7458da] font-bold text-2xl mb-4">Create New Announcement</h2>
+                            <div className="space-y-4">
+                                <input
+                                    type="text"
+                                    placeholder="Title"
+                                    value={newAnnouncement.title}
+                                    onChange={(e) => setNewAnnouncement({ ...newAnnouncement, title: e.target.value })}
+                                    className="w-full p-3 rounded-lg bg-[#201644] text-white focus:outline-none focus:ring-2 focus:ring-[#7458da]"
+                                />
+                                <textarea
+                                    placeholder="Content"
+                                    value={newAnnouncement.content}
+                                    onChange={(e) => setNewAnnouncement({ ...newAnnouncement, content: e.target.value })}
+                                    className="w-full p-3 rounded-lg bg-[#201644] text-white focus:outline-none focus:ring-2 focus:ring-[#7458da]"
+                                    rows={4}
+                                />
+                                <button
+                                    onClick={addAnnouncement}
+                                    disabled={isUpdating}
+                                    className={`w-full bg-[#7458da] text-white px-4 py-3 rounded-lg hover:bg-[#604BAC] transition-colors flex items-center justify-center ${isUpdating ? 'opacity-70 cursor-not-allowed' : ''
+                                        }`}
+                                >
+                                    {isUpdating ? (
+                                        <span className="inline-block h-4 w-4 mr-2 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                                    ) : (
+                                        <FontAwesomeIcon icon={faPlus} className="mr-2" />
+                                    )}
+                                    Add Announcement
+                                </button>
+                            </div>
                         </div>
-                    </div>
+                    )}
 
                     <div className="mb-6">
                         <div className="flex flex-col md:flex-row md:items-center justify-between">
@@ -320,33 +322,30 @@ export const AnnouncementSystem = ({ tournamentID }: { tournamentID: number }) =
                             <div className="flex space-x-2">
                                 <button
                                     onClick={() => handleSortChange('newest')}
-                                    className={`px-4 py-2 rounded-lg flex items-center transition-colors ${
-                                        sortOption === 'newest' 
-                                            ? 'bg-[#7458da] text-white' 
+                                    className={`px-4 py-2 rounded-lg flex items-center transition-colors ${sortOption === 'newest'
+                                            ? 'bg-[#7458da] text-white'
                                             : 'bg-[#2a1a66] text-gray-300 hover:bg-[#3b2682]'
-                                    }`}
+                                        }`}
                                 >
                                     <FontAwesomeIcon icon={faSortDown} className="mr-2" />
                                     Newest
                                 </button>
                                 <button
                                     onClick={() => handleSortChange('oldest')}
-                                    className={`px-4 py-2 rounded-lg flex items-center transition-colors ${
-                                        sortOption === 'oldest' 
-                                            ? 'bg-[#7458da] text-white' 
+                                    className={`px-4 py-2 rounded-lg flex items-center transition-colors ${sortOption === 'oldest'
+                                            ? 'bg-[#7458da] text-white'
                                             : 'bg-[#2a1a66] text-gray-300 hover:bg-[#3b2682]'
-                                    }`}
+                                        }`}
                                 >
                                     <FontAwesomeIcon icon={faSortUp} className="mr-2" />
                                     Oldest
                                 </button>
                                 <button
                                     onClick={() => handleSortChange('unread')}
-                                    className={`px-4 py-2 rounded-lg flex items-center transition-colors ${
-                                        sortOption === 'unread' 
-                                            ? 'bg-[#7458da] text-white' 
+                                    className={`px-4 py-2 rounded-lg flex items-center transition-colors ${sortOption === 'unread'
+                                            ? 'bg-[#7458da] text-white'
                                             : 'bg-[#2a1a66] text-gray-300 hover:bg-[#3b2682]'
-                                    }`}
+                                        }`}
                                 >
                                     <FontAwesomeIcon icon={faCircle} className="mr-2" size="xs" />
                                     Unread First
@@ -366,15 +365,14 @@ export const AnnouncementSystem = ({ tournamentID }: { tournamentID: number }) =
                                     layout
                                     layoutId={announcement.id}
                                     whileHover={{ scale: 1.01 }}
-                                    transition={{ 
-                                        type: "spring", 
-                                        stiffness: 500, 
+                                    transition={{
+                                        type: "spring",
+                                        stiffness: 500,
                                         damping: 30,
                                         layoutDependency: announcement.isRead
                                     }}
-                                    className={`p-6 rounded-xl cursor-pointer shadow-md ${
-                                        announcement.isRead ? 'bg-[#2a1a66]' : 'bg-[#3b2682]'
-                                    }`}
+                                    className={`p-6 rounded-xl cursor-pointer shadow-md ${announcement.isRead ? 'bg-[#2a1a66]' : 'bg-[#3b2682]'
+                                        }`}
                                     onClick={() => toggleReadStatus(announcement.id)}
                                 >
                                     <div className="flex justify-between items-start">
@@ -382,7 +380,7 @@ export const AnnouncementSystem = ({ tournamentID }: { tournamentID: number }) =
                                             <div className="flex items-center">
                                                 <h3 className="text-xl font-semibold text-white">{announcement.title}</h3>
                                                 {!announcement.isRead && (
-                                                    <motion.div 
+                                                    <motion.div
                                                         initial={{ scale: 0 }}
                                                         animate={{ scale: 1 }}
                                                         className="ml-3"
@@ -422,7 +420,7 @@ export const AnnouncementSystem = ({ tournamentID }: { tournamentID: number }) =
                                 </motion.div>
                             ))}
                         </AnimatePresence>
-                        
+
                         {displayedAnnouncements.length === 0 && (
                             <div className="text-center py-10 text-gray-400">
                                 <p>No announcements yet</p>
@@ -432,7 +430,7 @@ export const AnnouncementSystem = ({ tournamentID }: { tournamentID: number }) =
                 </div>
             </div>
 
-            <DeleteModal word="Announcement" id={deleteConfirmation} setId={setDeleteConfirmation} handleDelete={handleDeleteAnnouncement}/>
+            <DeleteModal word="Announcement" id={deleteConfirmation} setId={setDeleteConfirmation} handleDelete={handleDeleteAnnouncement} />
         </div>
     );
 };
