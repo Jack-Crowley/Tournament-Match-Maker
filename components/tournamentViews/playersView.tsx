@@ -443,7 +443,7 @@ export const PlayersView = ({ tournamentID, bracket, user, setActiveTab }: { set
                                                                 className="px-4 py-2 bg-[#342575] hover:bg-[#3a2b7d] text-white rounded-md transition-colors flex items-center shadow-md"
                                                                 onClick={() => setIsMessaging(!isMessaging)}
                                                                 whileHover={{ scale: 1.05 }}
-                                                                whileTap={{ scale: 0.98 }}
+                                                                whileTap={{ scale: 0.98 }} 
                                                             >
                                                                 <FontAwesomeIcon icon={faEnvelope} className="mr-2" />
                                                                 Message Player
