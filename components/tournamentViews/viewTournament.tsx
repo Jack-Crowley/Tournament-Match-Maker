@@ -2,7 +2,7 @@
 "use client"
 
 import TournamentBracket, { BracketViewType } from "@/components/tournamentViews/single/bracketView";
-import { Bracket, Matchup } from "@/types/bracketTypes";
+import { Bracket } from "@/types/bracketTypes";
 import { useEffect, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTrophy, faBullhorn, faEnvelope, faFlagCheckered, faFileAlt, faInfoCircle, faList } from "@fortawesome/free-solid-svg-icons";

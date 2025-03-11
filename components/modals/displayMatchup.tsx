@@ -110,7 +110,7 @@ export const MatchupModal = ({ isOpen, setOpen, matchup, user }: MatchupModalPro
             }
         }
         fetchPlayerData();
-    }, [isOpen, matchup.players, supabase]);
+    }, [isOpen, matchup.players, supabase, matchup]);
 
     const OpenAddPlayerDropdown = (index: number) => {
         setAddPlayersIndex(index === addPlayersIndex ? -1 : index);
