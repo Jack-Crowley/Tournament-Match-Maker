@@ -70,15 +70,29 @@ export const EndTournamentButton = ({ tournamentID, bracket }: { tournamentID: n
     );
 };
 
+
 export const SideNavbar = ({ tab, setTab, setShowEndTournamentModal, showScoreReport }: {
     tab: string,
     setTab: (state: string) => void,
     setShowEndTournamentModal: (state: boolean) => void,
     showScoreReport: boolean
 }) => {
+    const [isMobile, setIsMobile] = useState(false);
+
+    useEffect(() => {
+        const handleResize = () => {
+            setIsMobile(window.innerWidth <= 768);
+        };
+
+        handleResize(); // Initial check
+        window.addEventListener("resize", handleResize);
+        return () => window.removeEventListener("resize", handleResize);
+    }, []);
+
     return (
-        <div className="fixed top-1/2 transform -translate-y-1/2 w-[8%] z-20 flex items-center justify-center">
-            <nav className="z-20 bg-deep p-3 flex w-fit shadow-lg rounded-full flex-col gap-2 border border-soft">
+        <div className={`fixed ${isMobile ? "bottom-0 left-0 right-0" : "top-1/2 transform -translate-y-1/2 left-4"} z-20`}>
+            {/* <nav className="z-20 bg-deep p-3 flex w-fit shadow-lg rounded-full flex-col gap-2 border border-soft"></nav> */}
+            <nav className={`z-20 bg-deep p-3 flex ${isMobile ? "flex-row justify-around" : "flex-col gap-2 rounded-full border-2"} w-full shadow-lg border-soft`}>
                 {NAV_ITEMS.map(({ key, icon }) => (
                     <button
                         key={key}
@@ -92,27 +106,31 @@ export const SideNavbar = ({ tab, setTab, setShowEndTournamentModal, showScoreRe
                         className={`relative group text-2xl w-12 h-12 flex justify-center items-center transition-all rounded-full ${tab === key ? "bg-primary text-white" : "text-soft hover:bg-highlight hover:text-white"}`}
                     >
                         <FontAwesomeIcon icon={icon} />
-                        <span className="absolute left-full top-1/2 -translate-y-1/2 ml-6 px-3 py-1 bg-accent text-white text-sm rounded-full shadow opacity-0 group-hover:opacity-100 transition-opacity">{key}</span>
+                        {!isMobile && (
+                            <span className="absolute left-full top-1/2 -translate-y-1/2 ml-6 px-3 py-1 bg-accent text-white text-sm rounded-full shadow opacity-0 group-hover:opacity-100 transition-opacity">
+                                {key}
+                            </span>
+                        )}
                     </button>
                 ))}
 
                 {showScoreReport && (
                     <button
                         onClick={() => setTab("Score Report")}
-                        className={`relative group text-2xl w-12 h-12 flex justify-center items-center transition-all rounded-full ${tab === "Score Report" ? "bg-primary text-white" : "text-soft hover:bg-highlight hover:text-white"
-                            }`}
+                        className={`relative group text-2xl w-12 h-12 flex justify-center items-center transition-all rounded-full ${tab === "Score Report" ? "bg-primary text-white" : "text-soft hover:bg-highlight hover:text-white"}`}
                     >
                         <FontAwesomeIcon icon={faFileAlt} />
-                        <span className="absolute left-full top-1/2 -translate-y-1/2 ml-6 px-3 py-1 bg-accent text-white text-sm rounded-full shadow opacity-0 group-hover:opacity-100 transition-opacity">
-                            Score Report
-                        </span>
+                        {!isMobile && (
+                            <span className="absolute left-full top-1/2 -translate-y-1/2 ml-6 px-3 py-1 bg-accent text-white text-sm rounded-full shadow opacity-0 group-hover:opacity-100 transition-opacity">
+                                Score Report
+                            </span>
+                        )}
                     </button>
                 )}
             </nav>
         </div>
     );
 };
-
 
 
 export const ViewTournament = ({ tournamentID, user }: { tournamentID: number, user: User }) => {
