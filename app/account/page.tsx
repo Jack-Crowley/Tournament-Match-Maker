@@ -17,7 +17,7 @@ export default function AccountPage() {
   const [organizingTournaments, setOrganizingTournaments] = useState<Tournament[]>([]);
   const client = useClient();
   const supabase = createClient();
-
+ 
   useEffect(() => {
     async function fetchUserDetails() {
       setLoading(true);
