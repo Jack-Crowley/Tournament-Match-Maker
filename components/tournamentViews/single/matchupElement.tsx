@@ -181,7 +181,7 @@ export const MatchupElement = ({
         }
         // setIsMatchupModalOpen(false);
     };
-
+ 
     const addPlayerFromWaitlist = async (index: number) => {
         if (viewType !== BracketViewType.AddPlayer || !tournament || !newPlayer || !onClose) return;
 
