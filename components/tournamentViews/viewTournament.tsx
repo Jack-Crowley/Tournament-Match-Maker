@@ -20,10 +20,9 @@ import { MessagingSystem } from "../messanging";
 import { TournamentInfoView } from "./infoView";
 
 
-export const SideNavbar = ({ tab, setTab, tournament, user }: {
+export const SideNavbar = ({ tab, setTab, user }: {
     tab: string,
     setTab: (state: string) => void,
-    tournament: Tournament,
     user: User,
 }) => {
     const [isMobile, setIsMobile] = useState(false);
@@ -180,7 +179,7 @@ export const ViewTournament = ({ tournamentID, user }: { tournamentID: number, u
     return (
         <div className="relative">
             {tournament && (
-                <SideNavbar tab={activeTab} setTab={setActiveTab} user={user} tournament={tournament} />
+                <SideNavbar tab={activeTab} setTab={setActiveTab} user={user} />
             )}
 
             {bracket ? (
