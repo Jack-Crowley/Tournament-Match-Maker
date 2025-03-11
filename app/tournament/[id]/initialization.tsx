@@ -39,7 +39,7 @@ export default function Initialization({ refreshTournament, user }: { user: User
     const modalRef = useRef<HTMLDivElement>(null);
     const { triggerMessage } = useMessage();
     const params = useParams();
-    const id = params.id;
+    const tournament_id = params.id;
 
     console.log(user)
 
@@ -49,7 +49,7 @@ export default function Initialization({ refreshTournament, user }: { user: User
                 const { data, error } = await supabase
                     .from('tournaments')
                     .select('*')
-                    .eq('id', id)
+                    .eq('id', tournament_id)
                     .single();
 
                 if (error) {
@@ -57,18 +57,6 @@ export default function Initialization({ refreshTournament, user }: { user: User
                 } else {
                     setTournament(data);
                     setJoinLink(window.location.origin + "/tournament/join/" + data.join_code);
-                }
-
-                const { data: data1, error: error1 } = await supabase
-                    .from('tournament_players')
-                    .select('*')
-                    .eq('tournament_id', id);
-
-                if (error1) {
-                    triggerMessage("Error fetching players data: " + error1.message, "red");
-                } else {
-                    setActivePlayers(data1.filter(player => player.type == "active"));
-                    setWaitlistedPlayers(data1.filter(player => player.type == "waitlist"));
                 }
             } catch (error) {
                 triggerMessage("An unexpected error occurred", "red");
@@ -79,8 +67,52 @@ export default function Initialization({ refreshTournament, user }: { user: User
         };
 
         fetchData();
+
+        const fetchPlayers = async () => {
+            console.log("Fetching players...");
+            try {
+                const { data, error } = await supabase
+                    .from('tournament_players')
+                    .select('*')
+                    .eq('tournament_id', tournament_id);
+
+                if (error) {
+                    triggerMessage("Error fetching players data: " + error.message, "red");
+                } else {
+                    setActivePlayers(data.filter(player => player.type === "active"));
+                    setWaitlistedPlayers(data.filter(player => player.type === "waitlist"));
+                }
+            } catch (error) {
+                triggerMessage("An unexpected error occurred", "red");
+                console.error(error);
+            }
+        };
+
+        fetchPlayers();
+
+        // **Subscribe to real-time updates**
+        const subscription = supabase
+            .channel(`tournament-players-${tournament_id}`)
+            .on(
+                "postgres_changes",
+                {
+                    event: "*", // Listen to all insert/update/delete events
+                    schema: "public",
+                    table: "tournament_players",
+                    filter: `tournament_id=eq.${tournament_id}`
+                },
+                async (payload) => {
+                    console.log("Realtime Update:", payload);
+                    fetchPlayers(); // Refresh players after each change
+                }
+            )
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(subscription);
+        };
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [id, supabase, client]);
+    }, [tournament_id, supabase]);
 
     const handleAllowJoinToggle = async () => {
         if (!tournament) return;
@@ -89,7 +121,7 @@ export default function Initialization({ refreshTournament, user }: { user: User
             const { error } = await supabase
                 .from('tournaments')
                 .update({ allow_join: !tournament.allow_join })
-                .eq('id', id);
+                .eq('id', tournament_id);
 
             if (error) {
                 triggerMessage("Error updating tournament: " + error.message, "red");
@@ -183,7 +215,7 @@ export default function Initialization({ refreshTournament, user }: { user: User
                 const { error } = await supabase
                     .from('tournaments')
                     .update({ status: "started", max_rounds: getMaxRounds(activePlayers.length) })
-                    .eq('id', id);
+                    .eq('id', tournament_id);
 
                 if (error) {
                     triggerMessage("Error updating tournament: " + error.message, "red");
