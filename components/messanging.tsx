@@ -418,7 +418,7 @@ export const MessagingSystem = ({ tournamentID, user }: { tournamentID: number, 
             chat.player_uuid === player.member_uuid
         );
 
-        if (existingChat) {
+        if (existingChat != -1) {
             setSelectedChat(existingChat);
         } else {
             const newChat: Chat = {

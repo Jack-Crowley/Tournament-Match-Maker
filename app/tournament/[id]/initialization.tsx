@@ -8,7 +8,6 @@ import { useMessage } from '@/context/messageContext';
 import { createClient } from "@/utils/supabase/client";
 import QRCode from "react-qr-code";
 import { useParams } from 'next/navigation';
-import { useClient } from "@/context/clientContext";
 import { SpinningLoader } from "@/components/loading";
 import { Tournament } from "@/types/tournamentTypes";
 import { BracketPlayer, Matchup } from "@/types/bracketTypes";
@@ -21,7 +20,6 @@ import { User } from "@/types/userType";
 
 export default function Initialization({ refreshTournament, user }: { user: User, refreshTournament: () => void }) {
     const supabase = createClient();
-    const client = useClient();
     const [tournament, setTournament] = useState<Tournament | null>(null);
     const [loading, setLoading] = useState<boolean>(true);
     const [joinLink, setJoinLink] = useState<null | string>(null);
