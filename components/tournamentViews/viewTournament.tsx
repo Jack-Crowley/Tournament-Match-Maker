@@ -88,7 +88,7 @@ export const SideNavbar = ({ tab, setTab, setShowEndTournamentModal, showScoreRe
         window.addEventListener("resize", handleResize);
         return () => window.removeEventListener("resize", handleResize);
     }, []);
-
+ 
     return (
         <div className={`fixed ${isMobile ? "bottom-0 left-0 right-0" : "top-1/2 transform -translate-y-1/2 left-8"} z-20`}>
             {/* <nav className="z-20 bg-deep p-3 flex w-fit shadow-lg rounded-full flex-col gap-2 border border-soft"></nav> */}
