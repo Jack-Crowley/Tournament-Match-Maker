@@ -19,65 +19,29 @@ import { useMessage } from "@/context/messageContext";
 import { MessagingSystem } from "../messanging";
 import { TournamentInfoView } from "./infoView";
 
-const NAV_ITEMS = [
-    { key: "Bracket", icon: faTrophy },
-    { key: "Players", icon: faList },
-    { key: "Announcements", icon: faBullhorn },
-    { key: "Messages", icon: faEnvelope },
-    { key: "Tournament Info", icon: faInfoCircle },
-    { key: "End Tournament", icon: faFlagCheckered }, // Add End Tournament option
-];
 
-export const EndTournamentButton = ({ tournamentID, bracket }: { tournamentID: number; bracket: { rounds: { matches: Matchup[] }[] } }) => {
-    const supabase = createClient();
-    const { triggerMessage } = useMessage();
-
-    const handleEndTournament = async () => {
-        // 1. Generate a simple score report
-        const scoreReport = bracket.rounds.flatMap((round, roundIndex) =>
-            round.matches.map(match => ({
-                round: roundIndex + 1,
-                match: match.match_number,
-                player1: match.players[0]?.name || "TBD",
-                player2: match.players[1]?.name || "TBD",
-                winner: match.winner ? match.players.find(p => p.uuid === match.winner)?.name : "No Winner"
-            }))
-        );
-
-        console.table(scoreReport); // Log report to console
-
-        // 2. Update tournament status to 'completed'
-        const { error } = await supabase
-            .from("tournaments")
-            .update({ status: "completed" })
-            .eq("id", tournamentID);
-
-        if (error) {
-            triggerMessage("Error ending tournament", "red");
-        } else {
-            triggerMessage("Tournament ended successfully!", "green");
-            alert("Tournament has ended. Check the console for score report.");
-        }
-    };
-
-    return (
-        <button
-            onClick={handleEndTournament}
-            className="px-4 py-2 bg-red-600 text-white font-bold rounded-lg hover:bg-red-700 transition-all"
-        >
-            End Tournament
-        </button>
-    );
-};
-
-
-export const SideNavbar = ({ tab, setTab, setShowEndTournamentModal, showScoreReport }: {
+export const SideNavbar = ({ tab, setTab, tournament, user }: {
     tab: string,
     setTab: (state: string) => void,
-    setShowEndTournamentModal: (state: boolean) => void,
-    showScoreReport: boolean
+    tournament: Tournament,
+    user: User,
 }) => {
     const [isMobile, setIsMobile] = useState(false);
+    const isCompleted = tournament?.status === "completed";
+
+    // Define nav items dynamically based on tournament status
+    const NAV_ITEMS = [
+        { key: "Bracket", icon: faTrophy },
+        { key: "Players", icon: faList },
+        { key: "Score Report", icon: faFileAlt },
+        { key: "Announcements", icon: faBullhorn },
+        { key: "Messages", icon: faEnvelope },
+        { key: "Tournament Info", icon: faInfoCircle },
+    ];
+
+    if (user.permission_level === "admin" || user.permission_level === "owner") {
+        NAV_ITEMS.push({ key: "End Tournament", icon: faFlagCheckered });
+    }
 
     useEffect(() => {
         const handleResize = () => {
@@ -90,43 +54,21 @@ export const SideNavbar = ({ tab, setTab, setShowEndTournamentModal, showScoreRe
     }, []);
  
     return (
-        <div className={`fixed ${isMobile ? "bottom-0 left-0 right-0" : "top-1/2 transform -translate-y-1/2 left-8"} z-20`}>
-            {/* <nav className="z-20 bg-deep p-3 flex w-fit shadow-lg rounded-full flex-col gap-2 border border-soft"></nav> */}
-            <nav className={`z-20 bg-deep p-3 flex ${isMobile ? "flex-row justify-around" : "flex-col gap-2 rounded-full border-2"} w-full shadow-lg border-soft`}>
+        <div className="fixed top-1/2 transform -translate-y-1/2 left-8 z-20">
+            <nav className="bg-deep p-3 flex flex-col gap-2 rounded-full border-2 shadow-lg border-soft">
                 {NAV_ITEMS.map(({ key, icon }) => (
                     <button
                         key={key}
-                        onClick={() => {
-                            if (key === "End Tournament") {
-                                setShowEndTournamentModal(true);
-                            } else {
-                                setTab(key);
-                            }
-                        }}
-                        className={`relative group text-2xl w-12 h-12 flex justify-center items-center transition-all rounded-full ${tab === key ? "bg-primary text-white" : "text-soft hover:bg-highlight hover:text-white"}`}
+                        onClick={() => setTab(key)}
+                        className={`relative group text-2xl w-12 h-12 flex justify-center items-center transition-all rounded-full 
+                            ${tab === key ? "bg-primary text-white" : "text-soft hover:bg-highlight hover:text-white"}`}
                     >
                         <FontAwesomeIcon icon={icon} />
-                        {!isMobile && (
-                            <span className="absolute left-full top-1/2 -translate-y-1/2 ml-6 px-3 py-1 bg-accent text-white text-sm rounded-full shadow opacity-0 group-hover:opacity-100 transition-opacity">
-                                {key}
-                            </span>
-                        )}
+                        <span className="absolute left-full top-1/2 -translate-y-1/2 ml-6 px-3 py-1 bg-accent text-white text-sm rounded-full shadow opacity-0 group-hover:opacity-100 transition-opacity">
+                            {key}
+                        </span>
                     </button>
                 ))}
-
-                {showScoreReport && (
-                    <button
-                        onClick={() => setTab("Score Report")}
-                        className={`relative group text-2xl w-12 h-12 flex justify-center items-center transition-all rounded-full ${tab === "Score Report" ? "bg-primary text-white" : "text-soft hover:bg-highlight hover:text-white"}`}
-                    >
-                        <FontAwesomeIcon icon={faFileAlt} />
-                        {!isMobile && (
-                            <span className="absolute left-full top-1/2 -translate-y-1/2 ml-6 px-3 py-1 bg-accent text-white text-sm rounded-full shadow opacity-0 group-hover:opacity-100 transition-opacity">
-                                Score Report
-                            </span>
-                        )}
-                    </button>
-                )}
             </nav>
         </div>
     );
@@ -135,7 +77,6 @@ export const SideNavbar = ({ tab, setTab, setShowEndTournamentModal, showScoreRe
 
 export const ViewTournament = ({ tournamentID, user }: { tournamentID: number, user: User }) => {
     const [bracket, setBracket] = useState<Bracket | null>(null)
-    const [showEndTournamentModal, setShowEndTournamentModal] = useState(false);
     const [tournament, setTournament] = useState<Tournament>();
 
     const supabase = createClient()
@@ -210,7 +151,7 @@ export const ViewTournament = ({ tournamentID, user }: { tournamentID: number, u
             triggerMessage("No bracket data available", "red");
             return;
         }
-        // Generate a simple score report
+
         const scoreReport = bracket.rounds.flatMap((round, roundIndex) =>
             round.matches.map(match => ({
                 round: roundIndex + 1,
@@ -223,7 +164,6 @@ export const ViewTournament = ({ tournamentID, user }: { tournamentID: number, u
 
         console.table(scoreReport); // Log report to console
 
-        // Update tournament status to 'completed'
         const { error } = await supabase
             .from("tournaments")
             .update({ status: "completed" })
@@ -233,14 +173,16 @@ export const ViewTournament = ({ tournamentID, user }: { tournamentID: number, u
             triggerMessage("Error ending tournament", "red");
         } else {
             triggerMessage("Tournament ended successfully!", "green");
-            setShowEndTournamentModal(false);
-            window.location.reload();
+            setActiveTab("Score Report"); // Redirect to Score Report
         }
     };
 
+
     return (
         <div className="relative">
-            <SideNavbar tab={activeTab} setTab={setActiveTab} setShowEndTournamentModal={setShowEndTournamentModal} showScoreReport={tournament?.status === "completed"} />
+            {tournament && (
+                <SideNavbar tab={activeTab} setTab={setActiveTab} user={user} tournament={tournament} />
+            )}
 
             {bracket ? (
                 <AnimatePresence mode="wait">
@@ -279,9 +221,24 @@ export const ViewTournament = ({ tournamentID, user }: { tournamentID: number, u
                                 setTournament={setTournament}
                             />
                         )}
+                        {activeTab === "End Tournament" && tournament && (
+                            <div className="bg-[#2e225b] p-6 rounded-xl text-white w-[60%] ml-[20%]">
+                                <h2 className="text-2xl font-semibold mb-4">End Tournament</h2>
+                                <p className="text-gray-300 mb-6">
+                                    Are you sure you want to end the tournament? This action is irreversible.
+                                </p>
+                                <button
+                                    onClick={handleEndTournament}
+                                    className="px-4 py-2 bg-[#f08c8a] text-[#2e225b] font-bold rounded-lg hover:bg-[#e15151] transition"
+                                >
+                                    Yes, End Tournament
+                                </button>
+                            </div>
+                        )}
+
 
                         {activeTab === "Score Report" && tournament && tournament.status === "completed" && (
-                            <div className="bg-[#2e225b] p-6 rounded-xl text-white">
+                            <div className="bg-[#2e225b] p-6 rounded-xl text-white w-[60%] ml-[20%]">
                                 <h2 className="text-2xl font-semibold mb-4">Score Report</h2>
                                 <ul className="space-y-2">
                                     {bracket.rounds.flatMap((round, roundIndex) =>
@@ -292,28 +249,6 @@ export const ViewTournament = ({ tournamentID, user }: { tournamentID: number, u
                                         ))
                                     )}
                                 </ul>
-                            </div>
-                        )}
-                        {showEndTournamentModal && (
-                            <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-[9999]">
-                                <div className="bg-[#2e225b] p-6 rounded-2xl shadow-2xl text-center relative z-[10000] text-white w-[90%] max-w-md">
-                                    <h2 className="text-xl font-semibold mb-4">End Tournament?</h2>
-                                    <p className="text-gray-300 mb-6">This action is irreversible. Are you sure?</p>
-                                    <div className="flex justify-center gap-4">
-                                        <button
-                                            onClick={() => setShowEndTournamentModal(false)}
-                                            className="px-4 py-2 bg-[#7458DA] text-white rounded-lg hover:bg-[#604BAC] transition"
-                                        >
-                                            Cancel
-                                        </button>
-                                        <button
-                                            onClick={handleEndTournament}
-                                            className="px-4 py-2 bg-[#f08c8a] text-[#2e225b] font-bold rounded-lg hover:bg-[#e15151] transition"
-                                        >
-                                            Yes, End Tournament
-                                        </button>
-                                    </div>
-                                </div>
                             </div>
                         )}
                     </motion.div>
