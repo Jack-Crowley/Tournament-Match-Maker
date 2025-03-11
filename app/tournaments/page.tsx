@@ -57,7 +57,8 @@ export default function Home() {
             const { data: playingData, error: playingError } = await supabase
                 .from('tournament_players')
                 .select('tournament_id')
-                .eq('member_uuid', id);
+                .eq('member_uuid', id)
+                .eq('left_match', false);
 
             if (playingError || organizingErrorOwner) {
                 triggerMessage("Error fetching player data", "red");
@@ -301,6 +302,26 @@ export default function Home() {
                 : b.name.localeCompare(a.name);
         });
 
+        const handleLeaveTournament = async (tournamentId: string) => {
+            const id = client.session?.user.id;
+
+            if (!id) return;
+
+            const { error: updateError } = await supabase
+                .from('tournament_players')
+                .update({ left_match: true })
+                .eq('tournament_id', tournamentId)
+                .eq('member_uuid', id);
+
+            if (updateError) {
+                triggerMessage("Error leaving tournament", "red");
+                return;
+            }
+
+            setPlayingTournaments((prev) => prev.filter((tournament) => tournament.id !== tournamentId));
+            triggerMessage("You have left the tournament successfully!", "green");
+        };
+
         const HandleDelete = async (id: string) => {
             if (!id) return;
 
@@ -371,16 +392,15 @@ export default function Home() {
             return emptyMessage;
         };
 
-        const renderStatusChip = (status : any) => {
+        const renderStatusChip = (status: any) => {
             const statusText = status || "initialization";
             const isStarted = statusText === "started";
-            
+
             return (
-                <div className={`absolute top-4 right-4 px-3 py-1 rounded-full text-xs font-semibold ${
-                    isStarted 
-                        ? "bg-[#3c0e51] text-white" 
+                <div className={`absolute top-4 right-4 px-3 py-1 rounded-full text-xs font-semibold ${isStarted
+                        ? "bg-[#3c0e51] text-white"
                         : "bg-[#672287] text-white"
-                }`}>
+                    }`}>
                     {isStarted ? "Started" : "Initialization"}
                 </div>
             );
@@ -526,6 +546,17 @@ export default function Home() {
                                                         </button>
                                                     </div>
                                                 )
+                                            )}
+                                            {title === "Playing Tournaments" && (
+                                                <button
+                                                    onClick={() => handleLeaveTournament(tournament.id)}
+                                                    className={`px-4 py-2 text-white rounded-lg transition-colors transform
+                                                  ${deleteIndexes.includes(tournament.id)
+                                                            ? 'bg-red-700 border border-red-500 hover:bg-red-600'
+                                                            : 'bg-[#2a1a66] border border-highlight hover:bg-highlight'}`}
+                                                >
+                                                    Leave
+                                                </button>
                                             )}
                                         </div>
                                     </div>
