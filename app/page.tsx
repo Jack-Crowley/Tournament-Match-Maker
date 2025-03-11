@@ -58,7 +58,7 @@ export default function Homepage() {
                 height={400}
                 className="object-cover"
                 priority
-              />
+              /> 
 
             </div>
           </div>
