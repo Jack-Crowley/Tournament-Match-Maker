@@ -438,7 +438,7 @@ export const PlayersView = ({ tournamentID, bracket, user, setActiveTab }: { set
                                                             </motion.button>
                                                         )}
                                                         
-                                                        {!activePlayer.is_anonymous && !((activePlayer as any).placeholder_player) && (["owner", "admin"].includes(user.permission_level)) && (
+                                                        {!((activePlayer as any).placeholder_player) && (["owner", "admin"].includes(user.permission_level)) && (
                                                             <motion.button 
                                                                 className="px-4 py-2 bg-[#342575] hover:bg-[#3a2b7d] text-white rounded-md transition-colors flex items-center shadow-md"
                                                                 onClick={() => setIsMessaging(!isMessaging)}
