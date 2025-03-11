@@ -20,7 +20,7 @@ export default function Homepage() {
     };
 
     checkUser();
-  }, []);
+  }, [supabase.auth]);
 
   return (
     <div className="min-h-screen bg-[#160A3A]">

@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { ChangeEvent, useEffect, useState } from 'react';
 import { createClient } from '@/utils/supabase/client';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faChevronDown, faChevronUp, faTrophy, faUserShield, faInfoCircle } from '@fortawesome/free-solid-svg-icons';
+import { faTrophy, faUserShield, faInfoCircle } from '@fortawesome/free-solid-svg-icons';
 
 interface Button {
     id: string;
@@ -30,29 +30,28 @@ const buttons: Button[] = [
     { id: "swiss", label: "Swiss System", description: "Players with similar scores face each other" },
 ];
 
-const tournamentRules: { [key: string]: { label: string, key: string, description: string }[] } = {
-    "single": [
-        { label: "Third Place Match", key: "custom-rule-1", description: "Add a match to determine third place" },
-        { label: "Seeded Brackets", key: "custom-rule-2", description: "Arrange brackets based on player rankings" },
-    ],
-    "double": [
-        { label: "Modified Brackets", key: "custom-rule-3", description: "Use modified double elimination brackets" },
-        { label: "Grand Finals Reset", key: "custom-rule-4", description: "Winner's bracket finalist must be beaten twice" },
-    ],
-    "round": [
-        { label: "Points System", key: "custom-rule-5", description: "Customize points for wins, draws, and losses" },
-        { label: "Tiebreakers", key: "custom-rule-6", description: "Set rules for breaking ties in standings" },
-    ],
-    "swiss": [
-        { label: "Buchholz System", key: "custom-rule-7", description: "Use sum of opponents' scores for tiebreaks" },
-        { label: "Fixed Rounds", key: "custom-rule-8", description: "Set a specific number of rounds regardless of participants" },
-    ]
-};
+// const tournamentRules: { [key: string]: { label: string, key: string, description: string }[] } = {
+//     "single": [
+//         { label: "Third Place Match", key: "custom-rule-1", description: "Add a match to determine third place" },
+//         { label: "Seeded Brackets", key: "custom-rule-2", description: "Arrange brackets based on player rankings" },
+//     ],
+//     "double": [
+//         { label: "Modified Brackets", key: "custom-rule-3", description: "Use modified double elimination brackets" },
+//         { label: "Grand Finals Reset", key: "custom-rule-4", description: "Winner's bracket finalist must be beaten twice" },
+//     ],
+//     "round": [
+//         { label: "Points System", key: "custom-rule-5", description: "Customize points for wins, draws, and losses" },
+//         { label: "Tiebreakers", key: "custom-rule-6", description: "Set rules for breaking ties in standings" },
+//     ],
+//     "swiss": [
+//         { label: "Buchholz System", key: "custom-rule-7", description: "Use sum of opponents' scores for tiebreaks" },
+//         { label: "Fixed Rounds", key: "custom-rule-8", description: "Set a specific number of rounds regardless of participants" },
+//     ]
+// };
 
 export const CreateTournament = ({ isModalOpen, setIsModalOpen, ref }: { isModalOpen: boolean, ref: any, setIsModalOpen: (state: boolean) => void }) => {
     const [rules, setRules] = useState<Rules>({});
     const [selectedButton, setSelectedButton] = useState<string | null>(null);
-    const [selectedDropdown, setSelectedDropdown] = useState<string | null>(null);
     const [tournamentName, setTournamentName] = useState<string>('');
     const [tournamentDescription, setTournamentDescription] = useState<string>('');
     const [selectedType, setSelectedType] = useState<string | null>(null);

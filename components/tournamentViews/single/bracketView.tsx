@@ -1,15 +1,12 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react";
-import { Bracket, BracketPlayer, Matchup } from "@/types/bracketTypes";
-import { MatchupModal } from "@/components/modals/displayMatchup";
+import { useEffect, useState } from "react";
+import { Bracket, BracketPlayer } from "@/types/bracketTypes";
 import { motion } from "framer-motion";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faUserPlus } from "@fortawesome/free-solid-svg-icons/faUserPlus";
-import { addPlayerToMatchupFromWaitlist, moveOrSwapPlayerToMatchup } from "@/utils/bracket/bracket";
 
 import { Tournament } from "@/types/tournamentTypes";
-import { useMessage } from "@/context/messageContext";
 import { User } from "@/types/userType";
 
 export const AddPlayerButton = ({ onAddPlayer }: { onAddPlayer: () => void }) => {
@@ -92,11 +89,6 @@ const TournamentBracket = ({
         }
     };
 
-
-    if (!bracket || !bracket.rounds || bracket.rounds.length === 0) {
-        return <div className="flex justify-center items-center h-full">No tournament data available</div>;
-    }
-
     const [tournament, setTournament] = useState<Tournament | null>(null);
 
     useEffect(() => {
@@ -117,6 +109,10 @@ const TournamentBracket = ({
         getTournament();
     }, [tournamentID]); // Runs when `tournamentID` changes
 
+
+    if (!bracket || !bracket.rounds || bracket.rounds.length === 0) {
+        return <div className="flex justify-center items-center h-full">No tournament data available</div>;
+    }
 
     const containerClass = viewType === BracketViewType.Single
         ? "mt-12 ml-[8%] h-[89vh] overflow-auto pb-16"

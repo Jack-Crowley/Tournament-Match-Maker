@@ -2,16 +2,13 @@
 
 import { useEffect, useRef, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faEnvelope, faTrash, faPlus, faCrown, faTimes } from "@fortawesome/free-solid-svg-icons";
-import { Bracket, BracketPlayer, Matchup } from "@/types/bracketTypes";
+import { faTrash, faPlus, faCrown, faTimes } from "@fortawesome/free-solid-svg-icons";
+import { BracketPlayer, Matchup } from "@/types/bracketTypes";
 import { createClient } from "@/utils/supabase/client";
 import { motion, AnimatePresence } from "framer-motion";
 import { PlayerManagementTabs } from "../playerManagementTabs";
 import { TournamentPlayer } from "@/types/playerTypes";
-import TournamentBracket from "../tournamentViews/single/bracketView";
 import { User } from "@/types/userType";
-import { Tournament } from "@/types/tournamentTypes";
-import { error } from "console";
 
 interface MatchupModalProps {
     isOpen: boolean;
@@ -33,6 +30,8 @@ export const MatchupModal = ({ isOpen, setOpen, matchup, user }: MatchupModalPro
     const [locked, setLocked] = useState<boolean>(false);
     const [removedPlayersList, setRemovedPlayersList] = useState<[string, number][]>([]);
 
+
+    if (user) {}
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -109,7 +108,7 @@ export const MatchupModal = ({ isOpen, setOpen, matchup, user }: MatchupModalPro
             }
         }
         fetchPlayerData();
-    }, [isOpen]);
+    }, [isOpen, matchup.players, supabase]);
 
     const OpenAddPlayerDropdown = (index: number) => {
         setAddPlayersIndex(index === addPlayersIndex ? -1 : index);

@@ -12,7 +12,6 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faArrowRight, faArrowsAlt, faExchangeAlt } from "@fortawesome/free-solid-svg-icons";
 
 import { AddPlayerButton, BracketViewType, MovingPlayer, OnMovePlayer } from "./bracketView";
-import { TournamentPlayer } from "@/types/playerTypes";
 
 interface ContextMenuProps {
     x: number;
@@ -97,6 +96,10 @@ export const MatchupElement = ({
         index: number;
     } | null>(null);
     const { triggerMessage } = useMessage?.() || { triggerMessage: () => { } };
+
+    if (bracket) {
+
+    }
 
     function openModal() {
         if (viewType === BracketViewType.Single && tournament?.status !== "completed") {

@@ -108,7 +108,8 @@ export const PlayersView = ({ tournamentID, bracket, user, setActiveTab }: { set
         }
 
         loadData();
-
+        
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [tournamentID, supabase]);
 
     const handlePlayerClick = (player: Player) => {

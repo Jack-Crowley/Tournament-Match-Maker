@@ -5,7 +5,7 @@ import TournamentBracket, { BracketViewType } from "@/components/tournamentViews
 import { Bracket, Matchup } from "@/types/bracketTypes";
 import { useEffect, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faTrophy, faUserClock, faBullhorn, faEnvelope, faCog, faFlagCheckered, faFileAlt, faInfoCircle, faList } from "@fortawesome/free-solid-svg-icons";
+import { faTrophy, faBullhorn, faEnvelope, faFlagCheckered, faFileAlt, faInfoCircle, faList } from "@fortawesome/free-solid-svg-icons";
 import { fetchBracket } from "@/utils/bracket/bracket";
 import { SpinningLoader } from "../loading";
 import { createClient } from "@/utils/supabase/client";
@@ -117,7 +117,6 @@ export const SideNavbar = ({ tab, setTab, setShowEndTournamentModal, showScoreRe
 
 export const ViewTournament = ({ tournamentID, user }: { tournamentID: number, user: User }) => {
     const [bracket, setBracket] = useState<Bracket | null>(null)
-    const [errorCode, setErrorCode] = useState<number | null>(null)
     const [showEndTournamentModal, setShowEndTournamentModal] = useState(false);
     const [tournament, setTournament] = useState<Tournament>();
 
@@ -129,9 +128,8 @@ export const ViewTournament = ({ tournamentID, user }: { tournamentID: number, u
     useEffect(() => {
         async function LoadBracket() {
             console.log("We are currently loading the barcket!")
-            const { bracket, errorCode } = await fetchBracket(tournamentID);
+            const { bracket } = await fetchBracket(tournamentID);
             setBracket(bracket);
-            setErrorCode(errorCode);
         }
 
         async function LoadTournament() {
@@ -187,7 +185,7 @@ export const ViewTournament = ({ tournamentID, user }: { tournamentID: number, u
         }
 
         updateTournamentInDatabase();
-    }, [tournament]);
+    }, [tournament, supabase, tournamentID]);
 
     const handleEndTournament = async () => {
         if (!bracket) {

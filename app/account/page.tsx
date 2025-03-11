@@ -53,7 +53,7 @@ export default function AccountPage() {
         .select('*')
         .eq('owner', id);
 
-      let owningIds = organizingTournamentsOwner?.map(record => record.id) || [];
+      const owningIds = organizingTournamentsOwner?.map(record => record.id) || [];
       setOrganizingTournaments(organizingTournamentsOwner || []);
 
       const { data: playingData } = await supabase
@@ -101,6 +101,7 @@ export default function AccountPage() {
     }
 
     fetchUserDetails();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [client.session?.user.id]);
 
   return (
@@ -196,7 +197,7 @@ export default function AccountPage() {
       ) : (
         <div className="text-center p-8 bg-[#2a1a66] rounded-lg max-w-md mx-auto mt-20">
           <h2 className="text-xl font-medium text-gray-300">User Not Found</h2>
-          <p className="mt-2 text-gray-400">Please make sure you're logged in to view your account details.</p>
+          <p className="mt-2 text-gray-400">Please make sure you{"'"}re logged in to view your account details.</p>
         </div>
       )}
     </div>

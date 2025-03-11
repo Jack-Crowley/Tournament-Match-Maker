@@ -3,12 +3,10 @@
 import { useEffect, useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { createClient } from '@/utils/supabase/client';
-import { useMessage } from '@/context/messageContext';
 import { SpinningLoader } from './loading';
-import { useClient } from '@/context/clientContext';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
-    faSearch, faPaperPlane, faUserCircle, faEllipsisV,
+    faSearch, faPaperPlane, faUserCircle,
     faChevronLeft, faTimes, faPlus
 } from '@fortawesome/free-solid-svg-icons';
 import { User } from '@/types/userType';
@@ -74,6 +72,7 @@ export const MessagingSystem = ({ tournamentID, user }: { tournamentID: number, 
         if (selectedChat>=0 && selectedChat < chats.length && messageEndRef.current) {
             messageEndRef.current.scrollIntoView({ behavior: 'smooth' });
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedChat]);
 
     function createChatsFromMessages(messages: Message[], players: TournamentPlayer[]) {
@@ -182,6 +181,7 @@ export const MessagingSystem = ({ tournamentID, user }: { tournamentID: number, 
         }
 
         loadChats();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isAdmin, tournamentID, user?.uuid, supabase]);
 
     const [numberOfMessagesInChat, setNumberOfMessagesInChat] = useState<number>(0)
@@ -195,6 +195,7 @@ export const MessagingSystem = ({ tournamentID, user }: { tournamentID: number, 
                 }
             }
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [chats, selectedChat])
 
     useEffect(() => {
@@ -297,6 +298,7 @@ export const MessagingSystem = ({ tournamentID, user }: { tournamentID: number, 
         return () => {
             supabase.removeChannel(messageChannel);
         };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isAdmin, selectedChat, tournamentID, user?.uuid, players, supabase]);
 
     // Mark messages as seen when chat is selected
@@ -304,6 +306,7 @@ export const MessagingSystem = ({ tournamentID, user }: { tournamentID: number, 
         if (selectedChat>=0 && chats[selectedChat].messages.length > 0) {
             markChatAsSeen(chats[selectedChat]);
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedChat]);
 
     const markChatAsSeen = async (chat: Chat) => {
