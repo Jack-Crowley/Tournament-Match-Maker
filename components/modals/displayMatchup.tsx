@@ -84,6 +84,7 @@ export const MatchupModal = ({ isOpen, setOpen, matchup, user }: MatchupModalPro
                     .from("tournament_players")
                     .select("*")
                     .eq("member_uuid", matchup.players[0].uuid)
+                    .eq("tournament_id", matchup.tournament_id)
                     .single();
                 if (error1) {
                     console.error("error fetching player 1", error1);
