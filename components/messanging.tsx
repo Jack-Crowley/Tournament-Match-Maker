@@ -69,7 +69,7 @@ export const MessagingSystem = ({ tournamentID, user }: { tournamentID: number, 
 
     // Scroll to bottom when messages change
     useEffect(() => {
-        if (selectedChat>=0 && selectedChat < chats.length && messageEndRef.current) {
+        if (selectedChat >= 0 && selectedChat < chats.length && messageEndRef.current) {
             messageEndRef.current.scrollIntoView({ behavior: 'smooth' });
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -94,15 +94,15 @@ export const MessagingSystem = ({ tournamentID, user }: { tournamentID: number, 
             const messagesForPlayer = groupedMessages[player_uuid];
 
             // Count unread messages based on role
-            const unreadCount = isAdmin 
+            const unreadCount = isAdmin
                 ? messagesForPlayer.filter(message => !message.admin_seen && !message.admin_sent).length
                 : messagesForPlayer.filter(message => !message.player_seen && message.admin_sent).length;
 
             // Sort messages by timestamp 
             messagesForPlayer.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
 
-            const lastMessage = messagesForPlayer.length > 0 
-                ? messagesForPlayer[messagesForPlayer.length - 1] 
+            const lastMessage = messagesForPlayer.length > 0
+                ? messagesForPlayer[messagesForPlayer.length - 1]
                 : undefined;
 
             const player_name = playerNameMap[player_uuid] || 'Unknown Player';
@@ -158,7 +158,7 @@ export const MessagingSystem = ({ tournamentID, user }: { tournamentID: number, 
                     .select("*")
                     .eq("tournament_id", tournamentID)
                     .eq("player_uuid", user.uuid);
-                
+
                 if (!messageData) return;
 
                 const messages: Message[] = messageData as Message[];
@@ -199,99 +199,85 @@ export const MessagingSystem = ({ tournamentID, user }: { tournamentID: number, 
     }, [chats, selectedChat])
 
     useEffect(() => {
-        if (isAdmin === undefined || selectedChat == -1) return;
+        if (isAdmin === undefined) return;
+        const channelName = `private_messages_channel-${user.uuid}`
 
         const messageChannel = supabase
-            .channel('private_messages_channel')
+            .channel(channelName)
             .on('postgres_changes', {
-                event: 'INSERT',
+                event: '*',
                 schema: 'public',
                 table: 'private_messages',
-                filter: `tournament_id=eq.${tournamentID}${!isAdmin ? `&player_uuid=eq.${user.uuid}` : ''}`,
+                filter: `tournament_id=eq.${tournamentID}`,
             }, (payload) => {
-                const newMessage = payload.new as Message;
-                
-                if (selectedChat>=0 && chats[selectedChat].player_uuid === newMessage.player_uuid) {
-                    if (isAdmin && !newMessage.admin_sent) {
-                        markMessageAsSeen(newMessage.id, true);
-                    } else if (!isAdmin && newMessage.admin_sent) {
-                        markMessageAsSeen(newMessage.id, false);
-                    }
-                }
+                const message = payload.new as Message;
+
+                console.log(message)
+                if (!isAdmin && message.player_uuid != user.uuid) return;
 
                 setChats(prevChats => {
-                    const chatIndex = prevChats.findIndex(chat => chat.player_uuid === newMessage.player_uuid);
+                    const chatIndex = prevChats.findIndex(chat => chat.player_uuid === message.player_uuid);
+
                     if (chatIndex >= 0) {
+                        // Update existing chat
                         const updatedChats = [...prevChats];
-                        const chat = {...updatedChats[chatIndex]};
-                        
-                        chat.messages = [...chat.messages, newMessage];
-                        chat.lastMessage = newMessage;
-                        
-                        if (selectedChat == -1 || chats[selectedChat].player_uuid !== chat.player_uuid) {
-                            if (isAdmin && !newMessage.admin_sent) {
-                                chat.unreadCount += 1;
-                            } else if (!isAdmin && newMessage.admin_sent) {
-                                chat.unreadCount += 1;
+                        const chat = { ...updatedChats[chatIndex] };
+
+                        if (payload.eventType === 'INSERT') {
+                            chat.messages = [...chat.messages, message];
+                            chat.lastMessage = message;
+
+                            if (selectedChat === -1 || chats[selectedChat].player_uuid !== chat.player_uuid) {
+                                if ((isAdmin && !message.admin_sent) || (!isAdmin && message.admin_sent)) {
+                                    chat.unreadCount += 1;
+                                }
                             }
+                        } else if (payload.eventType === 'UPDATE') {
+                            chat.messages = chat.messages.map(msg =>
+                                msg.id === message.id ? message : msg
+                            );
+
+                            if (chat.lastMessage && chat.lastMessage.id === message.id) {
+                                chat.lastMessage = message;
+                            }
+
+                            chat.unreadCount = isAdmin
+                                ? chat.messages.filter(m => !m.admin_seen && !m.admin_sent).length
+                                : chat.messages.filter(m => !m.player_seen && m.admin_sent).length;
                         }
-                        
+
                         updatedChats[chatIndex] = chat;
-                        
+
                         return updatedChats.sort((a, b) => {
                             if (!a.lastMessage) return 1;
                             if (!b.lastMessage) return -1;
                             return new Date(b.lastMessage.timestamp).getTime() - new Date(a.lastMessage.timestamp).getTime();
                         });
-                    } else {
-                        const playerName = players.find(p => p.member_uuid === newMessage.player_uuid)?.player_name || 'Unknown Player';
-                        
+                    } else if (payload.eventType === 'INSERT') {
+                        // Create new chat for INSERT events
+                        const playerName = players.find(p => p.member_uuid === message.player_uuid)?.player_name || 'Unknown Player';
+
                         const newChat: Chat = {
                             id: prevChats.length,
-                            player_uuid: newMessage.player_uuid,
+                            player_uuid: message.player_uuid,
                             player_name: playerName,
-                            messages: [newMessage],
-                            lastMessage: newMessage,
+                            messages: [message],
+                            lastMessage: message,
                             unreadCount: 1
                         };
-                        
+
                         return [newChat, ...prevChats];
                     }
-                });
-            })
-            .on('postgres_changes', {
-                event: 'UPDATE',
-                schema: 'public',
-                table: 'private_messages',
-                filter: `tournament_id=eq.${tournamentID}${!isAdmin ? `&player_uuid=eq.${user.uuid}` : ''}`,
-            }, (payload) => {
-                const updatedMessage = payload.new as Message;
-                
-                setChats(prevChats => {
-                    const chatIndex = prevChats.findIndex(chat => chat.player_uuid === updatedMessage.player_uuid);
-                    
-                    if (chatIndex >= 0) {
-                        const updatedChats = [...prevChats];
-                        const chat = {...updatedChats[chatIndex]};
-                        
-                        chat.messages = chat.messages.map(msg => 
-                            msg.id === updatedMessage.id ? updatedMessage : msg
-                        );
-                        
-                        if (chat.lastMessage && chat.lastMessage.id === updatedMessage.id) {
-                            chat.lastMessage = updatedMessage;
-                        }
-                        
-                        chat.unreadCount = isAdmin 
-                            ? chat.messages.filter(message => !message.admin_seen && !message.admin_sent).length
-                            : chat.messages.filter(message => !message.player_seen && message.admin_sent).length;
-                            
-                        updatedChats[chatIndex] = chat;
-                        return updatedChats;
-                    }
-                    
+
                     return prevChats;
                 });
+
+                // Handle message seen logic
+                if (selectedChat >= 0 && chats[selectedChat].player_uuid === message.player_uuid) {
+                    if ((isAdmin && !message.admin_sent) || (!isAdmin && message.admin_sent)) {
+                        markMessageAsSeen(message.id, isAdmin);
+                    }
+                }
             })
             .subscribe();
 
@@ -299,11 +285,11 @@ export const MessagingSystem = ({ tournamentID, user }: { tournamentID: number, 
             supabase.removeChannel(messageChannel);
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [isAdmin, selectedChat, tournamentID, user?.uuid, players, supabase]);
+    }, [isAdmin, tournamentID, user?.uuid, supabase]);
 
     // Mark messages as seen when chat is selected
     useEffect(() => {
-        if (selectedChat>=0 && chats[selectedChat].messages.length > 0) {
+        if (selectedChat >= 0 && chats[selectedChat].messages.length > 0) {
             markChatAsSeen(chats[selectedChat]);
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -311,40 +297,40 @@ export const MessagingSystem = ({ tournamentID, user }: { tournamentID: number, 
 
     const markChatAsSeen = async (chat: Chat) => {
         if (isAdmin === undefined) return;
-        
-        const unreadMessages = chat.messages.filter(msg => 
+
+        const unreadMessages = chat.messages.filter(msg =>
             isAdmin ? (!msg.admin_seen && !msg.admin_sent) : (!msg.player_seen && msg.admin_sent)
         );
-        
+
         if (unreadMessages.length > 0) {
             setChats(prevChats => {
                 const chatIndex = prevChats.findIndex(c => c.player_uuid === chat.player_uuid);
                 if (chatIndex >= 0) {
                     const updatedChats = [...prevChats];
-                    const updatedChat = {...updatedChats[chatIndex]};
-                    
+                    const updatedChat = { ...updatedChats[chatIndex] };
+
                     updatedChat.messages = updatedChat.messages.map(msg => {
                         if (isAdmin && !msg.admin_seen && !msg.admin_sent) {
-                            return {...msg, admin_seen: true};
+                            return { ...msg, admin_seen: true };
                         } else if (!isAdmin && !msg.player_seen && msg.admin_sent) {
-                            return {...msg, player_seen: true};
+                            return { ...msg, player_seen: true };
                         }
                         return msg;
                     });
-                    
+
                     updatedChat.unreadCount = 0;
                     updatedChats[chatIndex] = updatedChat;
                     return updatedChats;
                 }
                 return prevChats;
             });
-            
+
             // Update in database
             const updates = unreadMessages.map(msg => ({
                 id: msg.id,
                 [isAdmin ? 'admin_seen' : 'player_seen']: true
             }));
-            
+
             for (const update of updates) {
                 await supabase
                     .from('private_messages')
@@ -355,10 +341,10 @@ export const MessagingSystem = ({ tournamentID, user }: { tournamentID: number, 
     };
 
     const markMessageAsSeen = async (messageId: number, isAdminViewing: boolean) => {
-        const update = isAdminViewing 
-            ? { admin_seen: true } 
+        const update = isAdminViewing
+            ? { admin_seen: true }
             : { player_seen: true };
-            
+
         await supabase
             .from('private_messages')
             .update(update)
@@ -386,7 +372,7 @@ export const MessagingSystem = ({ tournamentID, user }: { tournamentID: number, 
     };
 
     const handleSendMessage = async () => {
-        if (!newMessage.trim() || selectedChat==-1 || isAdmin === undefined) return;
+        if (!newMessage.trim() || selectedChat == -1 || isAdmin === undefined) return;
 
         const newMsg = {
             player_uuid: chats[selectedChat].player_uuid,
@@ -436,7 +422,7 @@ export const MessagingSystem = ({ tournamentID, user }: { tournamentID: number, 
         setShowNewChatModal(false);
         setSearchQuery('');
         setSearchResults([]);
-        
+
         if (isMobileView) {
             setShowChatList(false);
         }
@@ -449,7 +435,7 @@ export const MessagingSystem = ({ tournamentID, user }: { tournamentID: number, 
         }
     };
 
-    const handleChatSelect = (chatIndex : number) => {
+    const handleChatSelect = (chatIndex: number) => {
         setSelectedChat(chatIndex);
         if (isMobileView) {
             setShowChatList(false);
@@ -506,11 +492,10 @@ export const MessagingSystem = ({ tournamentID, user }: { tournamentID: number, 
                                                     damping: 30
                                                 }}
                                                 onClick={() => handleChatSelect(ind)}
-                                                className={`p-4 cursor-pointer border-b border-[#2a1a66] ${
-                                                    (selectedChat >= 0 && chats[selectedChat].id === chat.id)
+                                                className={`p-4 cursor-pointer border-b border-[#2a1a66] ${(selectedChat >= 0 && chats[selectedChat].id === chat.id)
                                                         ? 'bg-[#3b2682]'
                                                         : 'hover:bg-[#2a1a66]'
-                                                }`}
+                                                    }`}
                                             >
                                                 <div className="flex items-center">
                                                     <div className="w-10 h-10 rounded-full bg-[#7458da] flex items-center justify-center text-white">
@@ -530,8 +515,8 @@ export const MessagingSystem = ({ tournamentID, user }: { tournamentID: number, 
                                                         <div className="flex justify-between items-center mt-1">
                                                             <p className="text-sm text-gray-300 truncate max-w-[170px]">
                                                                 {chat.lastMessage
-                                                                    ? `${(chat.lastMessage.admin_sent && isAdmin) || 
-                                                                       !(chat.lastMessage.admin_sent || isAdmin) ? 'You: ' : ''}${chat.lastMessage.content}`
+                                                                    ? `${(chat.lastMessage.admin_sent && isAdmin) ||
+                                                                        !(chat.lastMessage.admin_sent || isAdmin) ? 'You: ' : ''}${chat.lastMessage.content}`
                                                                     : 'No messages yet'
                                                                 }
                                                             </p>
@@ -617,11 +602,10 @@ export const MessagingSystem = ({ tournamentID, user }: { tournamentID: number, 
                                                             <motion.div
                                                                 initial={{ opacity: 0, y: 10 }}
                                                                 animate={{ opacity: 1, y: 0 }}
-                                                                className={`max-w-[70%] rounded-lg px-4 py-2 ${
-                                                                    isCurrentUser
+                                                                className={`max-w-[70%] rounded-lg px-4 py-2 ${isCurrentUser
                                                                         ? 'bg-[#7458da] text-white rounded-br-none'
                                                                         : 'bg-[#3b2682] text-white rounded-bl-none'
-                                                                }`}
+                                                                    }`}
                                                             >
                                                                 <p>{message.content}</p>
                                                                 <div className={`text-xs mt-1 ${isCurrentUser ? 'text-gray-200' : 'text-gray-400'}`}>
@@ -651,11 +635,10 @@ export const MessagingSystem = ({ tournamentID, user }: { tournamentID: number, 
                                         <button
                                             onClick={handleSendMessage}
                                             disabled={!newMessage.trim()}
-                                            className={`ml-2 text-white p-2 rounded-full ${
-                                                newMessage.trim()
+                                            className={`ml-2 text-white p-2 rounded-full ${newMessage.trim()
                                                     ? 'bg-[#7458da] hover:bg-[#604BAC]'
                                                     : 'bg-[#3b2682] cursor-not-allowed'
-                                            }`}
+                                                }`}
                                         >
                                             <FontAwesomeIcon icon={faPaperPlane} />
                                         </button>
