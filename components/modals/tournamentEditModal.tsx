@@ -5,7 +5,7 @@ import { Tournament } from '@/types/tournamentTypes';
 import { createClient } from '@/utils/supabase/client';
 import { ModalList } from './modalList';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faEdit, faMapPin, faCalendar, faUsers, faAward, faBook, faTimes, faPlus, faTrashAlt, faCheck } from '@fortawesome/free-solid-svg-icons';
+import { faEdit, faMapPin, faCalendar, faUsers, faAward, faTimes, faPlus, faTrashAlt, faCheck } from '@fortawesome/free-solid-svg-icons';
 
 export const TournamentModal = ({
     isOpen,
@@ -390,13 +390,13 @@ export const TournamentModal = ({
                                     <ModalList name="Skill Fields" list={skillFields} setList={setSkillFields} />
                                 </div>
 
-                                <div className="p-4 bg-[#252525] rounded-lg border border-[#3A3A3A]">
+                                {/* <div className="p-4 bg-[#252525] rounded-lg border border-[#3A3A3A]">
                                     <div className="flex items-center mb-3">
                                         <FontAwesomeIcon icon={faBook} className="mr-2 text-[#7458da]" />
                                         <h3 className="text-white font-medium">Tournament Rules</h3>
                                     </div>
                                     <ModalList name="Rules" list={rules} setList={setRules} />
-                                </div>
+                                </div> */}
                             </motion.div>
                         )}
 

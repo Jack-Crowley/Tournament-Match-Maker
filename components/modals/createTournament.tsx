@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { ChangeEvent, useEffect, useState } from 'react';
 import { createClient } from '@/utils/supabase/client';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faChevronDown, faChevronUp, faTrophy, faUserShield } from '@fortawesome/free-solid-svg-icons';
+import { faTrophy, faUserShield, faInfoCircle } from '@fortawesome/free-solid-svg-icons';
 
 interface Button {
     id: string;
@@ -20,7 +20,7 @@ interface Rules {
 
 const generalRules: { fullName: string, id: string, description: string }[] = [
     { fullName: "Require Accounts", id: "accounts", description: "Participants must have an account to join" },
-    { fullName: "Team Tournament", id: "team", description: "Allow teams instead of individual players" },
+    // { fullName: "Team Tournament", id: "team", description: "Allow teams instead of individual players" },
 ]
 
 const buttons: Button[] = [
@@ -30,29 +30,28 @@ const buttons: Button[] = [
     { id: "swiss", label: "Swiss System", description: "Players with similar scores face each other" },
 ];
 
-const tournamentRules: { [key: string]: { label: string, key: string, description: string }[] } = {
-    "single": [
-        { label: "Third Place Match", key: "custom-rule-1", description: "Add a match to determine third place" },
-        { label: "Seeded Brackets", key: "custom-rule-2", description: "Arrange brackets based on player rankings" },
-    ],
-    "double": [
-        { label: "Modified Brackets", key: "custom-rule-3", description: "Use modified double elimination brackets" },
-        { label: "Grand Finals Reset", key: "custom-rule-4", description: "Winner's bracket finalist must be beaten twice" },
-    ],
-    "round": [
-        { label: "Points System", key: "custom-rule-5", description: "Customize points for wins, draws, and losses" },
-        { label: "Tiebreakers", key: "custom-rule-6", description: "Set rules for breaking ties in standings" },
-    ],
-    "swiss": [
-        { label: "Buchholz System", key: "custom-rule-7", description: "Use sum of opponents' scores for tiebreaks" },
-        { label: "Fixed Rounds", key: "custom-rule-8", description: "Set a specific number of rounds regardless of participants" },
-    ]
-};
+// const tournamentRules: { [key: string]: { label: string, key: string, description: string }[] } = {
+//     "single": [
+//         { label: "Third Place Match", key: "custom-rule-1", description: "Add a match to determine third place" },
+//         { label: "Seeded Brackets", key: "custom-rule-2", description: "Arrange brackets based on player rankings" },
+//     ],
+//     "double": [
+//         { label: "Modified Brackets", key: "custom-rule-3", description: "Use modified double elimination brackets" },
+//         { label: "Grand Finals Reset", key: "custom-rule-4", description: "Winner's bracket finalist must be beaten twice" },
+//     ],
+//     "round": [
+//         { label: "Points System", key: "custom-rule-5", description: "Customize points for wins, draws, and losses" },
+//         { label: "Tiebreakers", key: "custom-rule-6", description: "Set rules for breaking ties in standings" },
+//     ],
+//     "swiss": [
+//         { label: "Buchholz System", key: "custom-rule-7", description: "Use sum of opponents' scores for tiebreaks" },
+//         { label: "Fixed Rounds", key: "custom-rule-8", description: "Set a specific number of rounds regardless of participants" },
+//     ]
+// };
 
 export const CreateTournament = ({ isModalOpen, setIsModalOpen, ref }: { isModalOpen: boolean, ref: any, setIsModalOpen: (state: boolean) => void }) => {
     const [rules, setRules] = useState<Rules>({});
     const [selectedButton, setSelectedButton] = useState<string | null>(null);
-    const [selectedDropdown, setSelectedDropdown] = useState<string | null>(null);
     const [tournamentName, setTournamentName] = useState<string>('');
     const [tournamentDescription, setTournamentDescription] = useState<string>('');
     const [selectedType, setSelectedType] = useState<string | null>(null);
@@ -64,6 +63,12 @@ export const CreateTournament = ({ isModalOpen, setIsModalOpen, ref }: { isModal
     const handleCreateTournament = async () => {
         if (!tournamentName || !selectedButton) {
             triggerMessage('Please select a tournament type and provide a name.', 'red');
+            return;
+        }
+
+        // If trying to create any tournament type except "single" elimination
+        if (selectedButton !== "single") {
+            triggerMessage('Only Single Elimination tournaments are currently implemented.', 'red');
             return;
         }
 
@@ -181,6 +186,11 @@ export const CreateTournament = ({ isModalOpen, setIsModalOpen, ref }: { isModal
         }
     }, [isModalOpen]);
 
+    // Function to determine if a tournament type is implemented
+    const isImplemented = (buttonId: string) => {
+        return buttonId === "single";
+    };
+
     return (
         <div>
             {isModalOpen && (
@@ -211,22 +221,34 @@ export const CreateTournament = ({ isModalOpen, setIsModalOpen, ref }: { isModal
                                     <h3 className="text-md font-medium mb-3 text-gray-300">Tournament Type</h3>
                                     <div className="grid grid-cols-2 gap-4">
                                         {buttons.map((button) => (
-                                            <motion.button
-                                                key={button.id}
-                                                className={`p-4 rounded-lg text-white text-center flex flex-col items-center justify-center ${
-                                                    selectedButton === button.id
-                                                        ? "bg-gradient-to-br from-[#7458da] to-[#604BAC] shadow-lg shadow-[#7458da]/20"
-                                                        : "bg-[#2C2C2C] hover:bg-[#3C3C3C]"
-                                                }`}
-                                                whileHover={{ scale: 1.03, y: -2 }}
-                                                whileTap={{ scale: 0.97 }}
-                                                onClick={() => handleButtonSelect(button.id)}
-                                            >
-                                                <span className="font-medium mb-1">{button.label}</span>
-                                                <span className="text-xs text-gray-300 mt-1 overflow-hidden text-ellipsis">
-                                                    {button.description}
-                                                </span>
-                                            </motion.button>
+                                            <div key={button.id} className="relative">
+                                                <motion.button
+                                                    className={`p-4 rounded-lg text-white text-center flex flex-col items-center justify-center ${
+                                                        selectedButton === button.id
+                                                            ? "bg-gradient-to-br from-[#7458da] to-[#604BAC] shadow-lg shadow-[#7458da]/20"
+                                                            : isImplemented(button.id)
+                                                                ? "bg-[#2C2C2C] hover:bg-[#3C3C3C]"
+                                                                : "bg-[#2C2C2C] opacity-60 cursor-not-allowed"
+                                                    } w-full`}
+                                                    whileHover={isImplemented(button.id) ? { scale: 1.03, y: -2 } : { scale: 1 }}
+                                                    whileTap={isImplemented(button.id) ? { scale: 0.97 } : { scale: 1 }}
+                                                    onClick={() => isImplemented(button.id) && handleButtonSelect(button.id)}
+                                                >
+                                                    <span className="font-medium mb-1">{button.label}</span>
+                                                    <span className="text-xs text-gray-300 mt-1 overflow-hidden text-ellipsis">
+                                                        {button.description}
+                                                    </span>
+                                                </motion.button>
+                                                
+                                                {!isImplemented(button.id) && (
+                                                    <div className="absolute inset-0 bg-black bg-opacity-50 rounded-lg flex items-center justify-center pointer-events-none">
+                                                        <div className="bg-black bg-opacity-70 text-white px-3 py-2 rounded text-xs font-medium flex items-center">
+                                                            <FontAwesomeIcon icon={faInfoCircle} className="mr-2 text-[#7458da]" />
+                                                            Coming Soon!
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
                                         ))}
                                     </div>
                                 </div>
@@ -267,7 +289,7 @@ export const CreateTournament = ({ isModalOpen, setIsModalOpen, ref }: { isModal
                                     </div>
                                 </div>
 
-                                {selectedButton && (
+                                {/* {selectedButton && (
                                     <div className="mt-6">
                                         <h3 className="text-md font-medium mb-3 text-gray-300">Format-Specific Options</h3>
                                         <div
@@ -298,7 +320,7 @@ export const CreateTournament = ({ isModalOpen, setIsModalOpen, ref }: { isModal
                                             </motion.div>
                                         )}
                                     </div>
-                                )}
+                                )} */}
 
                                 <div className="mt-8 grid grid-cols-2 gap-4">
                                     <motion.button

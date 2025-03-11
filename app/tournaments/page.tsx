@@ -212,6 +212,11 @@ export default function Home() {
             .eq("tournament_id", id);
 
         await supabase
+            .from("private_messages")
+            .delete()
+            .eq("tournament_id", id);
+
+        await supabase
             .from("tournament_organizers")
             .delete()
             .eq("tournament_id", id);

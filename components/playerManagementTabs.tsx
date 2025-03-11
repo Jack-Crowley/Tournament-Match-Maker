@@ -33,8 +33,7 @@ export const PlayerManagementTabs = ({ tournamentID, onClose }: { tournamentID: 
             account_type: "active",
         } 
 
-        // update the account type of the player
-        const { data, error } = await supabase
+        const { error } = await supabase
             .from("tournament_players")
             .update({ type: "active" })
             .eq("id", player.id)

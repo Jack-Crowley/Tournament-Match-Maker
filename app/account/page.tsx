@@ -1,113 +1,205 @@
-"use client"
+"use client";
 
-import Image from "next/legacy/image";
-import Link from 'next/link';
-import { createClient } from "@/utils/supabase/client";
 import { useEffect, useState } from "react";
-import { SignUpToProceedScreen } from "@/components/sign-up-anonymous";
+import { createClient } from "@/utils/supabase/client";
 import { useClient } from "@/context/clientContext";
+import { useMessage } from "@/context/messageContext";
+import { User } from "@/types/userType";
 import { SpinningLoader } from "@/components/loading";
+import { Tournament } from "@/types/tournamentTypes";
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faTrophy, faGamepad, faUser, faSignOutAlt } from '@fortawesome/free-solid-svg-icons';
+import Link from "next/link";
 
-export default function Account() {
-  const supabase = createClient()
-  const client = useClient()
-  const [name, setName] = useState(null)
-  const [email, setEmail] = useState(null);
-  const [loading, setLoading] = useState<boolean>(true)
-  const [anonymous, setAnonymous] = useState<boolean>(false)
+export default function AccountPage() {
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [playingTournaments, setPlayingTournaments] = useState<Tournament[]>([]);
+  const [organizingTournaments, setOrganizingTournaments] = useState<Tournament[]>([]);
+  const client = useClient();
+  const supabase = createClient();
+  const { triggerMessage } = useMessage();
 
   useEffect(() => {
-    async function load() {
-      let anony = client.session?.user.is_anonymous
+    async function fetchUserDetails() {
+      setLoading(true);
+      const userUUID = client.session?.user.id;
 
-      if (!anony) {
-        anony = false;
-      };
-
-      setAnonymous(anony)
-
-      if (!anony) {
-        setName((await supabase.auth.getUser()).data.user?.user_metadata.name)
-        setEmail((await supabase.auth.getUser()).data.user?.user_metadata.email)
+      if (!userUUID) {
+        setLoading(false);
+        return;
       }
 
-      setLoading(false)
+      const { data, error } = await supabase
+        .from("users")
+        .select("*")
+        .eq("uuid", userUUID)
+        .single();
 
-      return;
+      if (error) {
+        triggerMessage("Error fetching user details", "red");
+        setLoading(false);
+        return;
+      }
+
+      setUser(data);
+      await loadTournamentData(userUUID);
+      setLoading(false);
     }
 
-    load()
-  })
+    async function loadTournamentData(id: any) {
+      const { data: organizingTournamentsOwner } = await supabase
+        .from('tournaments')
+        .select('*')
+        .eq('owner', id);
+
+      const owningIds = organizingTournamentsOwner?.map(record => record.id) || [];
+      setOrganizingTournaments(organizingTournamentsOwner || []);
+
+      const { data: playingData } = await supabase
+        .from('tournament_players')
+        .select('tournament_id')
+        .eq('member_uuid', id);
+
+      const { data: organizingTournaments } = await supabase
+        .from('tournament_organizers')
+        .select('*')
+        .eq('member_uuid', id);
+
+      const nonOwnerTournamentIds = organizingTournaments
+        ?.map(record => record.tournament_id)
+        .filter(tournament_id => !owningIds.includes(tournament_id));
+
+      if (nonOwnerTournamentIds?.length) {
+        const { data: nonOwnerTournaments } = await supabase
+          .from('tournaments')
+          .select('*')
+          .in('id', nonOwnerTournamentIds);
+
+        if (nonOwnerTournaments) {
+          setOrganizingTournaments(prev => [
+            ...prev,
+            ...nonOwnerTournaments
+          ]);
+        }
+      }
+
+      const tournamentIds = [...new Set((playingData as any).map((record: any) => record.tournament_id))];
+      const tournamentDetails = [];
+      for (const tournamentId of tournamentIds) {
+        if (owningIds.includes(tournamentId)) continue;
+
+        const { data: tournament } = await supabase
+          .from('tournaments')
+          .select('*')
+          .eq('id', tournamentId)
+          .single();
+
+        if (tournament) tournamentDetails.push(tournament);
+      }
+      setPlayingTournaments(tournamentDetails);
+    }
+
+    fetchUserDetails();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [client.session?.user.id]);
 
   return (
-    <div className="w-full justify-center">
+    <div className="min-h-screen bg-[#160A3A] text-white">
       {loading ? (
-        <SpinningLoader />
-      ) : (
-        <div>
-          {anonymous ? (
-            <SignUpToProceedScreen />
-          ) : (
-            <div className="">
-              <div className="grid grid-cols-2 min-h-[calc(100vh-160px)] w-full">
-                {/* Left Section: User Info */}
-                <div className="bg-[#160A3A] flex items-center justify-center p-8">
-                  <div className="flex flex-col gap-4">
-                    <Image
-                      src="/lego.jpg"
-                      width={150}
-                      height={150}
-                      alt="User Avatar"
-                      className="w-36 h-36 object-cover rounded-full border-4 border-[#604BAC] shadow-lg"
-                    />
-                    <h2 className="text-4xl font-black text-white uppercase tracking-wide">
-                      {name ?? "Loading"}
-                    </h2>
-                    <p className="text-lg text-[#ecd4f7]">Joined: January 2024</p>
-                    <p className="text-lg text-[#ecd4f7]">{email}</p>
-                    <p className="text-lg text-[#FF9CEE]">Location: New York, USA</p>
-                    <Link href="/account/edit">
-                      <button className="mt-4 px-6 py-3 bg-[#604BAC] rounded-full text-[#160A3A] font-bold text-lg hover:opacity-90 transition-opacity w-fit">
-                        Edit Profile
-                      </button>
-                    </Link>
-                    <Link href="/api/auth/signout" className="mt-4 px-6 py-3 bg-[#b36969] rounded-full text-[#160A3A] font-bold text-lg hover:opacity-90 transition-opacity w-fit" prefetch={false}>Log Out</Link>
-                  </div>
-                </div>
+        <div className="flex justify-center items-center min-h-screen">
+          <SpinningLoader />
+        </div>
+      ) : user ? (
+        <div className="container mx-auto px-4 py-8">
+          {/* Header */}
+          <div className="mb-10">
+            <h1 className="text-3xl font-bold text-center sm:text-left mb-2">Account Dashboard</h1>
+            <p className="text-gray-300 text-center sm:text-left">Manage your account and tournament activities</p>
+          </div>
 
-                {/* Right Section: Statistics */}
-                <div className="bg-[#160A3A] flex flex-col items-center justify-center p-8 text-white">
-                  <h2 className="text-3xl font-bold uppercase mb-8">Your Stats</h2>
-                  <div className="grid grid-cols-2 gap-8 text-center w-full max-w-lg">
-                    <div className="p-6 bg-[#604BAC] rounded-lg shadow-lg">
-                      <h3 className="text-2xl font-bold">Tournaments Created</h3>
-                      <p className="text-5xl font-black mt-4">3</p>
-                    </div>
-                    <div className="p-6 bg-[#604BAC] rounded-lg shadow-lg">
-                      <h3 className="text-2xl font-bold">Tournaments Joined</h3>
-                      <p className="text-5xl font-black mt-4">8</p>
-                    </div>
-                    <div className="p-6 bg-[#604BAC] rounded-lg shadow-lg">
-                      <h3 className="text-2xl font-bold">Games Played</h3>
-                      <p className="text-5xl font-black mt-4">24</p>
-                    </div>
-                    <div className="p-6 bg-[#604BAC] rounded-lg shadow-lg">
-                      <h3 className="text-2xl font-bold">Games Won</h3>
-                      <p className="text-5xl font-black mt-4">10</p>
-                    </div>
-                  </div>
-                  <Link href="/tournaments">
-                    <button className="mt-8 px-8 py-4 bg-[#ECD4F7] rounded-full text-[#160A3A] font-bold text-xl hover:opacity-90 transition-opacity">
-                      View Tournaments
-                    </button>
-                  </Link>
+          {/* User Details Section */}
+          <div className="bg-gradient-to-r from-[#2a1a66] to-[#3f2c84] rounded-lg p-6 mb-8 shadow-lg">
+            <div className="flex items-center gap-4">
+              <div className="w-16 h-16 rounded-full bg-highlight flex items-center justify-center">
+                <FontAwesomeIcon icon={faUser} className="text-2xl text-white" />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold">{(user as any).name}</h2>
+                <p className="text-gray-300">{(user as any).email}</p>
+              </div>
+              <div className="ml-auto flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-200">
+                <Link href="/api/auth/signout" className="" prefetch={false}><FontAwesomeIcon icon={faSignOutAlt} /> Log Out</Link>
+              </div>
+            </div>
+          </div>
+
+          {/* Tournament Stats */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
+            <div className="bg-gradient-to-r from-[#2a1a66] to-[#3f2c84] rounded-lg p-6 shadow-lg">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-semibold">Playing Tournaments</h3>
+                  <p className="text-3xl font-bold">{playingTournaments.length}</p>
+                </div>
+                <div className="w-12 h-12 rounded-full bg-highlight flex items-center justify-center">
+                  <FontAwesomeIcon icon={faGamepad} className="text-xl text-white" />
                 </div>
               </div>
             </div>
-          )}
+
+            <div className="bg-gradient-to-r from-[#2a1a66] to-[#3f2c84] rounded-lg p-6 shadow-lg">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-semibold">Organizing Tournaments</h3>
+                  <p className="text-3xl font-bold">{organizingTournaments.length}</p>
+                </div>
+                <div className="w-12 h-12 rounded-full bg-highlight flex items-center justify-center">
+                  <FontAwesomeIcon icon={faTrophy} className="text-xl text-white" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Tournament Lists */}
+          <div className="space-y-8">
+            <div className="bg-gradient-to-r from-[#2a1a66] to-[#3f2c84] rounded-lg p-6 shadow-lg">
+              <h3 className="text-xl font-bold mb-4">Playing Tournaments</h3>
+              {playingTournaments.length > 0 ? (
+                <ul className="space-y-2">
+                  {playingTournaments.slice(0, 5).map(tournament => (
+                    <li key={tournament.id} className="text-gray-200">
+                      {tournament.name}
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-gray-300">You are not playing in any tournaments.</p>
+              )}
+            </div>
+
+            <div className="bg-gradient-to-r from-[#2a1a66] to-[#3f2c84] rounded-lg p-6 shadow-lg">
+              <h3 className="text-xl font-bold mb-4">Organizing Tournaments</h3>
+              {organizingTournaments.length > 0 ? (
+                <ul className="space-y-2">
+                  {organizingTournaments.slice(0, 5).map(tournament => (
+                    <li key={tournament.id} className="text-gray-200">
+                      {tournament.name}
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-gray-300">You are not organizing any tournaments.</p>
+              )}
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="text-center p-8 bg-[#2a1a66] rounded-lg max-w-md mx-auto mt-20">
+          <h2 className="text-xl font-medium text-gray-300">User Not Found</h2>
+          <p className="mt-2 text-gray-400">Please make sure you{"'"}re logged in to view your account details.</p>
         </div>
       )}
-
     </div>
   );
 }

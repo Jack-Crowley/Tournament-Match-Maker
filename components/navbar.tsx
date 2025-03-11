@@ -25,12 +25,12 @@ const Navbar = () => {
           </Link>
 
           <div className="hidden md:flex items-center space-x-8">
-            <Link href="/teams" className="text-white hover:text-[#7458da] transition-colors">
+            {/* <Link href="/teams" className="text-white hover:text-[#7458da] transition-colors">
               Teams
             </Link>
             <Link href="/organizations" className="text-white hover:text-[#7458da] transition-colors">
               Organizations
-            </Link>
+            </Link> */}
 
             {client.session?.user ? (
               <div className="flex items-center space-x-8">
