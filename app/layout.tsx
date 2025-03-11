@@ -22,7 +22,7 @@ export default function RootLayout({
               <Navbar/>
             )}
 
-            <div className="">{children}</div>
+            <div className="mt-[10vh]">{children}</div>
           </MessageProvider>
         </body>
       </html>

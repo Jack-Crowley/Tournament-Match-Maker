@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { useClient } from "@/context/clientContext";
-import { useMessage } from "@/context/messageContext";
 import { User } from "@/types/userType";
 import { SpinningLoader } from "@/components/loading";
 import { Tournament } from "@/types/tournamentTypes";
@@ -18,7 +17,6 @@ export default function AccountPage() {
   const [organizingTournaments, setOrganizingTournaments] = useState<Tournament[]>([]);
   const client = useClient();
   const supabase = createClient();
-  const { triggerMessage } = useMessage();
 
   useEffect(() => {
     async function fetchUserDetails() {
@@ -37,7 +35,6 @@ export default function AccountPage() {
         .single();
 
       if (error) {
-        triggerMessage("Error fetching user details", "red");
         setLoading(false);
         return;
       }

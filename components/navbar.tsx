@@ -15,8 +15,8 @@ const Navbar = () => {
 
   return (
     <nav
-      className={`w-full z-50 transition-all duration-300  
-        }`}
+      className={`w-full z-50 fixed top-0 left-0 transition-all duration-300
+      } ${isMenuOpen ? 'bg-[#201644]' : 'bg-background' }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-[10vh]">
@@ -92,7 +92,7 @@ const Navbar = () => {
           transition={{ duration: 0.3 }}
         >
           <div className="px-4 pt-2 pb-6 space-y-4">
-            <Link
+            {/* <Link
               href="/teams"
               className="block text-white hover:text-[#7458da] py-2 transition-colors"
               onClick={toggleMenu}
@@ -105,7 +105,7 @@ const Navbar = () => {
               onClick={toggleMenu}
             >
               Organization
-            </Link>
+            </Link> */}
 
             {client.session?.user ? (
               <div className="flex flex-col space-y-4">
@@ -115,6 +115,13 @@ const Navbar = () => {
                   onClick={toggleMenu}
                 >
                   Account
+                </Link>
+                <Link
+                  href="/join"
+                  className="block bg-[#7458da] hover:bg-[#604BAC] text-white px-4 py-2 rounded-lg transition-colors text-center"
+                  onClick={toggleMenu}
+                >
+                  Join
                 </Link>
                 <Link
                   href="/tournaments"
