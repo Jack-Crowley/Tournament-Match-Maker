@@ -2,7 +2,7 @@
 "use client"
 
 import TournamentBracket, { BracketViewType } from "@/components/tournamentViews/single/bracketView";
-import { Bracket, Matchup } from "@/types/bracketTypes";
+import { Bracket } from "@/types/bracketTypes";
 import { useEffect, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTrophy, faBullhorn, faEnvelope, faFlagCheckered, faFileAlt, faInfoCircle, faList } from "@fortawesome/free-solid-svg-icons";
@@ -52,7 +52,7 @@ export const SideNavbar = ({ tab, setTab, tournament, user }: {
         window.addEventListener("resize", handleResize);
         return () => window.removeEventListener("resize", handleResize);
     }, []);
-
+ 
     return (
         <div className={`fixed ${isMobile ? "bottom-0 left-0 right-0" : "top-1/2 transform -translate-y-1/2 left-8"} z-20`}>
             <nav className={`z-20 bg-deep p-3 flex ${isMobile ? "flex-row justify-around" : "flex-col gap-2 rounded-full border-2"} w-full shadow-lg border-soft`}>
