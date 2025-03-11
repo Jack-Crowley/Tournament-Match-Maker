@@ -66,7 +66,8 @@ export default function Home() {
                 const { data: organizingTournaments } = await supabase
                     .from('tournament_organizers')
                     .select('*')
-                    .eq('member_uuid', id);
+                    .eq('member_uuid', id)
+                    .eq("accepted", true)
 
                 const nonOwnerTournamentIds = organizingTournaments
                     ?.map((record) => record.tournament_id)
