@@ -16,13 +16,16 @@ import QRCode from "react-qr-code";
 import { Tournament } from "@/types/tournamentTypes";
 import { SpinningLoader } from "../loading";
 import { useMessage } from "@/context/messageContext";
+import { User } from "@/types/userType";
 
 export const TournamentInfoView = ({
     tournament,
     setActiveTab,
+    user
 }: {
     tournament: Tournament | undefined;
     setActiveTab: (state: string) => void;
+    user: User;
 }) => {
     const [showQRCode, setShowQRCode] = useState<boolean>(false);
     const { triggerMessage } = useMessage();
@@ -62,13 +65,15 @@ export const TournamentInfoView = ({
                     {/* Header Section */}
                     <div className="flex items-center justify-between mb-8">
                         <h1 className="text-[#7458da] font-bold text-5xl">{tournament.name}</h1>
-                        <button
-                            onClick={() => setActiveTab("Settings")}
-                            className="text-[#7458da] hover:text-[#604BAC] transition-colors p-3 rounded-full hover:bg-[#2a1a66]"
-                            title="Edit Tournament Settings"
-                        >
-                            <FontAwesomeIcon icon={faGear} size="xl" />
-                        </button>
+                        {["owner", "admin"].includes(user.permission_level.toLowerCase()) && (
+                            <button
+                                onClick={() => setActiveTab("Settings")}
+                                className="text-[#7458da] hover:text-[#604BAC] transition-colors p-3 rounded-full hover:bg-[#2a1a66]"
+                                title="Edit Tournament Settings"
+                            >
+                                <FontAwesomeIcon icon={faGear} size="xl" />
+                            </button>
+                        )}
                     </div>
 
                     {/* Description */}

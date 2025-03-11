@@ -269,7 +269,7 @@ export const ViewTournament = ({ tournamentID, user }: { tournamentID: number, u
                         )}
 
                         {activeTab === "Tournament Info" && (
-                            <TournamentInfoView tournament={tournament} setActiveTab={setActiveTab} />
+                            <TournamentInfoView tournament={tournament} setActiveTab={setActiveTab} user={user} />
                         )}
                         {activeTab === "Settings" && tournament && (
                             <TournamentModal
