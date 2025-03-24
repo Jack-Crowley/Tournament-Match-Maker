@@ -84,7 +84,6 @@ export const ViewTournament = ({ tournamentID, user }: { tournamentID: number, u
 
     useEffect(() => {
         async function LoadBracket() {
-            console.log("We are currently loading the barcket!")
             const { bracket } = await fetchBracket(tournamentID);
             setBracket(bracket);
         }
