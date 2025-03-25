@@ -10,7 +10,7 @@ import QRCode from "react-qr-code";
 import { useParams } from 'next/navigation';
 import { SpinningLoader } from "@/components/loading";
 import { Tournament } from "@/types/tournamentTypes";
-import { BracketPlayer, Matchup } from "@/types/bracketTypes";
+import { BracketPlayer, Matchup, PlayerSkill } from "@/types/bracketTypes";
 import { Player } from "@/types/playerTypes";
 import { TournamentModal } from "@/components/modals/tournamentEditModal";
 import { AddPlaceholderPlayersModal } from "@/components/modals/addGeneratedPlayers";
@@ -100,6 +100,13 @@ export default function Initialization({ refreshTournament, user }: { user: User
                     .eq('id', tournament_id)
                     .single();
 
+
+                // Validate skill_fields
+                if (!Array.isArray(data.skill_fields)) {
+                    console.error("Invalid skill_fields format:", data.skill_fields);
+                    data.skill_fields = []; // Prevents React from breaking
+                }
+
                 if (error) {
                     triggerMessage("Error fetching tournament data: " + error.message, "red");
                 } else {
@@ -134,6 +141,7 @@ export default function Initialization({ refreshTournament, user }: { user: User
                 triggerMessage("An unexpected error occurred", "red");
                 console.error(error);
             }
+            console.log("Players fetched!");
         };
 
         fetchPlayers();
@@ -296,29 +304,49 @@ export default function Initialization({ refreshTournament, user }: { user: User
             return;
         }
 
-        const formattedPlayers: BracketPlayer[] = tournamentPlayers.map(player => ({
-            uuid: player.member_uuid,
-            name: player.player_name || "Unknown",
-            email: player.email || "",
-            account_type: player.is_anonymous ? "anonymous" : "logged_in",
-            score: Number(player.skills?.score) || 0,
-            skills: player.skills || {},
-        }));
+        const formattedPlayers: BracketPlayer[] = tournamentPlayers.map(player => {
+            const formattedSkills: PlayerSkill[] = [];
+        
+            if (Array.isArray(tournament.skill_fields)) {
+                tournament.skill_fields.forEach(skill => {
+                    let skillValue: number = 0; // Default for missing skills
+        
+                    if (Array.isArray(player.skills)) {
+                        const playerSkill: PlayerSkill = player.skills.find((s: { name: string; }) => s.name === skill.name);
+                        if (playerSkill) {
+                            skillValue = playerSkill.value;
+                        }
+        
+                    }
+        
+                    formattedSkills.push({ name: skill.name, type: skill.type, value: skillValue });
+                });
+            }
+        
+            return {
+                uuid: player.member_uuid,
+                name: player.player_name || "Unknown",
+                email: player.email || "",
+                account_type: player.is_anonymous ? "anonymous" : "logged_in",
+                score: 0,
+                skills: formattedSkills, // Store skills as structured objects
+            };
+        });
+
 
         function seedPlayers(playersToSeed: BracketPlayer[]) {
             return [...playersToSeed].sort((a, b) => {
-                // go in order of the skills array
+                // go in order of the skills arra
                 for (let i = 0; i < Math.min(a.skills?.length || 0, b.skills?.length || 0); i++) {
                     // get their respective skill values
-                    const [aSkillName, aSkillValue] = a.skills?.[i] || ['', 0];
-                    const [bSkillName, bSkillValue] = b.skills?.[i] || ['', 0];
+                    const aSkillValue = a.skills?.[i].value || 0;
+                    const bSkillValue = b.skills?.[i].value || 0;
 
                     // but if they're the same, lets move on to the next skill value to determine who's better
                     if (aSkillValue !== bSkillValue) {
                         return bSkillValue - aSkillValue;
                     }
                 }
-                
                 return 0;
             });
         }

@@ -7,7 +7,13 @@ export interface BracketPlayer {
     skills?: PlayerSkill[];
     account_type:string
 }
-type PlayerSkill = [string, number]
+export interface PlayerSkill {
+    name: string;  // Name of the skill (e.g., "rating", "Metal")
+    type: "numeric" | "categorical";  // Skill type
+    value: number; // always stored as a number
+    category_type?: string;   // example Bronze
+}
+
 
 export interface Matchup {
     id: number;

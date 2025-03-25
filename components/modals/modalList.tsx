@@ -2,75 +2,180 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faAward } from '@fortawesome/free-solid-svg-icons';
 import { ChangeEvent, useState } from 'react';
 
-interface SkillListProps {
+export interface SkillField {
     name: string;
-    list: string[];
-    setList: (list: string[]) => void;
+    type: "numeric" | "categorical";
+    categories?: string[]; // Only for categorical skills
 }
 
-export const ModalList = ({ name, list, setList }: SkillListProps) => {
-    const [newItem, setNewItem] = useState<string>('');
+export const ModalList = ({ name, list, setList }: { name: string; list: SkillField[]; setList: (items: SkillField[]) => void }) => {
+    const [newSkillName, setNewSkillName] = useState<string>("");
+    const [newSkillType, setNewSkillType] = useState<"numeric" | "categorical">("numeric");
+    const [newCategories, setNewCategories] = useState<string[]>([]);
 
-    const addItem = () => {
-        if (newItem.trim() !== '') {
-            setList([...list, newItem]);
-            setNewItem('');
-        }
-    };
+    const handleAddSkill = () => {
+        if (newSkillName.trim() === "") return;
 
-    const removeItem = (index: number) => {
-        const updatedItems = list.filter((_, i) => i !== index);
-        setList(updatedItems);
+        const newSkill: SkillField = {
+            name: newSkillName,
+            type: newSkillType,
+            categories: newSkillType === "categorical" ? newCategories : undefined,
+        };
+
+        setList([...list, newSkill]);
+        setNewSkillName("");
+        setNewSkillType("numeric");
+        setNewCategories([]);
     };
 
     return (
-        <div className="p-4 bg-[#252525] rounded-lg border border-[#3A3A3A]">
-            <div className="flex items-center mb-3">
-                <FontAwesomeIcon icon={faAward} className="mr-2 text-[#7458da]" />
-                <h3 className="text-white font-medium">{name}</h3>
-            </div>
-            
-            <div className="flex mb-2">
-                <input
-                    type="text"
-                    value={newItem}
-                    onChange={(e: ChangeEvent<HTMLInputElement>) => setNewItem(e.target.value)}
-                    placeholder="ELO..."
-                    className="flex-grow p-2 bg-[#2a2a2a] rounded-l-md text-white focus:outline-none"
-                />
-                <button
-                    onClick={addItem}
-                    className="bg-[#7458da] hover:bg-[#604BAC] text-white px-3 rounded-r-md transition-colors"
-                    disabled={!newItem.trim()}
-                >
-                    Add
-                </button>
-            </div>
-            
-            {list.length > 0 && (
-                <ul className="space-y-1">
-                    {list.map((item, index) => (
-                        <li key={index} className="flex justify-between items-center bg-[#2a2a2a] p-2 rounded">
+        <div>
+            <label className="text-white block text-sm mb-2">{name}</label>
+            <div className="space-y-4">
+                {list.map((skill, index) => (
+                    <div key={index} className="p-3 bg-[#2a2a2a] rounded-lg border border-[#3A3A3A]">
+                        <div className="flex items-center justify-between">
                             <input
                                 type="text"
-                                value={item}
+                                value={skill.name}
                                 onChange={(e: ChangeEvent<HTMLInputElement>) => {
-                                    const updatedItems = [...list];
-                                    updatedItems[index] = e.target.value;
-                                    setList(updatedItems);
+                                    const updatedSkills = [...list];
+                                    updatedSkills[index].name = e.target.value;
+                                    setList(updatedSkills);
                                 }}
-                                className="flex-grow bg-[#2a2a2a] text-white focus:outline-none focus:border-b border-[#7458da]"
+                                className="w-full p-2 bg-[#252525] border-b-2 border-[#7458da] text-white focus:outline-none focus:border-[#604BAC]"
                             />
                             <button
-                                onClick={() => removeItem(index)}
-                                className="text-red-400 hover:text-red-300 ml-2"
+                                onClick={() => {
+                                    const updatedSkills = list.filter((_, i) => i !== index);
+                                    setList(updatedSkills);
+                                }}
+                                className="bg-red-500 text-white px-2 py-1 rounded ml-2"
                             >
-                                Remove
+                                Delete
                             </button>
-                        </li>
-                    ))}
-                </ul>
-            )}
+                        </div>
+                        <div className="mt-2">
+                            <label className="text-white text-sm mr-2">Type:</label>
+                            <select
+                                value={skill.type}
+                                onChange={(e: ChangeEvent<HTMLSelectElement>) => {
+                                    const updatedSkills = [...list];
+                                    updatedSkills[index].type = e.target.value as "numeric" | "categorical";
+                                    if (updatedSkills[index].type === "categorical") {
+                                        updatedSkills[index].categories = [];
+                                    } else {
+                                        delete updatedSkills[index].categories;
+                                    }
+                                    setList(updatedSkills);
+                                }}
+                                className="p-1 bg-[#2D2D2D] border border-[#7458da] text-white rounded"
+                            >
+                                <option value="numeric">Numeric</option>
+                                <option value="categorical">Categorical</option>
+                            </select>
+                        </div>
+                        {skill.type === "categorical" && (
+                            <div className="mt-2">
+                                <label className="text-white text-sm mb-1 block">Categories (ordered)</label>
+                                {skill.categories?.map((category, catIndex) => (
+                                    <div key={catIndex} className="flex items-center space-x-2 mb-1">
+                                        <input
+                                            type="text"
+                                            value={category}
+                                            onChange={(e: ChangeEvent<HTMLInputElement>) => {
+                                                const updatedSkills = [...list];
+                                                updatedSkills[index].categories![catIndex] = e.target.value;
+                                                setList(updatedSkills);
+                                            }}
+                                            className="w-full p-2 bg-[#252525] border-b-2 border-[#7458da] text-white focus:outline-none"
+                                        />
+                                        <button
+                                            onClick={() => {
+                                                const updatedSkills = [...list];
+                                                updatedSkills[index].categories = updatedSkills[index].categories!.filter((_, i) => i !== catIndex);
+                                                setList(updatedSkills);
+                                            }}
+                                            className="bg-red-500 text-white px-2 py-1 rounded"
+                                        >
+                                            Remove
+                                        </button>
+                                    </div>
+                                ))}
+                                <button
+                                    onClick={() => {
+                                        const updatedSkills = [...list];
+                                        updatedSkills[index].categories!.push("");
+                                        setList(updatedSkills);
+                                    }}
+                                    className="bg-green-500 text-white px-2 py-1 rounded mt-2"
+                                >
+                                    Add Category
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                ))}
+                <div className="p-3 bg-[#2a2a2a] rounded-lg border border-[#3A3A3A]">
+                    <input
+                        type="text"
+                        value={newSkillName}
+                        onChange={(e: ChangeEvent<HTMLInputElement>) => setNewSkillName(e.target.value)}
+                        placeholder="Enter skill name"
+                        className="w-full p-2 bg-[#252525] border-b-2 border-[#7458da] text-white focus:outline-none"
+                    />
+                    <div className="mt-2">
+                        <label className="text-white text-sm mr-2">Type:</label>
+                        <select
+                            value={newSkillType}
+                            onChange={(e: ChangeEvent<HTMLSelectElement>) => setNewSkillType(e.target.value as "numeric" | "categorical")}
+                            className="p-1 bg-[#2D2D2D] border border-[#7458da] text-white rounded"
+                        >
+                            <option value="numeric">Numeric</option>
+                            <option value="categorical">Categorical</option>
+                        </select>
+                    </div>
+                    {newSkillType === "categorical" && (
+                        <div className="mt-2">
+                            <label className="text-white text-sm mb-1 block">Categories (ordered)</label>
+                            {newCategories.map((category, index) => (
+                                <div key={index} className="flex items-center space-x-2 mb-1">
+                                    <input
+                                        type="text"
+                                        value={category}
+                                        onChange={(e: ChangeEvent<HTMLInputElement>) => {
+                                            const updatedCategories = [...newCategories];
+                                            updatedCategories[index] = e.target.value;
+                                            setNewCategories(updatedCategories);
+                                        }}
+                                        className="w-full p-2 bg-[#252525] border-b-2 border-[#7458da] text-white focus:outline-none"
+                                    />
+                                    <button
+                                        onClick={() => {
+                                            setNewCategories(newCategories.filter((_, i) => i !== index));
+                                        }}
+                                        className="bg-red-500 text-white px-2 py-1 rounded"
+                                    >
+                                        Remove
+                                    </button>
+                                </div>
+                            ))}
+                            <button
+                                onClick={() => setNewCategories([...newCategories, ""])}
+                                className="bg-green-500 text-white px-2 py-1 rounded mt-2"
+                            >
+                                Add Category
+                            </button>
+                        </div>
+                    )}
+                    <button
+                        onClick={handleAddSkill}
+                        className="bg-[#7458da] text-white px-3 py-2 rounded mt-3 w-full"
+                    >
+                        Add Skill
+                    </button>
+                </div>
+            </div>
         </div>
     );
 };
