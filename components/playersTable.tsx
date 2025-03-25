@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import { Player } from "@/types/playerTypes";
 import { Checkbox, CheckboxWithEvent } from "./checkbox";
@@ -9,20 +9,33 @@ import { Tournament } from "@/types/tournamentTypes";
 import { PlayerModal } from "./modals/editPlayersModal";
 import { ConfirmModal, ConfirmModalInformation } from "./modals/confirmationModal";
 
-export const PlayersTable = ({ players, setPlayers, otherPlayers, setOtherPlayers, type, tournament, permission_level }: { permission_level: string, players: Player[], setPlayers: (players: Player[]) => void, otherPlayers: Player[], setOtherPlayers: React.Dispatch<React.SetStateAction<Player[]>>, type: string, tournament: Tournament }) => {
-    const [selectedPlayers, setSelectedPlayers] = useState<Set<string>>(new Set())
-    const [modalPlayer, setModalPlayer] = useState<Player | null>(null)
-
-    const [canDelete, setCanDelete] = useState<boolean>(false)
+export const PlayersTable = ({
+    players,
+    setPlayers,
+    otherPlayers,
+    setOtherPlayers,
+    type,
+    tournament,
+    permission_level
+}: {
+    permission_level: string;
+    players: Player[];
+    setPlayers: (players: Player[]) => void;
+    otherPlayers: Player[];
+    setOtherPlayers: React.Dispatch<React.SetStateAction<Player[]>>;
+    type: string;
+    tournament: Tournament;
+}) => {
+    const [selectedPlayers, setSelectedPlayers] = useState<Set<string>>(new Set());
+    const [modalPlayer, setModalPlayer] = useState<Player | null>(null);
+    const [canDelete, setCanDelete] = useState<boolean>(false);
+    const [confirmModalInfo, setConfirmModalInfo] = useState<ConfirmModalInformation | null>(null);
+    const { triggerMessage } = useMessage();
+    const supabase = createClient();
 
     useEffect(() => {
-        setCanDelete(permission_level == "admin" || permission_level == "owner")
-    }, [permission_level])
-
-    const [confirmModalInfo, setConfirmModalInfo] = useState<ConfirmModalInformation | null>(null)
-
-    const { triggerMessage } = useMessage()
-    const supabase = createClient()
+        setCanDelete(permission_level == "admin" || permission_level == "owner");
+    }, [permission_level]);
 
     const handleSelectPlayer = (playerId: string) => {
         const newSelectedPlayers = new Set(selectedPlayers);
@@ -41,9 +54,9 @@ export const PlayersTable = ({ players, setPlayers, otherPlayers, setOtherPlayer
         }
 
         const { error } = await supabase
-            .from('tournament_players')
+            .from("tournament_players")
             .delete()
-            .in('id', Array.from(selectedPlayers));
+            .in("id", Array.from(selectedPlayers));
 
         if (error) {
             triggerMessage("Error deleting players", "red");
@@ -55,7 +68,7 @@ export const PlayersTable = ({ players, setPlayers, otherPlayers, setOtherPlayer
     };
 
     const handleBulkSwitch = async () => {
-        const newType = type == "active" ? "waitlist" : "active"
+        const newType = type == "active" ? "waitlist" : "active";
 
         if (selectedPlayers.size === 0) {
             triggerMessage("No players selected", "red");
@@ -66,40 +79,40 @@ export const PlayersTable = ({ players, setPlayers, otherPlayers, setOtherPlayer
             const waitlistSwitchConfirm: ConfirmModalInformation = {
                 title: "Are you sure you want to do this?",
                 content: `Switching ${selectedPlayers.size > 1 ? `these ${selectedPlayers.size} players` : "this 1 player"} over to the active players table would violate the maximum players constraint`,
-                onCancel: () => { setConfirmModalInfo(null) },
+                onCancel: () => setConfirmModalInfo(null),
                 onSuccess: async () => {
                     const { error } = await supabase
-                        .from('tournament_players')
+                        .from("tournament_players")
                         .update({ type: newType })
-                        .in('id', Array.from(selectedPlayers));
+                        .in("id", Array.from(selectedPlayers));
 
                     if (error) {
-                        triggerMessage("Error deleting players", "red");
+                        triggerMessage("Error updating players", "red");
                     } else {
-                        triggerMessage(`Players brought to active successfully`, "green");
-                        setOtherPlayers((prev) => [...prev, ...players.filter(player => selectedPlayers.has(player.id))])
+                        triggerMessage(`Players moved to ${newType} successfully`, "green");
+                        setOtherPlayers(prev => [...prev, ...players.filter(player => selectedPlayers.has(player.id))]);
                         setPlayers(players.filter(player => !selectedPlayers.has(player.id)));
                         setSelectedPlayers(new Set());
                     }
 
-                    setConfirmModalInfo(null)
+                    setConfirmModalInfo(null);
                 }
-            }
+            };
 
-            setConfirmModalInfo(waitlistSwitchConfirm)
+            setConfirmModalInfo(waitlistSwitchConfirm);
             return;
         }
 
         const { error } = await supabase
-            .from('tournament_players')
+            .from("tournament_players")
             .update({ type: newType })
-            .in('id', Array.from(selectedPlayers));
+            .in("id", Array.from(selectedPlayers));
 
         if (error) {
-            triggerMessage("Error deleting players", "red");
+            triggerMessage("Error updating players", "red");
         } else {
-            triggerMessage(`Players ${type == "active" ? "waitlisted" : "brought to active"} successfully`, "green");
-            setOtherPlayers((prev) => [...prev, ...players.filter(player => selectedPlayers.has(player.id))])
+            triggerMessage(`Players moved to ${newType} successfully`, "green");
+            setOtherPlayers(prev => [...prev, ...players.filter(player => selectedPlayers.has(player.id))]);
             setPlayers(players.filter(player => !selectedPlayers.has(player.id)));
             setSelectedPlayers(new Set());
         }
@@ -123,9 +136,8 @@ export const PlayersTable = ({ players, setPlayers, otherPlayers, setOtherPlayer
                         <h2 className="text-[#7458da] font-bold text-2xl">{type == "active" ? "Registered Players" : "Waitlist"}</h2>
                         {canDelete && (
                             <div className="space-x-4">
-
                                 <button
-                                    className={`px-4 py-2 border-2 transition-all duration-300 ease-in-out rounded-lg text-white transform ${selectedPlayers.size > 0
+                                    className={`px-4 py-2 border-2 transition-all duration-300 ease-in-out rounded-lg text-white ${selectedPlayers.size > 0
                                         ? "bg-[#1f1f1f] border-[#222222] hover:bg-[#171717] hover:border-[#171717]"
                                         : "border-[#000000] bg-[#1717178d] cursor-not-allowed"
                                         }`}
@@ -134,7 +146,7 @@ export const PlayersTable = ({ players, setPlayers, otherPlayers, setOtherPlayer
                                     {type == "active" ? "Move to Waitlist" : "Bring out of Waitlist"}
                                 </button>
                                 <button
-                                    className={`px-4 py-2 border-2 transition-all duration-300 ease-in-out rounded-lg text-white transform ${selectedPlayers.size > 0
+                                    className={`px-4 py-2 border-2 transition-all duration-300 ease-in-out rounded-lg text-white ${selectedPlayers.size > 0
                                         ? "bg-[#c02a2a] border-[#c02a2a] hover:bg-[#a32424] hover:border-[#a32424]"
                                         : "border-[#c02a2a8b] bg-[#4512127b] cursor-not-allowed"
                                         }`}
@@ -152,7 +164,7 @@ export const PlayersTable = ({ players, setPlayers, otherPlayers, setOtherPlayer
                                 {canDelete && (
                                     <th className="p-3 text-left text-white w-10">
                                         <Checkbox deep={true} checked={selectedPlayers.size === players.length} onChange={() => {
-                                            if (selectedPlayers.size != players.length) {
+                                            if (selectedPlayers.size !== players.length) {
                                                 setSelectedPlayers(new Set(players.map(player => player.id)));
                                             } else {
                                                 setSelectedPlayers(new Set());
@@ -160,39 +172,38 @@ export const PlayersTable = ({ players, setPlayers, otherPlayers, setOtherPlayer
                                         }} />
                                     </th>
                                 )}
-                                <th className="p-3 text-left text-white truncate max-w-[150px]">Name</th>
-                                {tournament?.skill_fields.map((skill, index) => (
-                                    <th key={index} className="p-3 text-left text-white truncate max-w-[150px] overflow-hidden text-ellipsis">
-                                        {skill}
+                                <th className="p-3 text-left text-white">Name</th>
+                                {Array.isArray(tournament?.skill_fields) && tournament.skill_fields.map((skill, index) => (
+                                    <th key={index} className="p-3 text-left text-white">
+                                        {skill.name}
                                     </th>
                                 ))}
                             </tr>
                         </thead>
                         <tbody>
-                            {players.map((player) => (
+                            {players.map(player => (
                                 <tr
                                     key={player.id}
-                                    onClick={(e: any) => {
-                                        if (e.target.tagName !== "INPUT") {
+                                    onClick={(e) => {
+                                        if ((e.target as HTMLElement).tagName !== "INPUT") {
                                             setModalPlayer(player);
                                         }
                                     }}
-                                    className={`hover:bg-[#2a1b5f] bg-[#22154F] ${modalPlayer && modalPlayer.id == player.id ? "bg-[#2a1b5f]" : ""} transition-colors duration-50 cursor-pointer`}
+                                    className="hover:bg-[#2a1b5f] bg-[#22154F] transition-colors duration-50 cursor-pointer"
                                 >
                                     {canDelete && (
                                         <td className="p-3">
-                                            <CheckboxWithEvent
-                                                checked={selectedPlayers.has(player.id)}
-                                                onChange={(e) => {
-                                                    e.stopPropagation();
-                                                    handleSelectPlayer(player.id);
-                                                }}
-                                            />
+                                            <CheckboxWithEvent checked={selectedPlayers.has(player.id)} onChange={(e) => {
+                                                e.stopPropagation();
+                                                handleSelectPlayer(player.id);
+                                            }} />
                                         </td>
                                     )}
-                                    <td className={`p-3 ${!player.is_anonymous ? "text-white" : "text-[#c8c8c8]"}`}>{player.player_name}</td>
-                                    {tournament?.skill_fields.map((skill, index) => (
-                                        <td key={index} className="p-3">{player.skills[skill] ? player.skills[skill] : "N/A"}</td>
+                                    <td className="p-3 text-white">{player.player_name}</td>
+                                    {Array.isArray(tournament?.skill_fields) && tournament.skill_fields.map((skill, index) => (
+                                        <td key={index} className="p-3">
+                                            {player.skills.find(s => s.name === skill.name)?.value ?? "N/A"}
+                                        </td>
                                     ))}
                                 </tr>
                             ))}
@@ -201,5 +212,5 @@ export const PlayersTable = ({ players, setPlayers, otherPlayers, setOtherPlayer
                 </div>
             )}
         </div>
-    )
-}
+    );
+};

@@ -1,3 +1,5 @@
+import { PlayerSkill } from "./bracketTypes";
+
 export interface Player {
     id: string;
     member_uuid: string;
@@ -6,7 +8,7 @@ export interface Player {
     email?: string;
     is_anonymous?: boolean;
     created_at?: Date;
-    skills: { [key: string]: string };
+    skills: PlayerSkill[];
 }
 
 export interface TournamentPlayer {

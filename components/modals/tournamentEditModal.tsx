@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useMessage } from '@/context/messageContext';
 import { Tournament } from '@/types/tournamentTypes';
 import { createClient } from '@/utils/supabase/client';
-import { ModalList } from './modalList';
+import { ModalList, SkillField } from './modalList';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEdit, faMapPin, faCalendar, faUsers, faAward, faTimes, faPlus, faTrashAlt, faCheck } from '@fortawesome/free-solid-svg-icons';
 
@@ -27,7 +27,7 @@ export const TournamentModal = ({
     const [startTime, setStartTime] = useState<string>(tournament.start_time || '');
     const [endTime, setEndTime] = useState<string>(tournament.end_time || '');
     const [maxPlayers, setMaxPlayers] = useState<number>(tournament.max_players || 0);
-    const [skillFields, setSkillFields] = useState<string[]>(tournament.skill_fields || []);
+    const [skillFields, setSkillFields] = useState<SkillField[]>(tournament.skill_fields || []);
     const [rules, setRules] = useState<string[]>(tournament.rules || []);
     const [activeTab, setActiveTab] = useState<'info' | 'organizers'>('info');
     const [organizers, setOrganizers] = useState<{ email: string; permission: 'Admin' | 'Scorekeeper' | 'Viewer' }[]>([]);

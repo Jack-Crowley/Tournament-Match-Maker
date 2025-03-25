@@ -1,3 +1,5 @@
+import { SkillField } from "@/components/modals/modalList";
+
 export interface Tournament {
     start_time: string;
     end_time: string;
@@ -12,6 +14,6 @@ export interface Tournament {
     time: string;
     owner: string;
     status: string;
-    skill_fields: string[];
+    skill_fields: SkillField[];
     rules: string[];
 }
