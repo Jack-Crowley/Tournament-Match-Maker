@@ -202,7 +202,7 @@ export const PlayersTable = ({
                                     <td className="p-3 text-white">{player.player_name}</td>
                                     {Array.isArray(tournament?.skill_fields) && tournament.skill_fields.map((skill, index) => (
                                         <td key={index} className="p-3">
-                                            {player.skills.find(s => s.name === skill.name)?.value ?? "N/A"}
+                                            {player.skills[index].type === "numeric" ? player.skills[index].value : player.skills[index].category_type}
                                         </td>
                                     ))}
                                 </tr>
@@ -210,7 +210,7 @@ export const PlayersTable = ({
                         </tbody>
                     </table>
                 </div>
-            )}
+            )}                                                                            
         </div>
     );
 };

@@ -11,6 +11,7 @@ import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import TournamentBracket, { BracketViewType } from "./single/bracketView";
 import { User } from "@/types/userType";
+import { AddPlaceholderPlayersModal } from "../modals/addGeneratedPlayers";
 
 export const PlayersView = ({ tournamentID, bracket, user, setActiveTab }: { setActiveTab: (state: string) => void, tournamentID: number, bracket: Bracket, user: User }) => {
     const [activePlayer, setActivePlayer] = useState<Player | null>(null);
@@ -28,9 +29,9 @@ export const PlayersView = ({ tournamentID, bracket, user, setActiveTab }: { set
 
     const addPlayerSuccess = () => {
         if (!activePlayer) return;
-        setPlayers(players.map(player => 
-            player.id === activePlayer.id 
-                ? {...player, type: "active"} 
+        setPlayers(players.map(player =>
+            player.id === activePlayer.id
+                ? { ...player, type: "active" }
                 : player
         ));
         setActivePlayer(null);
@@ -40,14 +41,14 @@ export const PlayersView = ({ tournamentID, bracket, user, setActiveTab }: { set
 
     const sendMessageSuccess = async () => {
         if (!activePlayer || !messageText.trim()) return;
-        
-        const {error} = await supabase.from("private_messages").insert({
-            player_uuid:activePlayer.member_uuid,
-            tournament_id:tournamentID,
-            content:messageText.trim(),
-            player_seen:false,
-            admin_seen:true,
-            admin_sent:true
+
+        const { error } = await supabase.from("private_messages").insert({
+            player_uuid: activePlayer.member_uuid,
+            tournament_id: tournamentID,
+            content: messageText.trim(),
+            player_seen: false,
+            admin_seen: true,
+            admin_sent: true
         })
 
         if (error) {
@@ -59,7 +60,7 @@ export const PlayersView = ({ tournamentID, bracket, user, setActiveTab }: { set
         }
 
         try {
-            
+
         } catch (error) {
             console.error("Error sending message:", error);
         }
@@ -79,15 +80,15 @@ export const PlayersView = ({ tournamentID, bracket, user, setActiveTab }: { set
                 console.log(error);
             } else {
                 data.sort((a, b) => {
-                    const typeOrder : any = { "active": 0, "waitlist": 1, "inactive": 2 };
+                    const typeOrder: any = { "active": 0, "waitlist": 1, "inactive": 2 };
                     const typeA = typeOrder[(a as any).type] || 0;
                     const typeB = typeOrder[(b as any).type] || 0;
-                    
+
                     if (typeA !== typeB) return typeA - typeB;
-                    
+
                     return a.last_update - b.last_update;
                 });
-                
+
                 setPlayers(data as Player[]);
             }
 
@@ -103,12 +104,12 @@ export const PlayersView = ({ tournamentID, bracket, user, setActiveTab }: { set
             } else {
                 setTournament(tourn as Tournament);
             }
-            
+
             setIsLoading(false);
         }
 
         loadData();
-        
+
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [tournamentID, supabase]);
 
@@ -119,7 +120,7 @@ export const PlayersView = ({ tournamentID, bracket, user, setActiveTab }: { set
             setActivePlayer(null);
         } else {
             setActivePlayer(player);
-            setExpandedDetails(false); 
+            setExpandedDetails(false);
             setIsMessaging(false);
         }
     };
@@ -159,29 +160,28 @@ export const PlayersView = ({ tournamentID, bracket, user, setActiveTab }: { set
     };
 
     const getPlayerCount = (type: string) => {
-        return type === "all" 
-            ? players.length 
+        return type === "all"
+            ? players.length
             : players.filter(player => (player as any).type === type).length;
     };
 
     const getFilterButtonClass = (filter: string) => {
-        return `px-4 py-2 rounded-lg text-sm transition-all duration-200 font-medium ${
-            currentFilter === filter 
-                ? "bg-[#7458da] text-white shadow-lg" 
+        return `px-4 py-2 rounded-lg text-sm transition-all duration-200 font-medium ${currentFilter === filter
+                ? "bg-[#7458da] text-white shadow-lg"
                 : "bg-[#2a1a66] text-[#a899e0] hover:bg-[#342373]"
-        }`;
+            }`;
     };
 
     return (
         <div>
             {isAdding && tournament ? (
-                <TournamentBracket 
-                    user={user} 
-                    bracketViewType={BracketViewType.AddPlayer} 
-                    tournamentID={Number(tournament.id)} 
-                    bracket={bracket} 
-                    newPlayer={activePlayer as unknown as BracketPlayer} 
-                    onClose={addPlayerSuccess} 
+                <TournamentBracket
+                    user={user}
+                    bracketViewType={BracketViewType.AddPlayer}
+                    tournamentID={Number(tournament.id)}
+                    bracket={bracket}
+                    newPlayer={activePlayer as unknown as BracketPlayer}
+                    onClose={addPlayerSuccess}
                 />
             ) : (
                 <motion.div
@@ -231,25 +231,25 @@ export const PlayersView = ({ tournamentID, bracket, user, setActiveTab }: { set
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: 0.25, duration: 0.4 }}
                         >
-                            <button 
+                            <button
                                 className={getFilterButtonClass("all")}
                                 onClick={() => setCurrentFilter("all")}
                             >
                                 All ({getPlayerCount("all")})
                             </button>
-                            <button 
+                            <button
                                 className={getFilterButtonClass("active")}
                                 onClick={() => setCurrentFilter("active")}
                             >
                                 Active ({getPlayerCount("active")})
                             </button>
-                            <button 
+                            <button
                                 className={getFilterButtonClass("waitlist")}
                                 onClick={() => setCurrentFilter("waitlist")}
                             >
                                 Waitlist ({getPlayerCount("waitlist")})
                             </button>
-                            <button 
+                            <button
                                 className={getFilterButtonClass("inactive")}
                                 onClick={() => setCurrentFilter("inactive")}
                             >
@@ -294,7 +294,7 @@ export const PlayersView = ({ tournamentID, bracket, user, setActiveTab }: { set
                                                                 key={index}
                                                                 className="p-4 text-left text-white font-semibold text-lg border-b-2 border-[#3a2b7d] truncate max-w-[150px]"
                                                             >
-                                                                {skill}
+                                                                {skill.name}
                                                             </th>
                                                         ))}
                                                         <th className="p-4 text-center text-white font-semibold text-lg border-b-2 border-[#3a2b7d] w-16">Status</th>
@@ -328,10 +328,10 @@ export const PlayersView = ({ tournamentID, bracket, user, setActiveTab }: { set
                                                                     key={index}
                                                                     className="p-4 text-lg border-b border-[#3a2b7d] text-[#b8b8b8]"
                                                                 >
-                                                                    {player.skills && player.skills[skill] ? (
+                                                                    {player.skills && player.skills.findIndex(s => s.name === skill.name) !== -1 ? (
                                                                         <div className="flex items-center">
                                                                             <div className="w-2 h-2 rounded-full bg-[#7458da] mr-2"></div>
-                                                                            {player.skills[skill]}
+                                                                            {player.skills[index].type === "numeric" ? player.skills[index].value : player.skills[index].category_type}
                                                                         </div>
                                                                     ) : "—"}
                                                                 </td>
@@ -380,7 +380,7 @@ export const PlayersView = ({ tournamentID, bracket, user, setActiveTab }: { set
                                                                             Position: #{players.filter(p => (p as any).type === "waitlist").findIndex(p => p.id === activePlayer.id) + 1}
                                                                         </span>
                                                                     )}
-                                                                    
+
                                                                     {(activePlayer as any).account_type !== "generated" && (
                                                                         <span className="text-[#b8b8b8] text-sm bg-[#342575] px-2 py-1 rounded">
                                                                             {!activePlayer.is_anonymous && !((activePlayer as any).placeholder_player) ? "Logged In User" : !(activePlayer as any).placeholder_player ? "Anonymous User" : "Generated User"}
@@ -389,8 +389,8 @@ export const PlayersView = ({ tournamentID, bracket, user, setActiveTab }: { set
                                                                 </div>
                                                             </div>
                                                         </div>
-                                                        
-                                                        <button 
+
+                                                        <button
                                                             className="text-[#7458da] hover:text-white p-2 rounded-full hover:bg-[#342575] transition-colors"
                                                             onClick={() => setActivePlayer(null)}
                                                         >
@@ -400,26 +400,30 @@ export const PlayersView = ({ tournamentID, bracket, user, setActiveTab }: { set
 
                                                     <div className="mt-6 mb-2 flex justify-between items-center">
                                                         <h4 className="text-[#a899e0] font-medium">Player Skills</h4>
-                                                        <button 
+                                                        <button
                                                             className="text-[#7458da] hover:text-white flex items-center gap-1 text-sm"
                                                             onClick={() => setExpandedDetails(!expandedDetails)}
                                                         >
-                                                            {expandedDetails ? "Show Less" : "Show More"} 
+                                                            {expandedDetails ? "Show Less" : "Show More"}
                                                             <FontAwesomeIcon icon={expandedDetails ? faChevronUp : faChevronDown} className="ml-1" />
                                                         </button>
                                                     </div>
 
                                                     <div className={`grid grid-cols-1 md:grid-cols-${expandedDetails ? "3" : "2"} gap-4 transition-all duration-300`}>
                                                         {tournament?.skill_fields?.map((skill, index) => (
-                                                            activePlayer.skills && activePlayer.skills[skill] && (
-                                                                <motion.div 
-                                                                    key={index} 
+                                                            activePlayer.skills && activePlayer.skills[index] && (
+                                                                <motion.div
+                                                                    key={index}
                                                                     className="bg-[#342575] p-3 rounded-md shadow-md"
                                                                     whileHover={{ scale: 1.02 }}
                                                                     transition={{ duration: 0.2 }}
                                                                 >
-                                                                    <p className="text-[#a899e0] text-sm">{skill}</p>
-                                                                    <p className="text-white font-medium">{activePlayer.skills[skill]}</p>
+                                                                    <p className="text-[#a899e0] text-sm">{skill.name}</p>
+                                                                    <p className="text-white font-medium">
+                                                                        {activePlayer.skills[index].type === "numeric" ? 
+                                                                            activePlayer.skills[index].value
+                                                                            : activePlayer.skills[index].category_type}
+                                                                    </p>
                                                                 </motion.div>
                                                             )
                                                         ))}
@@ -427,8 +431,8 @@ export const PlayersView = ({ tournamentID, bracket, user, setActiveTab }: { set
 
                                                     <div className="mt-6 flex flex-wrap gap-3">
                                                         {(['waitlist', 'inactive'].includes((activePlayer as any).type) && (user.permission_level === "admin" || user.permission_level === "owner")) && (
-                                                            <motion.button 
-                                                                className="px-4 py-2 bg-gradient-to-r from-[#7458da] to-[#634bc1] hover:from-[#634bc1] hover:to-[#523aad] text-white rounded-md transition-all flex items-center shadow-md" 
+                                                            <motion.button
+                                                                className="px-4 py-2 bg-gradient-to-r from-[#7458da] to-[#634bc1] hover:from-[#634bc1] hover:to-[#523aad] text-white rounded-md transition-all flex items-center shadow-md"
                                                                 onClick={() => setIsAdding(true)}
                                                                 whileHover={{ scale: 1.05 }}
                                                                 whileTap={{ scale: 0.98 }}
@@ -437,20 +441,20 @@ export const PlayersView = ({ tournamentID, bracket, user, setActiveTab }: { set
                                                                 Move to Roster
                                                             </motion.button>
                                                         )}
-                                                        
+
                                                         {!((activePlayer as any).placeholder_player) && (["owner", "admin"].includes(user.permission_level)) && (
-                                                            <motion.button 
+                                                            <motion.button
                                                                 className="px-4 py-2 bg-[#342575] hover:bg-[#3a2b7d] text-white rounded-md transition-colors flex items-center shadow-md"
                                                                 onClick={() => setIsMessaging(!isMessaging)}
                                                                 whileHover={{ scale: 1.05 }}
-                                                                whileTap={{ scale: 0.98 }} 
+                                                                whileTap={{ scale: 0.98 }}
                                                             >
                                                                 <FontAwesomeIcon icon={faEnvelope} className="mr-2" />
                                                                 Message Player
                                                             </motion.button>
                                                         )}
                                                     </div>
-                                                    
+
                                                     <AnimatePresence>
                                                         {isMessaging && (
                                                             <motion.div
@@ -480,11 +484,10 @@ export const PlayersView = ({ tournamentID, bracket, user, setActiveTab }: { set
                                                                         Cancel
                                                                     </motion.button>
                                                                     <motion.button
-                                                                        className={`px-4 py-2 rounded-md transition-colors flex items-center shadow-md ${
-                                                                            messageText.trim() 
+                                                                        className={`px-4 py-2 rounded-md transition-colors flex items-center shadow-md ${messageText.trim()
                                                                                 ? "bg-gradient-to-r from-[#7458da] to-[#634bc1] hover:from-[#634bc1] hover:to-[#523aad] text-white"
                                                                                 : "bg-[#342575] text-[#a899e0] cursor-not-allowed"
-                                                                        }`}
+                                                                            }`}
                                                                         onClick={sendMessageSuccess}
                                                                         disabled={!messageText.trim()}
                                                                         whileHover={messageText.trim() ? { scale: 1.05 } : {}}
@@ -511,7 +514,7 @@ export const PlayersView = ({ tournamentID, bracket, user, setActiveTab }: { set
                                     <FontAwesomeIcon icon={faExclamationCircle} className="text-[#7458da] text-4xl mb-4" />
                                     <h3 className="text-white text-xl font-semibold mb-2">No Players Found</h3>
                                     <p className="text-[#a8a8a8] text-lg">
-                                        {currentFilter === "all" 
+                                        {currentFilter === "all"
                                             ? "There are currently no players in this tournament."
                                             : `There are no players with ${currentFilter} status.`}
                                     </p>

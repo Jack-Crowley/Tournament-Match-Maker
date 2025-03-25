@@ -344,6 +344,7 @@ export default function Initialization({ refreshTournament, user }: { user: User
 
                     // but if they're the same, lets move on to the next skill value to determine who's better
                     if (aSkillValue !== bSkillValue) {
+                        console.log("using skill value to sort", aSkillValue, bSkillValue);
                         return bSkillValue - aSkillValue;
                     }
                 }
