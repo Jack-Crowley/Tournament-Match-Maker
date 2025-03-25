@@ -42,6 +42,12 @@ export const AddPlaceholderPlayersModal = ({ isOpen, setOpen, tournament, addAct
             return;
         }
 
+        if (numberOfPlayers > 20) {
+            triggerMessage("Maximum of 20 generated players at a time", "red");
+            setWorking(false);
+            return;
+        }
+
         // Fetch existing players
         const { data: existingPlayers, error: existingPlayersError } = await supabase
             .from("tournament_players")

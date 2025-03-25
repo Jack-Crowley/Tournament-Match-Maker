@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPlusCircle, faSearch, faSort, faEllipsisVertical } from '@fortawesome/free-solid-svg-icons';
+import { faInbox, faPlusCircle, faSearch, faSort, faSyncAlt, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { useState, useRef, useEffect } from 'react';
 import { useMessage } from '@/context/messageContext';
 import { useClient } from "@/context/clientContext";
@@ -34,122 +34,155 @@ export default function Home() {
         { id: "invitations", label: "Invitations", count: invitations.length },
     ];
 
-    useEffect(() => {
-        async function loadTournamentData() {
-            const id = client.session?.user.id;
+    const [unreadMessages, setUnreadMessages] = useState([
+        {
+            tournamentName: "Fortnite Finals",
+            sender: "Alex Rodriguez",
+            content: "Are we still on for practice before the tournament?",
+            timeSent: "10 min ago"
+        },
+        {
+            tournamentName: "Call of Duty Championship",
+            sender: "Sarah Johnson",
+            content: "I've updated the rules for the upcoming match, please review",
+            timeSent: "1 hour ago"
+        },
+        {
+            tournamentName: "League of Legends Summit",
+            sender: "Michael Chang",
+            content: "Your team has advanced to the semifinals! Details inside.",
+            timeSent: "3 hours ago"
+        },
+        {
+            tournamentName: "Rocket League Tournament",
+            sender: "Tournament System",
+            content: "Match schedule has been updated due to server maintenance",
+            timeSent: "Yesterday"
+        },
+        {
+            tournamentName: "Apex Legends Championship",
+            sender: "James Wilson",
+            content: "New prize pool announcement for all participants",
+            timeSent: "2 days ago"
+        }
+    ]);
 
-            if (id == undefined) {
-                setLoading(false);
-                return;
-            }
+    async function loadTournamentData() {
+        const id = client.session?.user.id;
 
-            const { data: organizingTournamentsOwner, error: organizingErrorOwner } = await supabase
-                .from('tournaments')
-                .select('*')
-                .eq('owner', id);
-
-            let owningIds: string[] = [];
-            if (organizingTournamentsOwner) {
-                owningIds = organizingTournamentsOwner.map((record) => record.id);
-                setOrganizingTournaments(organizingTournamentsOwner);
-            }
-
-            const { data: playingData, error: playingError } = await supabase
-                .from('tournament_players')
-                .select('tournament_id')
-                .eq('member_uuid', id)
-                .eq('left_match', false);
-
-            if (playingError || organizingErrorOwner) {
-                triggerMessage("Error fetching player data", "red");
-            } else {
-                const { data: organizingTournaments } = await supabase
-                    .from('tournament_organizers')
-                    .select('*')
-                    .eq('member_uuid', id)
-                    .eq("accepted", true)
-
-                const nonOwnerTournamentIds = organizingTournaments
-                    ?.map((record) => record.tournament_id)
-                    .filter((tournament_id) => !owningIds.includes(tournament_id));
-
-                if (nonOwnerTournamentIds?.length) {
-                    const { data: nonOwnerTournaments, error: nonOwnerError } = await supabase
-                        .from('tournaments')
-                        .select('*')
-                        .in('id', nonOwnerTournamentIds);
-
-                    if (nonOwnerError) {
-                        triggerMessage('Error fetching non-owner tournaments:', 'red');
-                    } else if (nonOwnerTournaments) {
-                        setOrganizingTournaments((prev) => {
-                            const uniqueTournaments = new Map();
-                            [...prev, ...nonOwnerTournaments].forEach(tournament => {
-                                uniqueTournaments.set(tournament.id, tournament);
-                            });
-                            return Array.from(uniqueTournaments.values());
-                        });
-                    }
-                }
-
-                const tournamentIds = [...new Set(playingData.map((record) => record.tournament_id))];
-
-                const tournamentDetails: Tournament[] = [];
-                for (const tournamentId of tournamentIds) {
-                    if (owningIds.includes(tournamentId)) continue;
-
-                    const { data: tournament, error: fetchError } = await supabase
-                        .from('tournaments')
-                        .select('*')
-                        .eq('id', tournamentId)
-                        .single();
-
-                    if (fetchError) {
-                        console.error("Error fetching tournament with id:", tournamentId, fetchError);
-                    } else if (tournament) {
-                        tournamentDetails.push(tournament);
-                    }
-                }
-
-                setPlayingTournaments(tournamentDetails);
-            }
-
-            // Fetch invitations
-            const { data: invitationsData, error: invitationsError } = await supabase
-                .from('tournament_organizers')
-                .select('tournament_id, permission_level, accepted')
-                .eq('member_uuid', id)
-                .eq('accepted', false);
-
-            if (invitationsError) {
-                triggerMessage("Error fetching invitations", "red");
-            } else {
-                const tournamentDetails = await Promise.all(
-                    invitationsData.map(async (invitation) => {
-                        const { data: tournament, error: tournamentError } = await supabase
-                            .from('tournaments')
-                            .select('*')
-                            .eq('id', invitation.tournament_id)
-                            .single();
-
-                        if (tournamentError) {
-                            console.error("Error fetching tournament:", tournamentError);
-                            return null;
-                        }
-
-                        return {
-                            ...tournament,
-                            permission_level: invitation.permission_level,
-                        };
-                    })
-                );
-
-                setInvitations(tournamentDetails.filter((tournament) => tournament !== null) as Tournament[]);
-            }
-
+        if (id == undefined) {
             setLoading(false);
+            return;
         }
 
+        const { data: organizingTournamentsOwner, error: organizingErrorOwner } = await supabase
+            .from('tournaments')
+            .select('*')
+            .eq('owner', id);
+
+        let owningIds: string[] = [];
+        if (organizingTournamentsOwner) {
+            owningIds = organizingTournamentsOwner.map((record) => record.id);
+            setOrganizingTournaments(organizingTournamentsOwner);
+        }
+
+        const { data: playingData, error: playingError } = await supabase
+            .from('tournament_players')
+            .select('tournament_id')
+            .eq('member_uuid', id)
+            .eq('left_match', false);
+
+        if (playingError || organizingErrorOwner) {
+            triggerMessage("Error fetching player data", "red");
+        } else {
+            const { data: organizingTournaments } = await supabase
+                .from('tournament_organizers')
+                .select('*')
+                .eq('member_uuid', id)
+                .eq("accepted", true)
+
+            const nonOwnerTournamentIds = organizingTournaments
+                ?.map((record) => record.tournament_id)
+                .filter((tournament_id) => !owningIds.includes(tournament_id));
+
+            if (nonOwnerTournamentIds?.length) {
+                const { data: nonOwnerTournaments, error: nonOwnerError } = await supabase
+                    .from('tournaments')
+                    .select('*')
+                    .in('id', nonOwnerTournamentIds);
+
+                if (nonOwnerError) {
+                    triggerMessage('Error fetching non-owner tournaments:', 'red');
+                } else if (nonOwnerTournaments) {
+                    setOrganizingTournaments((prev) => {
+                        const uniqueTournaments = new Map();
+                        [...prev, ...nonOwnerTournaments].forEach(tournament => {
+                            uniqueTournaments.set(tournament.id, tournament);
+                        });
+                        return Array.from(uniqueTournaments.values());
+                    });
+                }
+            }
+
+            const tournamentIds = [...new Set(playingData.map((record) => record.tournament_id))];
+
+            const tournamentDetails: Tournament[] = [];
+            for (const tournamentId of tournamentIds) {
+                if (owningIds.includes(tournamentId)) continue;
+
+                const { data: tournament, error: fetchError } = await supabase
+                    .from('tournaments')
+                    .select('*')
+                    .eq('id', tournamentId)
+                    .single();
+
+                if (fetchError) {
+                    console.error("Error fetching tournament with id:", tournamentId, fetchError);
+                } else if (tournament) {
+                    tournamentDetails.push(tournament);
+                }
+            }
+
+            setPlayingTournaments(tournamentDetails);
+        }
+
+        // Fetch invitations
+        const { data: invitationsData, error: invitationsError } = await supabase
+            .from('tournament_organizers')
+            .select('tournament_id, permission_level, accepted')
+            .eq('member_uuid', id)
+            .eq('accepted', false);
+
+        if (invitationsError) {
+            triggerMessage("Error fetching invitations", "red");
+        } else {
+            const tournamentDetails = await Promise.all(
+                invitationsData.map(async (invitation) => {
+                    const { data: tournament, error: tournamentError } = await supabase
+                        .from('tournaments')
+                        .select('*')
+                        .eq('id', invitation.tournament_id)
+                        .single();
+
+                    if (tournamentError) {
+                        console.error("Error fetching tournament:", tournamentError);
+                        return null;
+                    }
+
+                    return {
+                        ...tournament,
+                        permission_level: invitation.permission_level,
+                    };
+                })
+            );
+
+            setInvitations(tournamentDetails.filter((tournament) => tournament !== null) as Tournament[]);
+        }
+
+        setLoading(false);
+    }
+
+    useEffect(() => {
         loadTournamentData();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [client, supabase]);
@@ -540,10 +573,10 @@ export default function Home() {
                                                 ) : (
                                                     <div className="relative ml-3">
                                                         <button
-                                                            className="p-2 text-white rounded-full hover:bg-[#3f2c84] transition-colors"
+                                                            className="p-2 text-white hover:text-red-400 rounded-full hover:bg-[#3f2c84] transition-colors"
                                                             onClick={() => setDeleteSelection(tournament.id)}
                                                         >
-                                                            <FontAwesomeIcon icon={faEllipsisVertical} />
+                                                            <FontAwesomeIcon icon={faTrash} />
                                                         </button>
                                                     </div>
                                                 )
@@ -597,29 +630,46 @@ export default function Home() {
                     </div>
 
                     {/* Stats overview */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-                        {tabs.map((tab) => (
-                            <motion.div
-                                key={tab.id}
-                                whileHover={{ y: -5 }}
-                                className={`p-6 rounded-lg cursor-pointer shadow-md ${activeTab === tab.id
-                                    ? "bg-gradient-to-r from-highlight to-accent"
-                                    : "bg-[#2a1a66] hover:bg-[#3f2c84]"
-                                    }`}
-                                onClick={() => setActiveTab(tab.id)}
+                    <div className="flex flex-col mb-10">
+                        <div className="flex justify-between items-center mb-4">
+                            <h2 className="text-xl font-semibold">Overview</h2>
+                            <motion.button
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.95 }}
+                                className="flex items-center gap-2 text-sm bg-highlight p-4 rounded-lg hover:bg-accent"
+                                onClick={loadTournamentData}
                             >
-                                <h2 className="text-xl font-semibold mb-2">{tab.label}</h2>
-                                <div className="flex justify-between items-center">
-                                    <span className="text-3xl font-bold">{tab.count}</span>
-                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${activeTab === tab.id ? "bg-white bg-opacity-20" : "bg-highlight"
-                                        }`}>
-                                        {tab.id === "organizing" && "🏆"}
-                                        {tab.id === "playing" && "🎮"}
-                                        {tab.id === "invitations" && "✉️"}
+                                <FontAwesomeIcon
+                                    icon={faSyncAlt}
+                                    className="text-sm"
+                                />
+                                <span>Refresh</span>
+                            </motion.button>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            {tabs.map((tab) => (
+                                <motion.div
+                                    key={tab.id}
+                                    whileHover={{ y: -5 }}
+                                    className={`p-6 rounded-lg cursor-pointer shadow-md ${activeTab === tab.id
+                                        ? "bg-gradient-to-r from-highlight to-accent"
+                                        : "bg-[#2a1a66] hover:bg-[#3f2c84]"
+                                        }`}
+                                    onClick={() => setActiveTab(tab.id)}
+                                >
+                                    <h2 className="text-xl font-semibold mb-2">{tab.label}</h2>
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-3xl font-bold">{tab.count}</span>
+                                        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${activeTab === tab.id ? "bg-white bg-opacity-20" : "bg-highlight"
+                                            }`}>
+                                            {tab.id === "organizing" && "🏆"}
+                                            {tab.id === "playing" && "🎮"}
+                                            {tab.id === "invitations" && "✉️"}
+                                        </div>
                                     </div>
-                                </div>
-                            </motion.div>
-                        ))}
+                                </motion.div>
+                            ))}
+                        </div>
                     </div>
 
                     <AnimatePresence mode="wait">
@@ -629,7 +679,7 @@ export default function Home() {
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: -20 }}
                             transition={{ duration: 0.3 }}
-                            className="mt-20"
+                            className="mt-12"
                         >
                             {activeTab === "organizing" && (
                                 <TournamentList
@@ -680,6 +730,62 @@ export default function Home() {
             )}
 
             <CreateTournament isModalOpen={isModalOpen} setIsModalOpen={setIsModalOpen} ref={modalRef} />
+
+            <div className="m-6 bg-[#2a1a66] rounded-lg p-6 shadow-md">
+                        <div className="flex justify-between items-center mb-4">
+                            <div className="flex items-center">
+                                <h2 className="text-xl font-semibold">Unread Messages</h2>
+                                {unreadMessages && unreadMessages.length > 0 && (
+                                    <span className="ml-3 bg-highlight text-white text-xs font-medium px-2.5 py-0.5 rounded-full">
+                                        {unreadMessages.length}
+                                    </span>
+                                )}
+                            </div>
+                            <motion.button
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.95 }}
+                                className="text-sm text-highlight hover:text-accent"
+                            >
+                                View All
+                            </motion.button>
+                        </div>
+                        
+                        {unreadMessages && unreadMessages.length > 0 ? (
+                            <div className="space-y-3">
+                                {unreadMessages.slice(0, 5).map((message, index) => (
+                                    <motion.div
+                                        key={index}
+                                        initial={{ opacity: 0, y: 10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ delay: index * 0.1 }}
+                                        className="p-4 bg-[#3f2c84] rounded-lg hover:bg-[#4a3795] cursor-pointer group"
+                                    >
+                                        <div className="flex justify-between mb-1">
+                                            <span className="font-medium text-highlight">{message.tournamentName}</span>
+                                            <span className="text-xs text-gray-300">{message.timeSent}</span>
+                                        </div>
+                                        <p className="text-sm text-gray-200 truncate">{message.content}</p>
+                                        <div className="mt-2 text-xs text-gray-400">
+                                            From: {message.sender}
+                                        </div>
+                                        <div className="mt-2 text-right">
+                                            <span className="text-xs text-highlight opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                                                Mark as read →
+                                            </span>
+                                        </div>
+                                    </motion.div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="flex flex-col items-center justify-center py-8 text-gray-400">
+                                <FontAwesomeIcon
+                                    icon={faInbox}
+                                    className="text-4xl mb-3"
+                                />
+                                <p>No unread messages</p>
+                            </div>
+                        )}
+                    </div>
             <Footer />
         </div>
     );
