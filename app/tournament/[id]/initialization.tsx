@@ -302,10 +302,25 @@ export default function Initialization({ refreshTournament, user }: { user: User
             email: player.email || "",
             account_type: player.is_anonymous ? "anonymous" : "logged_in",
             score: Number(player.skills?.score) || 0,
+            skills: player.skills || {},
         }));
 
         function seedPlayers(playersToSeed: BracketPlayer[]) {
-            return [...playersToSeed].sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
+            return [...playersToSeed].sort((a, b) => {
+                // go in order of the skills array
+                for (let i = 0; i < Math.min(a.skills?.length || 0, b.skills?.length || 0); i++) {
+                    // get their respective skill values
+                    const [aSkillName, aSkillValue] = a.skills?.[i] || ['', 0];
+                    const [bSkillName, bSkillValue] = b.skills?.[i] || ['', 0];
+
+                    // but if they're the same, lets move on to the next skill value to determine who's better
+                    if (aSkillValue !== bSkillValue) {
+                        return bSkillValue - aSkillValue;
+                    }
+                }
+                
+                return 0;
+            });
         }
 
         function generateMatchups(players: BracketPlayer[]) {

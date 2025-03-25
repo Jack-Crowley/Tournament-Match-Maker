@@ -4,8 +4,10 @@ export interface BracketPlayer {
     player_name?: string;
     email: string;
     score?: number;
+    skills?: PlayerSkill[];
     account_type:string
 }
+type PlayerSkill = [string, number]
 
 export interface Matchup {
     id: number;
