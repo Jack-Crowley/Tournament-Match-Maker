@@ -382,13 +382,7 @@ export const TournamentModal = ({
                                     )}
                                 </div>
 
-                                <div className="p-4 bg-[#252525] rounded-lg border border-[#3A3A3A]">
-                                    <div className="flex items-center mb-3">
-                                        <FontAwesomeIcon icon={faAward} className="mr-2 text-[#7458da]" />
-                                        <h3 className="text-white font-medium">Skill Fields</h3>
-                                    </div>
-                                    <ModalList name="Skill Fields" list={skillFields} setList={setSkillFields} />
-                                </div>
+                                <ModalList name="Skill Fields" list={skillFields} setList={setSkillFields} />
 
                                 {/* <div className="p-4 bg-[#252525] rounded-lg border border-[#3A3A3A]">
                                     <div className="flex items-center mb-3">

@@ -9,7 +9,7 @@ import { Tournament } from "@/types/tournamentTypes";
 import { useMessage } from "@/context/messageContext";
 import { User } from "@/types/userType";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faArrowRight, faArrowsAlt, faExchangeAlt } from "@fortawesome/free-solid-svg-icons";
+import { faArrowRight, faArrowsAlt, faCrown, faExchangeAlt } from "@fortawesome/free-solid-svg-icons";
 
 import { AddPlayerButton, BracketViewType, MovingPlayer, OnMovePlayer } from "./bracketView";
 
@@ -202,6 +202,8 @@ export const MatchupElement = ({
     }
 
     const renderPlayerContent = (player: BracketPlayer, index: number) => {
+        const isWinner = match.winner && player.uuid === match.winner;
+        
         switch (viewType) {
             case BracketViewType.Single:
                 if (!player.name) {
@@ -214,11 +216,13 @@ export const MatchupElement = ({
                                         bg-opacity-90 transition-all`}
                         >
                             Placeholder
-                        </div>)
+                        </div>
+                    );
                 }
                 return (
                     <>
-                        <span className="truncate mr-2">{player.name}</span>
+                        <span className="truncate mr-2">  {isWinner && <FontAwesomeIcon icon={faCrown} className="text-yellow-500 mr-2" />} {player.name}</span>
+                       
                         <div
                             className={`w-6 h-6 flex items-center justify-center flex-shrink-0
                             ${match.winner
@@ -233,12 +237,12 @@ export const MatchupElement = ({
                         </div>
                     </>
                 );
-
+    
             case BracketViewType.AddPlayer:
                 return player.name ?
                     <span className="truncate mr-2">{player.name}</span>
                     : <AddPlayerButton onAddPlayer={() => addPlayerFromWaitlist(index)} />;
-
+    
             case BracketViewType.MovePlayer:
                 if (movingPlayer) {
                     return (
@@ -254,7 +258,7 @@ export const MatchupElement = ({
                     triggerMessage("No player to move", "red");
                     return <p>ERROR NO MOVING PLAYER</p>
                 }
-
+    
             default:
                 return <div className="p-4 font-bold border-l-8 border-soft text-secondary bg-opacity-90 transition-all">Placeholder</div>;
         }

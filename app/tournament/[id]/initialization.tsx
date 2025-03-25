@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCopy, faGear, faQrcode, faUsers, faCalendarAlt, faMapMarkerAlt, faInfoCircle } from '@fortawesome/free-solid-svg-icons';
+import { faCopy, faGear, faQrcode, faUsers, faCalendarAlt, faMapMarkerAlt, faInfoCircle, faDownload } from '@fortawesome/free-solid-svg-icons';
 import { useState, useRef, useEffect } from 'react';
 import { useMessage } from '@/context/messageContext';
 import { createClient } from "@/utils/supabase/client";
@@ -38,8 +38,58 @@ export default function Initialization({ refreshTournament, user }: { user: User
     const { triggerMessage } = useMessage();
     const params = useParams();
     const tournament_id = params.id;
+    const qrRef = useRef<HTMLDivElement>(null);
 
-    console.log(user)
+    const downloadQRCode = () => {
+        if (!qrRef.current || !tournament) return;
+
+        const svg = qrRef.current.querySelector('svg');
+
+        if (svg) {
+            const svgClone = svg.cloneNode(true);
+
+            const svgData = new XMLSerializer().serializeToString(svgClone);
+
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+
+            const img = new Image();
+
+            const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+            const url = URL.createObjectURL(svgBlob);
+
+            if (!ctx) {
+                console.log("Failed to load CTX")
+                return;
+            }
+
+            img.onload = () => {
+                // Set canvas size to match SVG
+                canvas.width = img.width;
+                canvas.height = img.height;
+
+                ctx.fillStyle = 'white';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                ctx.drawImage(img, 0, 0);
+
+                const pngUrl = canvas.toDataURL('image/png');
+
+                const downloadLink = document.createElement('a');
+                downloadLink.href = pngUrl;
+                downloadLink.download = `tournament-qr-code.png`;
+
+                document.body.appendChild(downloadLink);
+                downloadLink.click();
+                document.body.removeChild(downloadLink);
+
+                URL.revokeObjectURL(url);
+            };
+
+            img.src = url;
+        }
+    };
+
 
     useEffect(() => {
         const fetchData = async () => {
@@ -252,13 +302,26 @@ export default function Initialization({ refreshTournament, user }: { user: User
             email: player.email || "",
             account_type: player.is_anonymous ? "anonymous" : "logged_in",
             score: Number(player.skills?.score) || 0,
+            skills: player.skills || {},
         }));
 
         function seedPlayers(playersToSeed: BracketPlayer[]) {
-            return [...playersToSeed].sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
+            return [...playersToSeed].sort((a, b) => {
+                // go in order of the skills array
+                for (let i = 0; i < Math.min(a.skills?.length || 0, b.skills?.length || 0); i++) {
+                    // get their respective skill values
+                    const [aSkillName, aSkillValue] = a.skills?.[i] || ['', 0];
+                    const [bSkillName, bSkillValue] = b.skills?.[i] || ['', 0];
+
+                    // but if they're the same, lets move on to the next skill value to determine who's better
+                    if (aSkillValue !== bSkillValue) {
+                        return bSkillValue - aSkillValue;
+                    }
+                }
+                
+                return 0;
+            });
         }
-
-
 
         function generateMatchups(players: BracketPlayer[]) {
             if (!tournament) return [];
@@ -356,10 +419,10 @@ export default function Initialization({ refreshTournament, user }: { user: User
                         {(user.permission_level == "owner" || user.permission_level == "admin") && (
                             <button
                                 onClick={() => setIsTournamentEditModalOpen(true)}
-                                className="text-[#7458da] hover:text-[#604BAC] transition-colors p-2 rounded-full hover:bg-[#2a1a66]"
+                                className="bg-[#7458da] hover:bg-[#604BAC] transition-colors p-2 rounded-full px-4"
                                 title="Edit Tournament Settings"
                             >
-                                <FontAwesomeIcon icon={faGear} size="lg" />
+                                Settings <FontAwesomeIcon icon={faGear} size="lg" />
                             </button>
                         )}
                     </div>
@@ -455,44 +518,65 @@ export default function Initialization({ refreshTournament, user }: { user: User
                                             />
                                         </div>
                                     </div>
-                                    <div className="relative">
-                                        <label className="text-white text-sm mb-2 block">Share Tournament Join Link</label>
-                                        <div className="md:flex block">
-                                            <div className="flex w-full">
+                                    <div className="space-y-8">
+                                        <div className="relative">
+                                            <label className="text-white text-sm mb-2 block">Join Code</label>
+                                            <div className="flex">
                                                 <input
                                                     type="text"
-                                                    value={joinLink}
+                                                    value={(tournament as any).join_code}
                                                     readOnly
                                                     className="w-full p-3 bg-[#22154F] border-l-4 border-[#7458da] text-white focus:outline-none rounded-l-lg"
                                                 />
-                                                <ActionButton onClick={handleCopyUrl} className="rounded-l-none">
-                                                    <FontAwesomeIcon icon={faCopy} />
+                                            </div>
+                                        </div>
+                                        <div className="relative">
+                                            <label className="text-white text-sm mb-2 block">Share Tournament Join Link</label>
+                                            <div className="md:flex block">
+                                                <div className="flex w-full">
+                                                    <input
+                                                        type="text"
+                                                        value={joinLink}
+                                                        readOnly
+                                                        className="w-full p-3 bg-[#22154F] border-l-4 border-[#7458da] text-white focus:outline-none rounded-l-lg"
+                                                    />
+                                                    <ActionButton onClick={handleCopyUrl} className="rounded-l-none">
+                                                        <FontAwesomeIcon icon={faCopy} />
+                                                    </ActionButton>
+                                                </div>
+
+                                                <ActionButton
+                                                    onClick={() => setShowQRCode(!showQRCode)}
+                                                    className="border-l w-fit border-[#604BAC] ml-8 flex items-center gap-2"
+                                                >
+                                                    <p className="m-0">QR</p>
+                                                    <FontAwesomeIcon icon={faQrcode} />
                                                 </ActionButton>
                                             </div>
-
-                                            <ActionButton
-                                                onClick={() => setShowQRCode(!showQRCode)}
-                                                className="border-l w-fit border-[#604BAC] ml-8 flex items-center gap-2"
-                                            >
-                                                <p className="m-0">QR</p>
-                                                <FontAwesomeIcon icon={faQrcode} />
-                                            </ActionButton>
                                         </div>
-                                    </div>
 
-                                    {showQRCode && (
-                                        <motion.div
-                                            initial={{ opacity: 0, height: 0 }}
-                                            animate={{ opacity: 1, height: "auto" }}
-                                            exit={{ opacity: 0, height: 0 }}
-                                            transition={{ duration: 0.3 }}
-                                            className="flex justify-center p-4"
-                                        >
-                                            <div className="p-4 bg-white rounded-lg inline-block">
-                                                <QRCode value={joinLink} size={160} />
-                                            </div>
-                                        </motion.div>
-                                    )}
+                                        {showQRCode && (
+                                            <motion.div
+                                                initial={{ opacity: 0, height: 0 }}
+                                                animate={{ opacity: 1, height: "auto" }}
+                                                exit={{ opacity: 0, height: 0 }}
+                                                transition={{ duration: 0.3 }}
+                                                className="flex flex-col items-center p-4"
+                                            >
+                                                <div ref={qrRef} className="p-4 bg-white rounded-lg inline-block mb-3">
+                                                    <QRCode value={joinLink} size={160} />
+                                                </div>
+
+                                                <ActionButton
+                                                    onClick={downloadQRCode}
+                                                    className="flex items-center gap-2 mt-2"
+                                                >
+                                                    <p className="m-0">Download QR</p>
+                                                    <FontAwesomeIcon icon={faDownload} />
+                                                </ActionButton>
+                                            </motion.div>
+                                        )}
+                                    </div>
                                 </div>
                             )}
                         </div>

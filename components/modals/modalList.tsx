@@ -1,56 +1,76 @@
-import { ChangeEvent, useState } from "react";
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faAward } from '@fortawesome/free-solid-svg-icons';
+import { ChangeEvent, useState } from 'react';
 
-export const ModalList = ({name, list, setList}: {name:string, list : string[], setList : (items : string[]) => void}) => {
-    const [newItem, setNewItem] = useState<string>("");
+interface SkillListProps {
+    name: string;
+    list: string[];
+    setList: (list: string[]) => void;
+}
+
+export const ModalList = ({ name, list, setList }: SkillListProps) => {
+    const [newItem, setNewItem] = useState<string>('');
+
+    const addItem = () => {
+        if (newItem.trim() !== '') {
+            setList([...list, newItem]);
+            setNewItem('');
+        }
+    };
+
+    const removeItem = (index: number) => {
+        const updatedItems = list.filter((_, i) => i !== index);
+        setList(updatedItems);
+    };
 
     return (
-        <div>
-            <label className="text-white block text-sm mb-2">{name}</label>
-            <div className="space-y-4">
-                {list.map((skill, index) => (
-                    <div key={index} className="flex items-center space-x-4">
-                        <input
-                            type="text"
-                            value={skill}
-                            onChange={(e: ChangeEvent<HTMLInputElement>) => {
-                                const updatedSkills = [...list];
-                                updatedSkills[index] = e.target.value;
-                                setList(updatedSkills);
-                            }}
-                            className="w-full p-2 bg-[#2a2a2a] border-b-2 border-[#7458da] text-white focus:outline-none focus:border-[#604BAC]"
-                        />
-                        <button
-                            onClick={() => {
-                                const updatedSkills = list.filter((_, i) => i !== index);
-                                setList(updatedSkills);
-                            }}
-                            className="bg-red-500 text-white px-2 py-1 rounded"
-                        >
-                            Delete
-                        </button>
-                    </div>
-                ))}
-                <div className="flex items-center space-x-4">
-                    <input
-                        type="text"
-                        value={newItem}
-                        onChange={(e: ChangeEvent<HTMLInputElement>) => setNewItem(e.target.value)}
-                        placeholder="Add new skill field"
-                        className="w-full p-2 bg-[#2a2a2a] border-b-2 border-[#7458da] text-white focus:outline-none focus:border-[#604BAC]"
-                    />
-                    <button
-                        onClick={() => {
-                            if (newItem.trim() !== '') {
-                                setList([...list, newItem]);
-                                setNewItem('');
-                            }
-                        }}
-                        className="bg-green-500 text-white px-2 py-1 rounded"
-                    >
-                        Add
-                    </button>
-                </div>
+        <div className="p-4 bg-[#252525] rounded-lg border border-[#3A3A3A]">
+            <div className="flex items-center mb-3">
+                <FontAwesomeIcon icon={faAward} className="mr-2 text-[#7458da]" />
+                <h3 className="text-white font-medium">{name}</h3>
             </div>
+            
+            <div className="flex mb-2">
+                <input
+                    type="text"
+                    value={newItem}
+                    onChange={(e: ChangeEvent<HTMLInputElement>) => setNewItem(e.target.value)}
+                    placeholder="ELO..."
+                    className="flex-grow p-2 bg-[#2a2a2a] rounded-l-md text-white focus:outline-none"
+                />
+                <button
+                    onClick={addItem}
+                    className="bg-[#7458da] hover:bg-[#604BAC] text-white px-3 rounded-r-md transition-colors"
+                    disabled={!newItem.trim()}
+                >
+                    Add
+                </button>
+            </div>
+            
+            {list.length > 0 && (
+                <ul className="space-y-1">
+                    {list.map((item, index) => (
+                        <li key={index} className="flex justify-between items-center bg-[#2a2a2a] p-2 rounded">
+                            <input
+                                type="text"
+                                value={item}
+                                onChange={(e: ChangeEvent<HTMLInputElement>) => {
+                                    const updatedItems = [...list];
+                                    updatedItems[index] = e.target.value;
+                                    setList(updatedItems);
+                                }}
+                                className="flex-grow bg-[#2a2a2a] text-white focus:outline-none focus:border-b border-[#7458da]"
+                            />
+                            <button
+                                onClick={() => removeItem(index)}
+                                className="text-red-400 hover:text-red-300 ml-2"
+                            >
+                                Remove
+                            </button>
+                        </li>
+                    ))}
+                </ul>
+            )}
         </div>
-    )
-}
+    );
+};

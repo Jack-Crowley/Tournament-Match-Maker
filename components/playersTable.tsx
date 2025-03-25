@@ -131,7 +131,7 @@ export const PlayersTable = ({ players, setPlayers, otherPlayers, setOtherPlayer
                                         }`}
                                     onClick={() => handleBulkSwitch()}
                                 >
-                                    {type == "active" ? "Move to Waitlist" : "Bring out of Waitlist"}
+                                    {type == "active" ? "Move to Waitlist" : "Move to active"}
                                 </button>
                                 <button
                                     className={`px-4 py-2 border-2 transition-all duration-300 ease-in-out rounded-lg text-white transform ${selectedPlayers.size > 0

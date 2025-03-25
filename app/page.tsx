@@ -22,6 +22,7 @@ export default function Homepage() {
 
     checkUser();
   }, [supabase.auth]);
+  
 
   return (
     <div className="min-h-screen bg-[#160A3A]">
@@ -58,7 +59,7 @@ export default function Homepage() {
                 height={400}
                 className="object-cover"
                 priority
-              />
+              /> 
 
             </div>
           </div>
