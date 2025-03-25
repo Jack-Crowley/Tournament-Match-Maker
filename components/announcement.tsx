@@ -310,7 +310,7 @@ export const AnnouncementSystem = ({ tournamentID, user }: { tournamentID: numbe
                                     ) : (
                                         <FontAwesomeIcon icon={faPlus} className="mr-2" />
                                     )}
-                                    Add Announcement
+                                    Send Announcement
                                 </button>
                             </div>
                         </div>

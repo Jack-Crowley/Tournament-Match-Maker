@@ -5,9 +5,9 @@ import { Player } from "@/types/playerTypes";
 import { Bracket, BracketPlayer } from "@/types/bracketTypes";
 import { Tournament } from "@/types/tournamentTypes";
 import { createClient } from "@/utils/supabase/client";
-import { faUserClock, faExclamationCircle, faInfoCircle, faEnvelope, faUserPlus, faTimes, faChevronDown, faChevronUp } from "@fortawesome/free-solid-svg-icons";
+import { faUserClock, faExclamationCircle, faInfoCircle, faEnvelope, faUserPlus, faTimes, faChevronDown, faChevronUp, faEllipsisV } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import TournamentBracket, { BracketViewType } from "./single/bracketView";
 import { User } from "@/types/userType";
@@ -15,6 +15,7 @@ import { AddPlaceholderPlayersModal } from "../modals/addGeneratedPlayers";
 
 export const PlayersView = ({ tournamentID, bracket, user, setActiveTab }: { setActiveTab: (state: string) => void, tournamentID: number, bracket: Bracket, user: User }) => {
     const [activePlayer, setActivePlayer] = useState<Player | null>(null);
+    const [activeContextPlayer, setActiveContextPlayer] = useState<Player | null>(null);
     const [players, setPlayers] = useState<Player[]>([]);
     const [tournament, setTournament] = useState<Tournament | null>(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -23,6 +24,15 @@ export const PlayersView = ({ tournamentID, bracket, user, setActiveTab }: { set
     const [messageText, setMessageText] = useState<string>("");
     const [currentFilter, setCurrentFilter] = useState<string>("all");
     const [expandedDetails, setExpandedDetails] = useState<boolean>(false);
+
+    const [contextMenu, setContextMenu] = useState<{
+        x: number;
+        y: number;
+        player: Player;
+    } | null>(null);
+
+    const [openContextMenuId, setOpenContextMenuId] = useState<string | null>(null);
+    const contextMenuRef = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
     const { triggerMessage } = useMessage();
     const supabase = createClient();
@@ -38,6 +48,19 @@ export const PlayersView = ({ tournamentID, bracket, user, setActiveTab }: { set
         setIsAdding(false);
         triggerMessage("Player successfully moved to roster", "green");
     }
+
+    const handleClickOutside = (event: MouseEvent) => {
+        setContextMenu(null)
+        setActivePlayer(null)
+    };
+
+    useEffect(() => {
+        document.addEventListener('mousedown', handleClickOutside);
+
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [openContextMenuId]);
 
     const sendMessageSuccess = async () => {
         if (!activePlayer || !messageText.trim()) return;
@@ -298,6 +321,7 @@ export const PlayersView = ({ tournamentID, bracket, user, setActiveTab }: { set
                                                             </th>
                                                         ))}
                                                         <th className="p-4 text-center text-white font-semibold text-lg border-b-2 border-[#3a2b7d] w-16">Status</th>
+                                                        <th />
                                                     </tr>
                                                 </thead>
                                                 <tbody>
@@ -310,7 +334,6 @@ export const PlayersView = ({ tournamentID, bracket, user, setActiveTab }: { set
                                                                 transition-all duration-200 ${user.permission_level !== "player" && user.permission_level !== "viewer" ? "cursor-pointer" : ""}
                                                                 hover:bg-[#2a1b5f] hover:shadow-md
                                                             `}
-                                                            whileHover={{ scale: 1.005 }}
                                                             transition={{ duration: 0.2 }}
                                                         >
                                                             <td className={`p-4 text-lg border-b border-[#3a2b7d] ${player.is_anonymous ? "text-white font-medium" : "text-[#d8d8d8] font-medium"}`}>
@@ -340,6 +363,37 @@ export const PlayersView = ({ tournamentID, bracket, user, setActiveTab }: { set
                                                                 <div className="flex justify-center">
                                                                     {getStatusChip((player as any).type || "unknown")}
                                                                 </div>
+                                                            </td>
+                                                            <td className="p-4 border-b border-[#3a2b7d] relative">
+                                                                {(user.permission_level === "admin" || user.permission_level === "owner") &&
+                                                                    (['waitlist', 'inactive'].includes((player as any).type)) && (
+                                                                        <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
+                                                                            <div
+                                                                                className="relative"
+                                                                                ref={(el) => {
+                                                                                    if (contextMenuRef.current) {
+                                                                                        contextMenuRef.current[player.member_uuid] = el;
+                                                                                    }
+                                                                                }}
+                                                                            >
+                                                                                <button
+                                                                                    onClick={(e) => {
+                                                                                        e.stopPropagation();
+                                                                                        setActiveContextPlayer(player)
+
+                                                                                        setContextMenu({
+                                                                                            x: e.pageX,
+                                                                                            y: e.pageY - 100,
+                                                                                            player,
+                                                                                        });
+                                                                                    }}
+                                                                                    className="text-[#a899e0] hover:text-white p-2 rounded-full hover:bg-[#342575] transition-colors"
+                                                                                >
+                                                                                    <FontAwesomeIcon icon={faEllipsisV} />
+                                                                                </button>
+                                                                            </div>
+                                                                        </div>
+                                                                    )}
                                                             </td>
                                                         </motion.tr>
                                                     ))}
@@ -567,6 +621,33 @@ export const PlayersView = ({ tournamentID, bracket, user, setActiveTab }: { set
                 </motion.div>
             )}
             <div className="h-10"></div>
+            <AnimatePresence>
+                {activeContextPlayer && contextMenu && (
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.9 }}
+                        style={{
+                            left: `${contextMenu.x}px`,
+                            top: `${contextMenu.y}px`,
+                            minWidth: '150px'
+                        }}
+                        className="absolute z-50 right-full mr-2 bg-[#342575] rounded-lg shadow-xl border border-[#3a2b7d] overflow-hidden"
+                    >
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                setActivePlayer(activeContextPlayer)
+                                setIsAdding(true)
+                            }}
+                            className="w-full text-left px-4 py-2 text-white hover:bg-[#3a2b7d] flex items-center"
+                        >
+                            <FontAwesomeIcon icon={faUserPlus} className="mr-2" />
+                            Move to Roster
+                        </button>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     );
 };
