@@ -5,7 +5,7 @@ import { useMessage } from '@/context/messageContext';
 import { Tournament } from '@/types/tournamentTypes';
 import { Player } from '@/types/playerTypes';
 
-export const PlayerModal = ({ isOpen, onClose, playerForModal, tournament }: { playerForModal: Player, tournament : Tournament, isOpen: boolean; onClose: () => void }) => {
+export const PlayerModal = ({ isOpen, onClose, playerForModal }: { playerForModal: Player, tournament : Tournament, isOpen: boolean; onClose: () => void }) => {
     const [player, setPlayer] = useState<Player | null>(null);
     const supabase = createClient()
     const {triggerMessage} = useMessage()
@@ -106,7 +106,7 @@ export const PlayerModal = ({ isOpen, onClose, playerForModal, tournament }: { p
                                 </div>
                             )}
 
-                            {tournament?.skill_fields.some((skill: string) => skill in player.skills) && (
+                            {/* {tournament?.skill_fields.some((skill: SkillField) => skill in player.skills) && (
                                 <div>
                                     <label className="text-white block text-sm mb-2">Skill Levels</label>
                                     <div className="space-y-2">
@@ -124,7 +124,7 @@ export const PlayerModal = ({ isOpen, onClose, playerForModal, tournament }: { p
                                         ))}
                                     </div>
                                 </div>
-                            )}
+                            )} */}
 
                         </div>
 

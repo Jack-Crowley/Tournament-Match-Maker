@@ -17,6 +17,7 @@ import { AddPlaceholderPlayersModal } from "@/components/modals/addGeneratedPlay
 import { PlayersTable } from "@/components/playersTable";
 import { ConfirmModal, ConfirmModalInformation } from "@/components/modals/confirmationModal";
 import { User } from "@/types/userType";
+import { ConfigureRoundRobin } from "@/matching/robin";
 
 export default function Initialization({ refreshTournament, user }: { user: User, refreshTournament: () => void }) {
     const supabase = createClient();
@@ -277,7 +278,13 @@ export default function Initialization({ refreshTournament, user }: { user: User
                     triggerMessage("Error updating tournament: " + error.message, "red");
                 } else {
                     setTournament({ ...tournament, status: "started" });
-                    setupBracket();
+
+                    if (tournament.tournament_type == "single") {
+                        setupBracket();
+                    }
+                    else if (tournament.tournament_type == "robin") {
+                        ConfigureRoundRobin(tournament, refreshTournament, triggerMessage)
+                    }
                 }
             } else {
                 triggerMessage(result.error, "red");

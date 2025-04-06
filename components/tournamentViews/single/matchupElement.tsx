@@ -78,7 +78,7 @@ interface MatchupElementProps {
 
 export const MatchupElement = ({
     match,
-    viewType = BracketViewType.Single,
+    viewType = BracketViewType.Normal,
     newPlayer = null,
     tournament = null,
     movingPlayer = null,
@@ -97,12 +97,14 @@ export const MatchupElement = ({
     } | null>(null);
     const { triggerMessage } = useMessage?.() || { triggerMessage: () => { } };
 
+    console.log(match)
+
     if (bracket) {
 
     }
 
     function openModal() {
-        if (viewType === BracketViewType.Single && tournament?.status !== "completed") {
+        if (viewType === BracketViewType.Normal && tournament?.status !== "completed") {
             console.log(user.permission_level)
             if (["owner", "admin", "scorekeeper"].includes(user.permission_level.toLowerCase())) {
                 setIsMatchupModalOpen(true);
@@ -113,7 +115,7 @@ export const MatchupElement = ({
     }
 
     const handleContextMenu = (e: React.MouseEvent, player: BracketPlayer, index: number) => {
-        if (!player.name || viewType !== "single" || (user.permission_level === "player" || user.permission_level === "viewer") || tournament?.status !== "started") {
+        if (!player.name || viewType !== "normal" || (user.permission_level === "player" || user.permission_level === "viewer") || tournament?.status !== "started") {
             return;
         }
 
@@ -205,7 +207,7 @@ export const MatchupElement = ({
         const isWinner = match.winner && player.uuid === match.winner;
         
         switch (viewType) {
-            case BracketViewType.Single:
+            case BracketViewType.Normal:
                 if (!player.name) {
                     return (
                         <div
@@ -267,12 +269,12 @@ export const MatchupElement = ({
     return (
         <div className="flex justify-center items-center flex-shrink-0">
             <motion.div
-                className={`${viewType === BracketViewType.Single ? "w-60" : "w-60"} bg-secondary rounded-lg shadow-xl overflow-hidden z-10 hover:cursor-pointer transition-all duration-300`}
-                whileHover={viewType === BracketViewType.Single ? { scale: 1.05 } : undefined}
+                className={`${viewType === BracketViewType.Normal ? "w-60" : "w-60"} bg-secondary rounded-lg shadow-xl overflow-hidden z-10 hover:cursor-pointer transition-all duration-300`}
+                whileHover={viewType === BracketViewType.Normal ? { scale: 1.05 } : undefined}
                 transition={{ type: "spring", stiffness: 130 }}
                 onClick={(e) => {
                     // Prevent click propagation when right-clicking
-                    if (e.button !== 2 && viewType === BracketViewType.Single && (user.permission_level !== "player" && user.permission_level !== "viewer")) {
+                    if (e.button !== 2 && viewType === BracketViewType.Normal && (user.permission_level !== "player" && user.permission_level !== "viewer")) {
                         console.log("open modal!")
                         openModal();
                     }
@@ -290,7 +292,7 @@ export const MatchupElement = ({
                         className={`relative ${match.winner && (player.uuid === match.winner ? "bg-[#98979b20]" : "bg-[#120b2950]")}`}
                         onContextMenu={(e) => handleContextMenu(e, player, index)}
                     >
-                        {(player.name && viewType == BracketViewType.Single || viewType == BracketViewType.AddPlayer) ? (
+                        {(player.name && viewType == BracketViewType.Normal || viewType == BracketViewType.AddPlayer) ? (
                             <div
                                 className={`p-4 flex justify-between font-bold border-l-8 
                 ${match.winner
@@ -311,8 +313,8 @@ export const MatchupElement = ({
                     </div>
                 ))}
             </motion.div>
-            {viewType === BracketViewType.Single && (
-                <MatchupModal matchup={match} isOpen={isMatchupModalOpen} setOpen={setIsMatchupModalOpen} user={user} />
+            {viewType === BracketViewType.Normal && tournament && (
+                <MatchupModal matchup={match} isOpen={isMatchupModalOpen} setOpen={setIsMatchupModalOpen} user={user} tournament_type={tournament?.tournament_type}/>
             )}
 
             {contextMenu && contextMenu.visible && (

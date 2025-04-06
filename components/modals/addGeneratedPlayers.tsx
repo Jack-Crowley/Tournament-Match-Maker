@@ -1,7 +1,7 @@
 "use client"
 
 import { useMessage } from "@/context/messageContext";
-import { Player, TournamentPlayer } from "@/types/playerTypes";
+import { TournamentPlayer } from "@/types/playerTypes";
 import { Tournament } from "@/types/tournamentTypes";
 import { createClient } from "@/utils/supabase/client";
 import { AnimatePresence, motion } from "framer-motion";

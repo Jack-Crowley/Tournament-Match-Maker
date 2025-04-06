@@ -34,7 +34,7 @@ export default function Home() {
         { id: "invitations", label: "Invitations", count: invitations.length },
     ];
 
-    const [unreadMessages, setUnreadMessages] = useState([
+    const [unreadMessages] = useState([
         {
             tournamentName: "Fortnite Finals",
             sender: "Alex Rodriguez",
