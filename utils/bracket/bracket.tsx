@@ -223,9 +223,9 @@ export const fetchBracket = async (tournamentID: number): Promise<{ bracket: Bra
     const supabase = createClient()
 
     const { data: tournament, error: tournamentError } = await supabase
-        .from("tournament_matches")
+        .from("tournaments")
         .select("*")
-        .eq("tournament_id", tournamentID);
+        .eq("id", tournamentID);
 
     const { data: matchesData, error: matchesError } = await supabase
         .from("tournament_matches")
