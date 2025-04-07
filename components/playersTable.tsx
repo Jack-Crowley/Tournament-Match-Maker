@@ -102,20 +102,6 @@ export const PlayersTable = ({
             setConfirmModalInfo(waitlistSwitchConfirm);
             return;
         }
-
-        const { error } = await supabase
-            .from("tournament_players")
-            .update({ type: newType })
-            .in("id", Array.from(selectedPlayers));
-
-        if (error) {
-            triggerMessage("Error updating players", "red");
-        } else {
-            triggerMessage(`Players moved to ${newType} successfully`, "green");
-            setOtherPlayers(prev => [...prev, ...players.filter(player => selectedPlayers.has(player.id))]);
-            setPlayers(players.filter(player => !selectedPlayers.has(player.id)));
-            setSelectedPlayers(new Set());
-        }
     };
 
     return (

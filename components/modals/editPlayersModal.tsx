@@ -4,11 +4,12 @@ import { createClient } from "@/utils/supabase/client";
 import { useMessage } from '@/context/messageContext';
 import { Tournament } from '@/types/tournamentTypes';
 import { Player } from '@/types/playerTypes';
+import { SkillField } from './modalList';
 
-export const PlayerModal = ({ isOpen, onClose, playerForModal, tournament }: { playerForModal: Player, tournament : Tournament, isOpen: boolean; onClose: () => void }) => {
+export const PlayerModal = ({ isOpen, onClose, playerForModal, tournament }: { playerForModal: Player, tournament: Tournament, isOpen: boolean; onClose: () => void }) => {
     const [player, setPlayer] = useState<Player | null>(null);
     const supabase = createClient()
-    const {triggerMessage} = useMessage()
+    const { triggerMessage } = useMessage()
 
     useEffect(() => {
         const checkAndSetPlayer = async () => {
@@ -21,7 +22,7 @@ export const PlayerModal = ({ isOpen, onClose, playerForModal, tournament }: { p
                 .single();
 
             if (tpError) {
-                triggerMessage("Error fetching member_uuid: "+tpError.message,"green");
+                triggerMessage("Error fetching member_uuid: " + tpError.message, "green");
                 return;
             }
 
@@ -106,25 +107,29 @@ export const PlayerModal = ({ isOpen, onClose, playerForModal, tournament }: { p
                                 </div>
                             )}
 
-                            {tournament?.skill_fields.some((skill: string) => skill in player.skills) && (
-                                <div>
-                                    <label className="text-white block text-sm mb-2">Skill Levels</label>
-                                    <div className="space-y-2">
-                                        {tournament?.skill_fields.map((skill: string, index: number) => (
-                                            (skill in player.skills) && (
-                                                <div key={index}>
-                                                    <input
-                                                        type="text"
-                                                        value={player.skills[skill]}
-                                                        readOnly
-                                                        className="w-full p-2 bg-[#2a2a2a] border-b-2 border-[#7458da] text-white focus:outline-none focus:border-[#604BAC] cursor-not-allowed"
-                                                    />
-                                                </div>
-                                            )
-                                        ))}
+                            {tournament?.skill_fields?.some((skillField: SkillField) =>
+                                player.skills?.some(skill => skill.name === skillField.name)
+                            ) && (
+                                    <div>
+                                        <label className="text-white block text-sm mb-2">Skill Levels</label>
+                                        <div className="space-y-2">
+                                            {tournament?.skill_fields?.map((skillField: SkillField, index: number) => {
+                                                const playerSkill = player.skills?.find(s => s.name === skillField.name);
+                                                const playerValue = playerSkill?.type == "numeric" ? playerSkill.value : playerSkill?.category_type;
+                                                return playerValue ? (
+                                                    <div key={index}>
+                                                        <input
+                                                            type="text"
+                                                            value={playerValue || ''}
+                                                            readOnly
+                                                            className="w-full p-2 bg-[#2a2a2a] border-b-2 border-[#7458da] text-white focus:outline-none focus:border-[#604BAC] cursor-not-allowed"
+                                                        />
+                                                    </div>
+                                                ) : null;
+                                            })}
+                                        </div>
                                     </div>
-                                </div>
-                            )}
+                                )}
 
                         </div>
 
