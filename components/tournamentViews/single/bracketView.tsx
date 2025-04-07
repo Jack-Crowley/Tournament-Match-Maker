@@ -51,7 +51,7 @@ export type OnMovePlayer = (player: MovingPlayer | null) => void;
 
 
 export enum BracketViewType {
-    Single = "single",
+    Normal = "normal",
     AddPlayer = "add-player",
     MovePlayer = "move-player",
 }
@@ -62,7 +62,7 @@ const TournamentBracket = ({
     tournamentID = null,
     onClose = null,
     user,
-    bracketViewType = BracketViewType.Single,
+    bracketViewType = BracketViewType.Normal,
     
 }: {
     bracket: Bracket;
@@ -82,7 +82,7 @@ const TournamentBracket = ({
         console.log("TOURNAMENT BRACKET: MOVING PLAYER", player);
         if (player === null) {
             setMovingPlayer(null);
-            setViewType(BracketViewType.Single);
+            setViewType(BracketViewType.Normal);
         } else {
             setMovingPlayer(player);
             setViewType(BracketViewType.MovePlayer);
@@ -114,7 +114,7 @@ const TournamentBracket = ({
         return <div className="flex justify-center items-center h-full">No tournament data available</div>;
     }
 
-    const containerClass = viewType === BracketViewType.Single
+    const containerClass = viewType === BracketViewType.Normal
         ? "mt-12 ml-[8%] h-[89vh] overflow-auto pb-16"
         : "mt-[50px] ml-[8%] h-[89vh]";
 

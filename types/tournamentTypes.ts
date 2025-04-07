@@ -15,5 +15,6 @@ export interface Tournament {
     owner: string;
     status: string;
     skill_fields: SkillField[];
+    tournament_type: string;
     rules: string[];
 }

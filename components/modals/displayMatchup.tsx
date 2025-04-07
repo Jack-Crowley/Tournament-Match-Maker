@@ -15,9 +15,10 @@ interface MatchupModalProps {
     setOpen: (state: boolean) => void;
     matchup: Matchup;
     user: User;
+    tournament_type:string;
 }
 
-export const MatchupModal = ({ isOpen, setOpen, matchup, user }: MatchupModalProps) => {
+export const MatchupModal = ({ isOpen, setOpen, matchup, user, tournament_type }: MatchupModalProps) => {
     // TODO Handle duplicate names
     const [editedMatchup, setEditedMatchup] = useState<Matchup>(matchup);
     const [player1, setPlayer1] = useState<TournamentPlayer | null>();
@@ -264,6 +265,8 @@ export const MatchupModal = ({ isOpen, setOpen, matchup, user }: MatchupModalPro
 
 
     const propagatePlayer = async (playerUuid: string) => {
+        if (tournament_type == "robin") return;
+
         const player = editedMatchup.players.find((player) => player.uuid === playerUuid);
         if (!player) {
             console.error("Player not found for propagation");

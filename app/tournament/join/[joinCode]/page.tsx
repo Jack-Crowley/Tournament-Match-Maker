@@ -87,6 +87,7 @@ export default function JoinTournament() {
         }
 
         fetchData();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [client, supabase, joinCode]);
 
     const handleSkillChange = (index: number, value: string) => {

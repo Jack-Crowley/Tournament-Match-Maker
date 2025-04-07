@@ -5,7 +5,7 @@ import { Tournament } from '@/types/tournamentTypes';
 import { createClient } from '@/utils/supabase/client';
 import { ModalList, SkillField } from './modalList';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faEdit, faMapPin, faCalendar, faUsers, faAward, faTimes, faPlus, faTrashAlt, faCheck } from '@fortawesome/free-solid-svg-icons';
+import { faEdit, faMapPin, faCalendar, faUsers, faTimes, faPlus, faTrashAlt, faCheck } from '@fortawesome/free-solid-svg-icons';
 
 export const TournamentModal = ({
     isOpen,

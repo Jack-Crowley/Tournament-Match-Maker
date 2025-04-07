@@ -18,6 +18,7 @@ import { TournamentModal } from "../modals/tournamentEditModal";
 import { useMessage } from "@/context/messageContext";
 import { MessagingSystem } from "../messanging";
 import { TournamentInfoView } from "./infoView";
+import { RoundRobinTournament } from "./robin/roundRobinTournament";
 
 
 export const SideNavbar = ({ tab, setTab, user }: {
@@ -50,7 +51,7 @@ export const SideNavbar = ({ tab, setTab, user }: {
         window.addEventListener("resize", handleResize);
         return () => window.removeEventListener("resize", handleResize);
     }, []);
- 
+
     return (
         <div className={`fixed ${isMobile ? "bottom-0 left-0 right-0" : "top-1/2 transform -translate-y-1/2 left-8"} z-20`}>
             <nav className={`z-20 bg-deep p-3 flex ${isMobile ? "flex-row justify-around" : "flex-col gap-2 rounded-full border-2"} w-full shadow-lg border-soft`}>
@@ -191,8 +192,14 @@ export const ViewTournament = ({ tournamentID, user }: { tournamentID: number, u
                         transition={{ duration: 0.3 }}
                         className="mt-8 px-4 sm:px-8 lg:px-16"
                     >
-                        {activeTab === "Bracket" && (
-                            <TournamentBracket bracket={bracket} bracketViewType={BracketViewType.Single} tournamentID={tournamentID} user={user} />
+                        {activeTab === "Bracket" && (tournament?.tournament_type == "single") && (
+                            console.log("SINGLE BRACKET", bracket),
+                            <TournamentBracket bracket={bracket} bracketViewType={BracketViewType.Normal} tournamentID={tournamentID} user={user} />
+                        )}
+
+                        {activeTab === "Bracket" && (tournament?.tournament_type == "robin") && (
+                            console.log("ROBIN BRACKET", bracket),
+                            <RoundRobinTournament bracket={bracket} bracketViewType={BracketViewType.Normal} tournamentID={tournamentID} user={user} />
                         )}
 
                         {activeTab == "Players" && (

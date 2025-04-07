@@ -15,7 +15,7 @@ export const BracketCreator = ({
     roundIndex,
     matchIndex,
     bracket,
-    viewType = BracketViewType.Single,
+    viewType = BracketViewType.Normal,
     newPlayer = null,
     movingPlayer,
     tournament = null,
@@ -36,7 +36,7 @@ export const BracketCreator = ({
 }) => {
     const elementRef = useRef<HTMLDivElement | null>(null);
     const [box, setBox] = useState<DOMRect | null>(null);
-    const heightOffset = (bracket.rounds.length - roundIndex - 1) * (viewType === BracketViewType.Single ? 8 : 7);
+    const heightOffset = (bracket.rounds.length - roundIndex - 1) * (viewType === BracketViewType.Normal ? 8 : 7);
     const connectionColor = "bg-primary";
     const connectionThickness = "2px";
     const connectionSpacing = "3rem";
@@ -55,6 +55,9 @@ export const BracketCreator = ({
             resizeObserver.observe(elementRef.current);
         }
     }, []);
+
+
+    console.log("BRACKET CREATOR", roundIndex, matchIndex, box, bracket);
 
     if (roundIndex === 0) {
         return (

@@ -25,9 +25,11 @@ const generalRules: { fullName: string, id: string, description: string }[] = [
 const buttons: Button[] = [
     { id: "single", label: "Single Elimination", description: "Knockout format with one chance per participant" },
     { id: "double", label: "Double Elimination", description: "Two chances before elimination" },
-    { id: "round", label: "Round Robin", description: "Everyone plays against everyone" },
+    { id: "robin", label: "Round Robin", description: "Everyone plays against everyone" },
     { id: "swiss", label: "Swiss System", description: "Players with similar scores face each other" },
 ];
+
+const implemented = ["robin", "single"]
 
 export const CreateTournament = ({ isModalOpen, setIsModalOpen, ref }: { isModalOpen: boolean, ref: any, setIsModalOpen: (state: boolean) => void }) => {
     const [rules, setRules] = useState<Rules>({});
@@ -52,7 +54,7 @@ export const CreateTournament = ({ isModalOpen, setIsModalOpen, ref }: { isModal
             return;
         }
 
-        if (selectedButton !== "single") {
+        if (!implemented.includes(selectedButton)) {
             triggerMessage('Only Single Elimination tournaments are currently implemented.', 'red');
             return;
         }
@@ -171,7 +173,7 @@ export const CreateTournament = ({ isModalOpen, setIsModalOpen, ref }: { isModal
     };
 
     const isImplemented = (buttonId: string) => {
-        return buttonId === "single";
+        return implemented.includes(buttonId);
     };
 
     useEffect(() => {

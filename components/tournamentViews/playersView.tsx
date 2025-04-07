@@ -11,7 +11,6 @@ import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import TournamentBracket, { BracketViewType } from "./single/bracketView";
 import { User } from "@/types/userType";
-import { AddPlaceholderPlayersModal } from "../modals/addGeneratedPlayers";
 
 export const PlayersView = ({ tournamentID, bracket, user, setActiveTab }: { setActiveTab: (state: string) => void, tournamentID: number, bracket: Bracket, user: User }) => {
     const [activePlayer, setActivePlayer] = useState<Player | null>(null);
@@ -31,7 +30,7 @@ export const PlayersView = ({ tournamentID, bracket, user, setActiveTab }: { set
         player: Player;
     } | null>(null);
 
-    const [openContextMenuId, setOpenContextMenuId] = useState<string | null>(null);
+    const [openContextMenuId] = useState<string | null>(null);
     const contextMenuRef = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
     const { triggerMessage } = useMessage();
@@ -49,7 +48,7 @@ export const PlayersView = ({ tournamentID, bracket, user, setActiveTab }: { set
         triggerMessage("Player successfully moved to roster", "green");
     }
 
-    const handleClickOutside = (event: MouseEvent) => {
+    const handleClickOutside = () => {
         setContextMenu(null)
         setActivePlayer(null)
     };

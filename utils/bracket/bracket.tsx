@@ -40,20 +40,20 @@ export const moveOrSwapPlayerToMatchup = async (
         console.log("Destination match is the same as source match");
         // so all we need to do is swap the order of players. 
         const { error: updateFromMatchError } = await supabase
-        .from("tournament_matches")
-        .upsert({
-            id: destinationMatch.id,
-            tournament_id: tournament.id,
-            round: destinationRoundNumber,
-            match_number: destinationMatchNumber,
-            players: destinationMatch.players.reverse(),
-        });
+            .from("tournament_matches")
+            .upsert({
+                id: destinationMatch.id,
+                tournament_id: tournament.id,
+                round: destinationRoundNumber,
+                match_number: destinationMatchNumber,
+                players: destinationMatch.players.reverse(),
+            });
         if (updateFromMatchError) {
             console.error("Error updating match when its the same match??:", updateFromMatchError);
             return { success: false, errorCode: 500 };
         }
         else {
-            return {success: true, errorCode: null};
+            return { success: true, errorCode: null };
         }
     }
 
@@ -222,12 +222,17 @@ export const addPlayerToMatchupFromWaitlist = async (
 export const fetchBracket = async (tournamentID: number): Promise<{ bracket: Bracket | null, errorCode: number | null }> => {
     const supabase = createClient()
 
+    const { data: tournament, error: tournamentError } = await supabase
+        .from("tournament_matches")
+        .select("*")
+        .eq("tournament_id", tournamentID);
+
     const { data: matchesData, error: matchesError } = await supabase
         .from("tournament_matches")
         .select("*")
         .eq("tournament_id", tournamentID);
 
-    if (matchesError) {
+    if (matchesError || tournamentError) {
         console.error("matches error!");
         return { bracket: null, errorCode: 500 };
     }
@@ -282,38 +287,39 @@ export const fetchBracket = async (tournamentID: number): Promise<{ bracket: Bra
     const firstRoundMatches = matchesByRound[1]?.length || 0;
     const totalRounds = Math.ceil(Math.log2(firstRoundMatches)) + 1;
 
-    for (let round = 1; round <= totalRounds; round++) {
-        if (!matchesByRound[round]) {
-            matchesByRound[round] = [];
-        }
-
-        const numMatches = Math.pow(2, totalRounds - round);
-        const tempPlayer = {
-            uuid: "",
-            name: "",
-            email: "",
-            account_type: "placeholder"
-        }
-
-        let counter = 1
-
-        while (matchesByRound[round].length < numMatches) {
-            if (matchesByRound[round].some(match => match.match_number == counter)) {
-                counter++
-                continue;
+    if (tournament[0].tournament_type == "single") {
+        for (let round = 1; round <= totalRounds; round++) {
+            if (!matchesByRound[round]) {
+                matchesByRound[round] = [];
             }
 
-            const placeholderMatch: Matchup = {
-                tournament_id: tournamentID,
-                match_number: counter,
-                id: -1,
-                players: [tempPlayer, tempPlayer],
-                round: round,
-            };
-            matchesByRound[round].push(placeholderMatch);
+            const numMatches = Math.pow(2, totalRounds - round);
+            const tempPlayer = {
+                uuid: "",
+                name: "",
+                email: "",
+                account_type: "placeholder"
+            }
+
+            let counter = 1
+
+            while (matchesByRound[round].length < numMatches) {
+                if (matchesByRound[round].some(match => match.match_number == counter)) {
+                    counter++
+                    continue;
+                }
+
+                const placeholderMatch: Matchup = {
+                    tournament_id: tournamentID,
+                    match_number: counter,
+                    id: -1,
+                    players: [tempPlayer, tempPlayer],
+                    round: round,
+                };
+                matchesByRound[round].push(placeholderMatch);
+            }
         }
     }
-
 
     const sortedRounds = Object.keys(matchesByRound)
         .map(Number)
