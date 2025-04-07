@@ -543,17 +543,6 @@ export default function Initialization({ refreshTournament, user }: { user: User
 
                             {joinLink && tournament.allow_join && (
                                 <div className="space-y-8">
-                                    <div className="relative">
-                                        <label className="text-white text-sm mb-2 block">Join Code</label>
-                                        <div className="flex">
-                                            <input
-                                                type="text"
-                                                value={(tournament as any).join_code}
-                                                readOnly
-                                                className="w-full p-3 bg-[#22154F] border-l-4 border-[#7458da] text-white focus:outline-none rounded-l-lg"
-                                            />
-                                        </div>
-                                    </div>
                                     <div className="space-y-8">
                                         <div className="relative">
                                             <label className="text-white text-sm mb-2 block">Join Code</label>
