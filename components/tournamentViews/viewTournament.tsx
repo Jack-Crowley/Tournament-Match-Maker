@@ -128,9 +128,11 @@ export const ViewTournament = ({ tournamentID, user }: { tournamentID: number, u
     useEffect(() => {
         async function updateTournamentInDatabase() {
             if (tournament) {
+                const { id, created_at, owner, tournament_type, join_code, ...updateData } = tournament;
+
                 const { error } = await supabase
                     .from("tournaments")
-                    .update(tournament)
+                    .update(updateData)
                     .eq("id", tournamentID);
 
                 if (error) {
