@@ -79,7 +79,6 @@ const TournamentBracket = ({
     const [movingPlayer, setMovingPlayer] = useState<MovingPlayer | null>(null);
 
     const handleMovePlayer: OnMovePlayer = (player) => {
-        console.log("TOURNAMENT BRACKET: MOVING PLAYER", player);
         if (player === null) {
             setMovingPlayer(null);
             setViewType(BracketViewType.Normal);
@@ -100,8 +99,6 @@ const TournamentBracket = ({
                 console.error("Error fetching tournament data");
                 return;
             }
-
-            // console.log("TOURNAMENT BRACKET: TOURNAMENT DATA", data);
 
             setTournament(data); // ✅ Store the tournament in state
         };

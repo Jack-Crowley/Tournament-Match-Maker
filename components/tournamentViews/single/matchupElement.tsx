@@ -97,15 +97,12 @@ export const MatchupElement = ({
     } | null>(null);
     const { triggerMessage } = useMessage?.() || { triggerMessage: () => { } };
 
-    console.log(match)
-
     if (bracket) {
 
     }
 
     function openModal() {
         if (viewType === BracketViewType.Normal && tournament?.status !== "completed") {
-            console.log(user.permission_level)
             if (["owner", "admin", "scorekeeper"].includes(user.permission_level.toLowerCase())) {
                 setIsMatchupModalOpen(true);
             }
@@ -275,14 +272,10 @@ export const MatchupElement = ({
                 onClick={(e) => {
                     // Prevent click propagation when right-clicking
                     if (e.button !== 2 && viewType === BracketViewType.Normal && (user.permission_level !== "player" && user.permission_level !== "viewer")) {
-                        console.log("open modal!")
                         openModal();
                     }
                     else if (viewType === "move-player") {
                         // console.log("moving player");
-                    }
-                    else {
-                        console.log("no permission to open modal")
                     }
                 }}
             >

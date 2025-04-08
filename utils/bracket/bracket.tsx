@@ -14,12 +14,6 @@ export const moveOrSwapPlayerToMatchup = async (
     destinationIndex: number
 ): Promise<{ success: boolean; errorCode: number | null }> => {
 
-    console.log("move player or swap player to matchup logistics")
-
-    console.log("new player", newPlayer)
-
-    console.log("destination match number", destinationMatchNumber)
-
     const supabase = createClient();
 
     // Fetch the destination match (where the player is being added)
@@ -37,7 +31,6 @@ export const moveOrSwapPlayerToMatchup = async (
     }
     // What if the destination match is the same as the source match
     if (newPlayer.fromMatch === destinationMatchNumber && newPlayer.fromRound === destinationRoundNumber) {
-        console.log("Destination match is the same as source match");
         // so all we need to do is swap the order of players. 
         const { error: updateFromMatchError } = await supabase
             .from("tournament_matches")
@@ -104,35 +97,37 @@ export const moveOrSwapPlayerToMatchup = async (
     // Update both matches in the database
     const { error: updateFromMatchError } = await supabase
         .from("tournament_matches")
-        .upsert({
-            id: fromMatch.id,
-            tournament_id: tournament.id,
-            round: fromMatch.round,
-            match_number: fromMatch.match_number,
+        .update({
             players: fromPlayers,
-        });
+        }).eq("id", fromMatch.id);
 
     if (updateFromMatchError) {
         console.error("Error updating from match:", updateFromMatchError);
         return { success: false, errorCode: 500 };
     }
 
-    const { error: updateDestinationMatchError } = await supabase
-        .from("tournament_matches")
-        .upsert({
-            id: destinationMatch?.id || undefined,
-            tournament_id: tournament.id,
-            round: destinationRoundNumber,
-            match_number: destinationMatchNumber,
-            players: destinationPlayers,
-        });
+    if (destinationMatch && destinationMatch.id) {
+        // exists → update
+        const { error: updateError } = await supabase
+            .from("tournament_matches")
+            .update({
+                players: destinationPlayers,
+            })
+            .eq("id", destinationMatch.id);
 
-    if (updateDestinationMatchError) {
-        console.error("Error updating destination match:", updateDestinationMatchError);
-        return { success: false, errorCode: 500 };
+    } else {
+        // doesn't → insert
+        const { error: insertError } = await supabase
+            .from("tournament_matches")
+            .insert({
+                tournament_id: tournament.id,
+                round: destinationRoundNumber,
+                match_number: destinationMatchNumber,
+                players: destinationPlayers,
+            });
+
     }
 
-    console.log("Player moved/swapped successfully:", newPlayer);
     return { success: true, errorCode: null };
 };
 
@@ -145,8 +140,6 @@ export const addPlayerToMatchupFromWaitlist = async (
     player: BracketPlayer,
     playerIndex: number
 ): Promise<{ success: boolean, errorCode: number | null }> => {
-    console.log(player)
-
     const supabase = createClient();
 
     const { data: existingMatch, error: fetchError } = await supabase
@@ -212,16 +205,12 @@ export const addPlayerToMatchupFromWaitlist = async (
         .match({ id: (player as any).id });
 
 
-    console.log((player as any).id)
-    console.log(upsertError)
-    console.log(updateError)
-
     return { success: true, errorCode: null };
 };
 
 export const fetchBracket = async (tournamentID: number): Promise<{ bracket: Bracket | null, errorCode: number | null }> => {
     const supabase = createClient()
- 
+
     const { data: tournament, error: tournamentError } = await supabase
         .from("tournaments")
         .select("*")

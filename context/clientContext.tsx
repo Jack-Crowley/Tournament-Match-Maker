@@ -47,8 +47,6 @@ export function ClientProvider({ children }: { children: ReactNode }) {
         fetchSession();
 
         const { data: { subscription } } = client.auth.onAuthStateChange((event, session) => {
-            console.log("Auth event:", event);
-
             if (event === "SIGNED_OUT") {
                 setSession(null);
                 router.push("/login");

@@ -192,7 +192,6 @@ export const MatchupModal = ({ isOpen, setOpen, matchup, user, tournament_type }
             } else {
                 if (winnerUUID) await propagatePlayer(winnerUUID);
                 setEditedMatchup((prev) => ({ ...prev, winnerUUID: winnerUUID }));
-                // console.log("Matchup updated successfully");
                 setOpen(false);
             }
         } catch (err) {
@@ -282,7 +281,7 @@ export const MatchupModal = ({ isOpen, setOpen, matchup, user, tournament_type }
             .single();
         
         if (round > tournament_data?.max_rounds) {
-            return console.log("Tournament complete, no further matches to update");
+            return;
         }
         if (countError) {
             console.error("Error fetching tournament data:", countError.message);
@@ -306,7 +305,6 @@ export const MatchupModal = ({ isOpen, setOpen, matchup, user, tournament_type }
             const existingMatchup: Matchup | null = data ? (data as Matchup) : null;
 
             if (existingMatchup) {
-                // console.log("Found existing matchup, updating players");
                 const currentMatchupPlayers: BracketPlayer[] = existingMatchup.players || [];
                 const playerIndex = 1 - editedMatchup.match_number % 2
 
@@ -406,7 +404,6 @@ export const MatchupModal = ({ isOpen, setOpen, matchup, user, tournament_type }
         setPlayer1((prev) => {
             if (prev) {
                 if (prev.member_uuid === playerUuid) {
-                    console.log("player1 is changing!", { ...prev, type: "inactive" });
                     return { ...prev, type: "inactive" };
                 }
                 else {

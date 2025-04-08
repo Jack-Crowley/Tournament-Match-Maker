@@ -173,7 +173,6 @@ export const RoundRobinTournament = ({
   const [movingPlayer, setMovingPlayer] = useState<MovingPlayer | null>(null);
 
   const handleMovePlayer: OnMovePlayer = (player) => {
-    console.log("TOURNAMENT BRACKET: MOVING PLAYER", player);
     if (player === null) {
       setMovingPlayer(null);
       setViewType(BracketViewType.Normal);

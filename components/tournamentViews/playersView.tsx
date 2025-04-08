@@ -99,7 +99,7 @@ export const PlayersView = ({ tournamentID, bracket, user, setActiveTab }: { set
 
             if (error) {
                 triggerMessage("Error fetching players", "red");
-                console.log(error);
+                console.error(error);
             } else {
                 data.sort((a, b) => {
                     const typeOrder: any = { "active": 0, "waitlist": 1, "inactive": 2 };
@@ -122,7 +122,7 @@ export const PlayersView = ({ tournamentID, bracket, user, setActiveTab }: { set
 
             if (tournamentError) {
                 triggerMessage("Error fetching tournament details", "red");
-                console.log(error);
+                console.error(tournamentError);
             } else {
                 setTournament(tourn as Tournament);
             }

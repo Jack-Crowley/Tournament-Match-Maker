@@ -18,7 +18,6 @@ export default function Home() {
             triggerMessage('Error updating tournament owner: '+ error.message, "red");
         } else {
             triggerMessage('Tournament updated: ' +data, "green");
-            console.log(data)
         }
     }
 

@@ -59,7 +59,6 @@ export const ConfigureRoundRobin = async (tournament: Tournament, refreshTournam
 
                 // but if they're the same, lets move on to the next skill value to determine who's better
                 if (aSkillValue !== bSkillValue) {
-                    console.log("using skill value to sort", aSkillValue, bSkillValue);
                     return bSkillValue - aSkillValue;
                 }
             }
@@ -116,8 +115,6 @@ export const ConfigureRoundRobin = async (tournament: Tournament, refreshTournam
             rotating.unshift(rotating.pop()!);
         }
 
-        console.log(matchups)
-    
         return matchups;
     }
     

@@ -16,8 +16,6 @@ export const addTeam = async (team: Team): Promise<Team | null> => {
 
     const { data, error } = await supabase.from('teams').insert(team).single();
 
-    console.log('data:', data);
-
     if (error) {
       console.error('Error adding team:', error);
       throw new Error(`Supabase error: ${error.message}`);

@@ -39,7 +39,6 @@ const LoginPageContent = () => {
         const redirectTo = redirectParam || localStorage.getItem('previousPath') || '/';
         
         localStorage.removeItem('previousPath');
-        console.log('Signed in anonymously, redirecting to:', redirectTo);
         router.push(redirectTo);
       }
     } catch (err) {
