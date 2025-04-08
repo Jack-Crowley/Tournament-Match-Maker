@@ -60,7 +60,6 @@ export default function Initialization({ refreshTournament, user }: { user: User
             const url = URL.createObjectURL(svgBlob);
 
             if (!ctx) {
-                console.log("Failed to load CTX")
                 return;
             }
 
@@ -125,7 +124,6 @@ export default function Initialization({ refreshTournament, user }: { user: User
         fetchData();
 
         const fetchPlayers = async () => {
-            console.log("Fetching players...");
             try {
                 const { data, error } = await supabase
                     .from('tournament_players')
@@ -142,7 +140,6 @@ export default function Initialization({ refreshTournament, user }: { user: User
                 triggerMessage("An unexpected error occurred", "red");
                 console.error(error);
             }
-            console.log("Players fetched!");
         };
 
         fetchPlayers();
@@ -159,7 +156,6 @@ export default function Initialization({ refreshTournament, user }: { user: User
                     filter: `tournament_id=eq.${tournament_id}`
                 },
                 async (payload) => {
-                    console.log("Realtime Update:", payload);
                     fetchPlayers(); // Refresh players after each change
                 }
             )
@@ -351,7 +347,6 @@ export default function Initialization({ refreshTournament, user }: { user: User
 
                     // but if they're the same, lets move on to the next skill value to determine who's better
                     if (aSkillValue !== bSkillValue) {
-                        console.log("using skill value to sort", aSkillValue, bSkillValue);
                         return bSkillValue - aSkillValue;
                     }
                 }

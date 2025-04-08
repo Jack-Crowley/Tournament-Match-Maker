@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useEffect, useRef, useState } from "react";
@@ -56,8 +55,6 @@ export const BracketCreator = ({
         }
     }, []);
 
-
-    console.log("BRACKET CREATOR", roundIndex, matchIndex, box, bracket);
 
     if (roundIndex === 0) {
         return (

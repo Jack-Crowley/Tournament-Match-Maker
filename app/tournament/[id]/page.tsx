@@ -46,7 +46,6 @@ export default function Home() {
         async function loadPlayerPermission() {
             const userObj = await getPermissionLevelForTournament(Number(id), client);
             setUser(userObj);
-            console.log(userObj);
         }
 
         loadPlayerPermission();

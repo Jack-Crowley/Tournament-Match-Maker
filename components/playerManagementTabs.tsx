@@ -60,7 +60,7 @@ export const PlayerManagementTabs = ({ tournamentID, onClose }: { tournamentID: 
 
                 if (error) {
                     triggerMessage("Error fetching players", "red");
-                    console.log(error);
+                    console.error(error);
                 } else {
                     data.sort((a, b) => a.last_update - b.last_update);
 

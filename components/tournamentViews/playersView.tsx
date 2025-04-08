@@ -99,7 +99,7 @@ export const PlayersView = ({ tournamentID, bracket, user, setActiveTab }: { set
 
             if (error) {
                 triggerMessage("Error fetching players", "red");
-                console.log(error);
+                console.error(error);
             } else {
                 data.sort((a, b) => {
                     const typeOrder: any = { "active": 0, "waitlist": 1, "inactive": 2 };
@@ -122,7 +122,7 @@ export const PlayersView = ({ tournamentID, bracket, user, setActiveTab }: { set
 
             if (tournamentError) {
                 triggerMessage("Error fetching tournament details", "red");
-                console.log(error);
+                console.error(tournamentError);
             } else {
                 setTournament(tourn as Tournament);
             }
@@ -194,8 +194,6 @@ export const PlayersView = ({ tournamentID, bracket, user, setActiveTab }: { set
             }`;
     };
 
-    console.log("ADDING TOURNAMENT AND ACTIVE PALYER")
-    console.log(isAdding, tournament, activePlayer);
     return (
         <div>
             {isAdding && tournament ? (
@@ -640,7 +638,6 @@ export const PlayersView = ({ tournamentID, bracket, user, setActiveTab }: { set
                                 e.stopPropagation();
                                 setActivePlayer(activeContextPlayer)
                                 setIsAdding(true)
-                                console.log("Moving player to roster:", activeContextPlayer);
                             }}
                             className="w-full text-left px-4 py-2 text-white hover:bg-[#3a2b7d] flex items-center"
                         >

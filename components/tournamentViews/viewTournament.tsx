@@ -1,4 +1,3 @@
-
 "use client"
 
 import TournamentBracket, { BracketViewType } from "@/components/tournamentViews/single/bracketView";
@@ -195,12 +194,10 @@ export const ViewTournament = ({ tournamentID, user }: { tournamentID: number, u
                         className="mt-8 px-4 sm:px-8 lg:px-16"
                     >
                         {activeTab === "Bracket" && (tournament?.tournament_type == "single") && (
-                            console.log("SINGLE BRACKET", bracket),
                             <TournamentBracket bracket={bracket} bracketViewType={BracketViewType.Normal} tournamentID={tournamentID} user={user} />
                         )}
 
                         {activeTab === "Bracket" && (tournament?.tournament_type == "robin") && (
-                            console.log("ROBIN BRACKET", bracket),
                             <RoundRobinTournament bracket={bracket} bracketViewType={BracketViewType.Normal} tournamentID={tournamentID} user={user} />
                         )}
 

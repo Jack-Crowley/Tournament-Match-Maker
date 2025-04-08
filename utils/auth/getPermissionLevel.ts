@@ -3,7 +3,6 @@ import { createClient } from "../supabase/client";
 
 export const getPermissionLevelForTournament = async (tournamentID: number, client : any): Promise<User | null> => {
     const uuid = client.session?.user.id;
-    console.log()
     if (!uuid) return null;
 
     const anonymous = client.session?.user.is_anonymous
@@ -15,7 +14,6 @@ export const getPermissionLevelForTournament = async (tournamentID: number, clie
     const { data:tournament, error:tournamentError } = await supabase.from("tournaments").select("*").eq("id", tournamentID).single()
 
     if (tournamentError) {
-        console.log("Error fetching tournament")
         return null;
     }
 
@@ -33,7 +31,6 @@ export const getPermissionLevelForTournament = async (tournamentID: number, clie
 
     const {data:tournamentPermissions, error} = await supabase.from("tournament_organizers").select("*").eq("tournament_id", tournamentID).eq("member_uuid", uuid).eq("accepted", true).single()
     if (error && error.code != "PGRST116") {
-        console.log("Error fetching tournament permissions")
         return null
     }
 
