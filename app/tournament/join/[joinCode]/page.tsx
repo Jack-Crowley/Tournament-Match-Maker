@@ -36,50 +36,53 @@ export default function JoinTournament() {
 
     useEffect(() => {
         const fetchData = async () => {
-            const { data, error } = await supabase
-                .from("tournaments")
-                .select("*")
-                .eq("join_code", joinCode)
-                .single();
+            try {
+                const response = await fetch(`/api/tournament/join-code?code=${joinCode}`);
+                const result = await response.json();
 
-            if (error) {
-                triggerMessage("Error fetching tournament data: " + error.message, "red");
-                return;
-            }
+                if (!response.ok) {
+                    triggerMessage(result.error, "red");
+                    return;
+                }
 
-            setTournament(data);
+                const { tournament } = result;
+                setTournament(tournament);
 
-            if (data && data.skill_fields) {
-                const initialSkillFields: SkillField[] = data.skill_fields.map((skill: any) => ({
-                    name: skill.name,
-                    type: skill.type,
-                    categories: skill.categories || [],
-                    value: "",
-                }));
-                setSkillFields(initialSkillFields);
-            }
+                if (tournament.skill_fields) {
+                    const initialSkillFields: SkillField[] = tournament.skill_fields.map((skill: any) => ({
+                        name: skill.name,
+                        type: skill.type,
+                        categories: skill.categories || [],
+                        value: "",
+                    }));
+                    setSkillFields(initialSkillFields);
+                }
 
-            if (data && data.max_players) {
-                setMaxNumber(data.max_players);
-            }
+                if (tournament.max_players) {
+                    setMaxNumber(tournament.max_players);
+                }
 
-            if (client.session?.user.is_anonymous) {
-                setAnonymous(true);
+                if (client.session?.user.is_anonymous) {
+                    setAnonymous(true);
+                    setLoading(false);
+                    return;
+                }
+
+                const { data: userData } = await supabase
+                    .from("users")
+                    .select("name")
+                    .eq("uuid", client.session?.user.id)
+                    .single();
+
+                if (userData && userData.name) {
+                    setName(userData.name);
+                }
+
                 setLoading(false);
-                return;
+            } catch {
+                triggerMessage("Error fetching tournament data", "red");
+                setLoading(false);
             }
-
-            const { data: userData } = await supabase
-                .from("users")
-                .select("name")
-                .eq("uuid", client.session?.user.id)
-                .single();
-
-            if (userData && userData.name) {
-                setName(userData.name);
-            }
-
-            setLoading(false);
         };
 
         if (client == null || client.session == null) {
