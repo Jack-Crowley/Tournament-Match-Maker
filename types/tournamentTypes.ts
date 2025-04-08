@@ -4,6 +4,7 @@ export interface Tournament {
     start_time: string;
     end_time: string;
     join_code: string;
+    created_at: string;
     id: string;
     name: string;
     description: string;

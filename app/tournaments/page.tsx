@@ -68,119 +68,29 @@ export default function Home() {
     ]);
 
     async function loadTournamentData() {
-        const id = client.session?.user.id;
-
-        if (id == undefined) {
-            setLoading(false);
-            return;
-        }
-
-        const { data: organizingTournamentsOwner, error: organizingErrorOwner } = await supabase
-            .from('tournaments')
-            .select('*')
-            .eq('owner', id);
-
-        let owningIds: string[] = [];
-        if (organizingTournamentsOwner) {
-            owningIds = organizingTournamentsOwner.map((record) => record.id);
-            setOrganizingTournaments(organizingTournamentsOwner);
-        }
-
-        const { data: playingData, error: playingError } = await supabase
-            .from('tournament_players')
-            .select('tournament_id')
-            .eq('member_uuid', id)
-            .eq('left_match', false);
-
-        if (playingError || organizingErrorOwner) {
-            triggerMessage("Error fetching player data", "red");
-        } else {
-            const { data: organizingTournaments } = await supabase
-                .from('tournament_organizers')
-                .select('*')
-                .eq('member_uuid', id)
-                .eq("accepted", true)
-
-            const nonOwnerTournamentIds = organizingTournaments
-                ?.map((record) => record.tournament_id)
-                .filter((tournament_id) => !owningIds.includes(tournament_id));
-
-            if (nonOwnerTournamentIds?.length) {
-                const { data: nonOwnerTournaments, error: nonOwnerError } = await supabase
-                    .from('tournaments')
-                    .select('*')
-                    .in('id', nonOwnerTournamentIds);
-
-                if (nonOwnerError) {
-                    triggerMessage('Error fetching non-owner tournaments:', 'red');
-                } else if (nonOwnerTournaments) {
-                    setOrganizingTournaments((prev) => {
-                        const uniqueTournaments = new Map();
-                        [...prev, ...nonOwnerTournaments].forEach(tournament => {
-                            uniqueTournaments.set(tournament.id, tournament);
-                        });
-                        return Array.from(uniqueTournaments.values());
-                    });
-                }
+        setLoading(true)
+        try {
+            const res = await fetch('/api/tournaments/get-users-tournament')
+            const json = await res.json()
+    
+            if (!res.ok) {
+                triggerMessage(json.error || "Failed to fetch data", "red")
+                setLoading(false)
+                return
             }
-
-            const tournamentIds = [...new Set(playingData.map((record) => record.tournament_id))];
-
-            const tournamentDetails: Tournament[] = [];
-            for (const tournamentId of tournamentIds) {
-                if (owningIds.includes(tournamentId)) continue;
-
-                const { data: tournament, error: fetchError } = await supabase
-                    .from('tournaments')
-                    .select('*')
-                    .eq('id', tournamentId)
-                    .single();
-
-                if (fetchError) {
-                    console.error("Error fetching tournament with id:", tournamentId, fetchError);
-                } else if (tournament) {
-                    tournamentDetails.push(tournament);
-                }
-            }
-
-            setPlayingTournaments(tournamentDetails);
+    
+            const { organizing, playing, invitations } = json
+    
+            setOrganizingTournaments(organizing)
+            setPlayingTournaments(playing)
+            setInvitations(invitations)
+        } catch (err) {
+            triggerMessage("Unexpected error loading tournaments", "red")
+        } finally {
+            setLoading(false)
         }
-
-        // Fetch invitations
-        const { data: invitationsData, error: invitationsError } = await supabase
-            .from('tournament_organizers')
-            .select('tournament_id, permission_level, accepted')
-            .eq('member_uuid', id)
-            .eq('accepted', false);
-
-        if (invitationsError) {
-            triggerMessage("Error fetching invitations", "red");
-        } else {
-            const tournamentDetails = await Promise.all(
-                invitationsData.map(async (invitation) => {
-                    const { data: tournament, error: tournamentError } = await supabase
-                        .from('tournaments')
-                        .select('*')
-                        .eq('id', invitation.tournament_id)
-                        .single();
-
-                    if (tournamentError) {
-                        console.error("Error fetching tournament:", tournamentError);
-                        return null;
-                    }
-
-                    return {
-                        ...tournament,
-                        permission_level: invitation.permission_level,
-                    };
-                })
-            );
-
-            setInvitations(tournamentDetails.filter((tournament) => tournament !== null) as Tournament[]);
-        }
-
-        setLoading(false);
     }
+    
 
     useEffect(() => {
         loadTournamentData();

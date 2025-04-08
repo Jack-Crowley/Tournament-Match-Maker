@@ -221,7 +221,7 @@ export const addPlayerToMatchupFromWaitlist = async (
 
 export const fetchBracket = async (tournamentID: number): Promise<{ bracket: Bracket | null, errorCode: number | null }> => {
     const supabase = createClient()
-
+ 
     const { data: tournament, error: tournamentError } = await supabase
         .from("tournaments")
         .select("*")
