@@ -84,8 +84,8 @@ export default function Home() {
             setOrganizingTournaments(organizing)
             setPlayingTournaments(playing)
             setInvitations(invitations)
-        } catch (err) {
-            triggerMessage("Unexpected error loading tournaments", "red")
+        } catch {
+            triggerMessage("Unexpected error loading tournaments: ", "red")
         } finally {
             setLoading(false)
         }

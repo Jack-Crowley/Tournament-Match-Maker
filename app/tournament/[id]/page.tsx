@@ -9,7 +9,6 @@ import { SpinningLoader } from "@/components/loading";
 import { createClient } from "@/utils/supabase/client";
 import { useMessage } from "@/context/messageContext";
 import { User } from "@/types/userType";
-import { getPermissionLevelForTournament } from "@/utils/auth/getPermissionLevel";
 import { useClient } from "@/context/clientContext";
 
 export default function Home() {
@@ -44,9 +43,15 @@ export default function Home() {
 
     useEffect(() => {
         async function loadPlayerPermission() {
-            const userObj = await getPermissionLevelForTournament(Number(id), client);
-            setUser(userObj);
-            console.log(userObj);
+            const res = await fetch(`/api/tournament/permission_level?tournamentID=${id}`)
+
+            if (!res.ok) {
+                console.error('Failed to fetch permission level')
+                return
+            }
+
+            const data = await res.json()
+            setUser(data)
         }
 
         loadPlayerPermission();
