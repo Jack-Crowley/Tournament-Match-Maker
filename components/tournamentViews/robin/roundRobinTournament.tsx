@@ -20,7 +20,7 @@ const RoundRobinCarousel = ({
   tournament = null,
   onMovePlayer,
   onClose = null,
-} : {
+}: {
   bracket: Bracket;
   user: User;
   viewType: BracketViewType;
@@ -58,28 +58,48 @@ const RoundRobinCarousel = ({
 
   return (
     <div className="relative w-full h-96">
-      {/* Dot indicators */}
-      <div className="absolute top-8 left-1/2 -translate-x-1/2 flex space-x-2 z-20">
-        {rounds.map((_ : any, index : number) => (
-          <button
-            key={`indicator-${index}`}
-            onClick={() => handleDotClick(index)}
-            aria-label={`Go to round ${index + 1}`}
-            className="focus:outline-none focus:ring-2 focus:ring-highlight rounded-full"
-          >
-            <FontAwesomeIcon
-              icon={faCircle}
-              className={`${index === activeIndex ? 'text-highlight' : 'text-deep'} text-xs transition-colors`}
-            />
-          </button>
-        ))}
+      <div className="absolute top-8 left-1/2 -translate-x-1/2 flex space-x-6 z-20">
+        <button
+          onClick={handlePrev}
+          disabled={activeIndex === 0}
+          aria-label="Previous round"
+          className={`rounded-full w-10 h-10 flex items-center justify-center shadow-md transition-colors focus:outline-none focus:ring-2 focus:ring-highlight ${activeIndex === 0 ? 'bg-deep cursor-not-allowed' : 'bg-highlight hover:bg-accent'
+            }`}
+        >
+          <FontAwesomeIcon icon={faChevronLeft} className={`${activeIndex == 0 ? "text-gray-200" : "text-white"}`} />
+        </button>
+        <div className='flex space-x-2 z-20 mr-4'>
+          {rounds.map((_: any, index: number) => (
+            <button
+              key={`indicator-${index}`}
+              onClick={() => handleDotClick(index)}
+              aria-label={`Go to round ${index + 1}`}
+              className="focus:outline-none focus:ring-2 focus:ring-highlight rounded-full"
+            >
+              <FontAwesomeIcon
+                icon={faCircle}
+                className={`${index === activeIndex ? 'text-highlight' : 'text-deep'} text-xs transition-colors`}
+              />
+            </button>
+          ))}
+        </div>
+
+        <button
+          onClick={handleNext}
+          disabled={activeIndex === rounds.length - 1}
+          aria-label="Next round"
+          className={`rounded-full w-10 h-10 flex items-center justify-center shadow-md transition-colors focus:outline-none focus:ring-2 focus:ring-highlight ${activeIndex === rounds.length - 1 ? 'bg-deep cursor-not-allowed' : 'bg-highlight hover:bg-accent'
+            }`}
+        >
+          <FontAwesomeIcon icon={faChevronRight} className={`${activeIndex == 0 ? "text-gray-200" : "text-white"}`} />
+        </button>
       </div>
 
       <div className="w-full h-full relative">
-        {rounds.map((round : Round, index : number) => {
+        {rounds.map((round: Round, index: number) => {
           const offset = index - activeIndex;
 
-          if (Math.abs(offset) > 2) return null; 
+          if (Math.abs(offset) > 2) return null;
 
           const transform = getRoundTransform(offset);
 
@@ -90,7 +110,7 @@ const RoundRobinCarousel = ({
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{
                   opacity: 1,
-                  scale: Math.abs(offset)<=1 ? 1 : 0.85,
+                  scale: Math.abs(offset) <= 1 ? 1 : 0.85,
                   top: '50%',
                   left: '50%',
                   ...transform,
@@ -100,11 +120,11 @@ const RoundRobinCarousel = ({
                 exit={{ opacity: 0, scale: 0.7 }}
                 transition={{ duration: 0.4, ease: 'easeInOut' }}
               >
-                <div className={`p-6 ${Math.abs(offset)<=1 ? 'w-64 h-64' : 'w-56 h-56'} transition-all`}>
-                  <h3 className={`${Math.abs(offset)<=1 ? 'text-xl' : 'text-base'} text-center font-bold text-highlight mb-2`}>
+                <div className={`p-6 ${Math.abs(offset) <= 1 ? 'w-64 h-64' : 'w-56 h-56'} transition-all`}>
+                  <h3 className={`${Math.abs(offset) <= 1 ? 'text-xl' : 'text-base'} text-center font-bold text-highlight mb-2`}>
                     Round {index + 1}
                   </h3>
-                  {round.matches.map((match : Matchup, matchIndex : number) => (
+                  {round.matches.map((match: Matchup, matchIndex: number) => (
                     <div key={`match-${match.id || matchIndex}`} className="mb-2">
                       <MatchupElement
                         match={match}
@@ -125,28 +145,6 @@ const RoundRobinCarousel = ({
           );
         })}
       </div>
-
-      <button
-        onClick={handlePrev}
-        disabled={activeIndex === 0}
-        aria-label="Previous round"
-        className={`absolute left-[42rem] top-[2.7rem] -translate-y-1/2 rounded-full w-10 h-10 flex items-center justify-center shadow-md transition-colors focus:outline-none focus:ring-2 focus:ring-highlight ${
-          activeIndex === 0 ? 'bg-deep cursor-not-allowed' : 'bg-highlight hover:bg-accent'
-        }`}
-      >
-        <FontAwesomeIcon icon={faChevronLeft} className={`${activeIndex == 0 ? "text-gray-200" : "text-white"}`} />
-      </button>
-
-      <button
-        onClick={handleNext}
-        disabled={activeIndex === rounds.length - 1}
-        aria-label="Next round"
-        className={`absolute right-[42rem] top-[2.7rem] -translate-y-1/2 rounded-full w-10 h-10 flex items-center justify-center shadow-md transition-colors focus:outline-none focus:ring-2 focus:ring-highlight ${
-          activeIndex === rounds.length - 1 ? 'bg-deep cursor-not-allowed' : 'bg-highlight hover:bg-accent'
-        }`}
-      >
-        <FontAwesomeIcon icon={faChevronRight} className={`${activeIndex == 0 ? "text-gray-200" : "text-white"}`} />
-      </button>
     </div>
   );
 };
@@ -207,19 +205,21 @@ export const RoundRobinTournament = ({
 
   return (
     <div className="min-h-screen py-12 px-4">
-      <div className="w-full h-full mx-auto">
-        <h1 className="text-3xl font-bold text-center">Featured Services</h1>
-        <RoundRobinCarousel
-          bracket={bracket}
-          viewType={viewType}
-          newPlayer={newPlayer}
-          movingPlayer={movingPlayer}
-          onMovePlayer={handleMovePlayer}
-          tournament={tournament}
-          onClose={onClose}
-          user={user}
-        />
-      </div>
+      {tournament && (
+        <div className="w-full h-full mx-auto">
+          <h1 className="text-3xl font-bold text-center">{tournament.name}</h1>
+          <RoundRobinCarousel
+            bracket={bracket}
+            viewType={viewType}
+            newPlayer={newPlayer}
+            movingPlayer={movingPlayer}
+            onMovePlayer={handleMovePlayer}
+            tournament={tournament}
+            onClose={onClose}
+            user={user}
+          />
+        </div>
+      )}
     </div>
   );
 };
