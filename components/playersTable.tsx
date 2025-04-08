@@ -68,41 +68,77 @@ export const PlayersTable = ({
     };
 
     const handleBulkSwitch = async () => {
-        const newType = type == "active" ? "waitlist" : "active";
+        const newType = type === "active" ? "waitlist" : "active";
 
         if (selectedPlayers.size === 0) {
             triggerMessage("No players selected", "red");
             return;
         }
 
-        if (type == "waitlist" && tournament.max_players && selectedPlayers.size + otherPlayers.length > tournament.max_players) {
-            const waitlistSwitchConfirm: ConfirmModalInformation = {
+        const playerIDs = Array.from(selectedPlayers);
+        const payload = {
+            tournamentID: tournament.id,
+            playerIDs,
+            type,
+            maxPlayers: tournament.max_players,
+            otherPlayersCount: otherPlayers.length,
+        };
+
+        const attemptSwitch = async () => {
+            const res = await fetch("/api/tournament/bulk-switch", {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload),
+            });
+
+            const result = await res.json();
+
+            if (!res.ok) {
+                triggerMessage(result.error || "Something went wrong", "red");
+                return;
+            }
+
+            triggerMessage(`Players moved to ${newType} successfully`, "green");
+
+            setOtherPlayers(prev => [...prev, ...players.filter(p => selectedPlayers.has(p.id))]);
+            setPlayers(players.filter(p => !selectedPlayers.has(p.id)));
+            setSelectedPlayers(new Set());
+        };
+
+        const res = await fetch("/api/tournament/bulk-switch", {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+        });
+
+        const result = await res.json();
+
+        if (res.status === 409 && result.warning) {
+            const confirmModal: ConfirmModalInformation = {
                 title: "Are you sure you want to do this?",
-                content: `Switching ${selectedPlayers.size > 1 ? `these ${selectedPlayers.size} players` : "this 1 player"} over to the active players table would violate the maximum players constraint`,
+                content: `Switching ${playerIDs.length > 1 ? `these ${playerIDs.length} players` : "this 1 player"} over to the active players table would violate the maximum players constraint.`,
                 onCancel: () => setConfirmModalInfo(null),
                 onSuccess: async () => {
-                    const { error } = await supabase
-                        .from("tournament_players")
-                        .update({ type: newType })
-                        .in("id", Array.from(selectedPlayers));
-
-                    if (error) {
-                        triggerMessage("Error updating players", "red");
-                    } else {
-                        triggerMessage(`Players moved to ${newType} successfully`, "green");
-                        setOtherPlayers(prev => [...prev, ...players.filter(player => selectedPlayers.has(player.id))]);
-                        setPlayers(players.filter(player => !selectedPlayers.has(player.id)));
-                        setSelectedPlayers(new Set());
-                    }
-
+                    await attemptSwitch();
                     setConfirmModalInfo(null);
-                }
+                },
             };
 
-            setConfirmModalInfo(waitlistSwitchConfirm);
+            setConfirmModalInfo(confirmModal);
             return;
         }
+
+        if (!res.ok) {
+            triggerMessage(result.error || "Something went wrong", "red");
+            return;
+        }
+
+        triggerMessage(`Players moved to ${newType} successfully`, "green");
+        setOtherPlayers(prev => [...prev, ...players.filter(p => selectedPlayers.has(p.id))]);
+        setPlayers(players.filter(p => !selectedPlayers.has(p.id)));
+        setSelectedPlayers(new Set());
     };
+
 
     return (
         <div>
@@ -196,7 +232,7 @@ export const PlayersTable = ({
                         </tbody>
                     </table>
                 </div>
-            )}                                                                            
+            )}
         </div>
     );
 };

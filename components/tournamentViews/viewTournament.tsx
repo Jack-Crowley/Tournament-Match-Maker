@@ -19,7 +19,6 @@ import { MessagingSystem } from "../messanging";
 import { TournamentInfoView } from "./infoView";
 import { RoundRobinTournament } from "./robin/roundRobinTournament";
 
-
 export const SideNavbar = ({ tab, setTab, user }: {
     tab: string,
     setTab: (state: string) => void,
@@ -128,6 +127,8 @@ export const ViewTournament = ({ tournamentID, user }: { tournamentID: number, u
         async function updateTournamentInDatabase() {
             if (tournament) {
                 const { id, created_at, owner, tournament_type, join_code, ...updateData } = tournament;
+
+                if (id && created_at && owner && tournament_type && join_code) {}
 
                 const { error } = await supabase
                     .from("tournaments")

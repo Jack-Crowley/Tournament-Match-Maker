@@ -2,7 +2,7 @@
 import { NextResponse } from 'next/server'
 import { createServer } from '@/utils/supabase/server'
 
-export async function GET(req: Request) {
+export async function GET() {
     const supabase = createServer()
     const {
         data: { user },
@@ -15,7 +15,7 @@ export async function GET(req: Request) {
 
     const userId = user.id
 
-    const { data: owning, error: ownerErr } = await supabase
+    const { data: owning } = await supabase
         .from('tournaments')
         .select('*')
         .eq('owner', userId)
@@ -69,7 +69,7 @@ export async function GET(req: Request) {
     if (invitations) {
         invitationDetails = await Promise.all(
             invitations.map(async (inv) => {
-                const { data, error } = await supabase
+                const { data } = await supabase
                     .from('tournaments')
                     .select('*')
                     .eq('id', inv.tournament_id)

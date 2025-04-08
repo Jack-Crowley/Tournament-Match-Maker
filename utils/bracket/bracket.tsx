@@ -97,32 +97,35 @@ export const moveOrSwapPlayerToMatchup = async (
     // Update both matches in the database
     const { error: updateFromMatchError } = await supabase
         .from("tournament_matches")
-        .upsert({
-            id: fromMatch.id,
-            tournament_id: tournament.id,
-            round: fromMatch.round,
-            match_number: fromMatch.match_number,
+        .update({
             players: fromPlayers,
-        });
+        }).eq("id", fromMatch.id);
 
     if (updateFromMatchError) {
         console.error("Error updating from match:", updateFromMatchError);
         return { success: false, errorCode: 500 };
     }
 
-    const { error: updateDestinationMatchError } = await supabase
-        .from("tournament_matches")
-        .upsert({
-            id: destinationMatch?.id || undefined,
-            tournament_id: tournament.id,
-            round: destinationRoundNumber,
-            match_number: destinationMatchNumber,
-            players: destinationPlayers,
-        });
+    if (destinationMatch && destinationMatch.id) {
+        // exists → update
+        const { error: updateError } = await supabase
+            .from("tournament_matches")
+            .update({
+                players: destinationPlayers,
+            })
+            .eq("id", destinationMatch.id);
 
-    if (updateDestinationMatchError) {
-        console.error("Error updating destination match:", updateDestinationMatchError);
-        return { success: false, errorCode: 500 };
+    } else {
+        // doesn't → insert
+        const { error: insertError } = await supabase
+            .from("tournament_matches")
+            .insert({
+                tournament_id: tournament.id,
+                round: destinationRoundNumber,
+                match_number: destinationMatchNumber,
+                players: destinationPlayers,
+            });
+
     }
 
     return { success: true, errorCode: null };
@@ -207,7 +210,7 @@ export const addPlayerToMatchupFromWaitlist = async (
 
 export const fetchBracket = async (tournamentID: number): Promise<{ bracket: Bracket | null, errorCode: number | null }> => {
     const supabase = createClient()
- 
+
     const { data: tournament, error: tournamentError } = await supabase
         .from("tournaments")
         .select("*")

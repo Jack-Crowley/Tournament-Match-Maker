@@ -37,37 +37,21 @@ export const TournamentModal = ({
 
     useEffect(() => {
         const fetchOrganizers = async (tournamentId: string) => {
-            const { data: organizersData, error: organizersError } = await supabase
-                .from('tournament_organizers')
-                .select('member_uuid, permission_level')
-                .eq('tournament_id', tournamentId);
+            try {
+                const response = await fetch(`/api/tournament/organizers?tournamentID=${tournamentId}`);
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    console.error('Error fetching organizers:', errorData.error);
+                    return [];
+                }
 
-            if (organizersError) {
-                console.error('Error fetching organizers:', organizersError.message);
+                const data = await response.json();
+                return data.organizers;
+            } catch (error) {
+                console.error('Error fetching organizers:', error);
                 return [];
             }
-
-            const organizersWithEmails = await Promise.all(
-                organizersData.map(async (organizer) => {
-                    const { data: userData, error: userError } = await supabase
-                        .from('users')
-                        .select('email')
-                        .eq('uuid', organizer.member_uuid)
-                        .single();
-
-                    if (userError || !userData) {
-                        console.error('Error fetching user email:', userError?.message);
-                        return null;
-                    }
-
-                    return {
-                        email: userData.email,
-                        permission: organizer.permission_level,
-                    };
-                })
-            );
-
-            return organizersWithEmails.filter((organizer) => organizer !== null);
         };
 
         if (tournament) {
@@ -84,7 +68,7 @@ export const TournamentModal = ({
                 setOrganizers(organizers);
             });
         }
-    }, [tournament, supabase]);
+    }, [tournament]);
 
     const handleSave = async () => {
         if (!tournament) return;
@@ -125,69 +109,28 @@ export const TournamentModal = ({
             let successCount = 0;
             let failCount = 0;
 
-            for (const organizer of organizers) {
-                const { email, permission } = organizer;
+            try {
+                const response = await fetch('/api/tournament/organizers', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        tournamentID: tournament.id,
+                        organizers: organizers
+                    })
+                });
 
-                // Lookup user by email
-                const { data: userData, error: userError } = await supabase
-                    .from('users')
-                    .select('uuid')
-                    .eq('email', email)
-                    .single();
-
-                if (userError || !userData) {
-                    failCount++;
-                    continue;
+                if (!response.ok) {
+                    throw new Error('Failed to update organizers');
                 }
 
-                const userUuid = userData.uuid;
-
-                // Check if the user is already an organizer for the tournament
-                const { data: organizerData, error: organizerError } = await supabase
-                    .from('tournament_organizers')
-                    .select('accepted, permission_level')
-                    .eq('tournament_id', tournament.id)
-                    .eq('member_uuid', userUuid)
-                    .single();
-
-                if (organizerError || !organizerData) {
-                    // User is not an organizer, add them
-                    const { error: addOrganizerError } = await supabase
-                        .from('tournament_organizers')
-                        .insert([
-                            {
-                                tournament_id: tournament.id,
-                                member_uuid: userUuid,
-                                permission_level: permission,
-                                accepted: false,
-                            },
-                        ]);
-
-                    if (addOrganizerError) {
-                        failCount++;
-                    } else {
-                        successCount++;
-                    }
-                } else {
-                    // Check if the permission level is actually changing
-                    if (organizerData.permission_level === permission) {
-                        successCount++;
-                        continue;
-                    }
-
-                    // User is already an organizer, update their permission level
-                    const { error: updateError } = await supabase
-                        .from('tournament_organizers')
-                        .update({ permission_level: permission })
-                        .eq('tournament_id', tournament.id)
-                        .eq('member_uuid', userUuid);
-
-                    if (updateError) {
-                        failCount++;
-                    } else {
-                        successCount++;
-                    }
-                }
+                const data = await response.json();
+                successCount = data.successCount;
+                failCount = data.failCount;
+            } catch (error) {
+                console.error('Error updating organizers:', error);
+                failCount = organizers.length;
             }
 
             onClose();

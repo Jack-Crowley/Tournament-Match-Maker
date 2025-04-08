@@ -106,7 +106,6 @@ export const AddPlaceholderPlayersModal = ({ isOpen, setOpen, tournament, addAct
                 member_uuid: uuidv4(),
                 player_name: playerName,
                 skills: generateRandomSkills(tournament.skill_fields),
-                tournament_director: false,
                 is_anonymous: true,
                 last_update: new Date().toISOString(),
                 placeholder_player: true,
