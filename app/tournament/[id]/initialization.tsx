@@ -155,7 +155,7 @@ export default function Initialization({ refreshTournament, user }: { user: User
                     table: "tournament_players",
                     filter: `tournament_id=eq.${tournament_id}`
                 },
-                async (payload) => {
+                async () => {
                     fetchPlayers(); // Refresh players after each change
                 }
             )
