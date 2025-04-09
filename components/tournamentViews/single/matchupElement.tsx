@@ -43,7 +43,7 @@ const ContextMenu = ({ x, y, player, round, matchNumber, index, onMovePlayer, on
     return (
         <div
             ref={menuRef}
-            className="fixed bg-deep rounded-md shadow-lg z-50 overflow-hidden"
+            className="fixed bg-deep rounded-md shadow-lg z-4 overflow-hidden"
             style={{
                 left: `${x}px`,
                 top: `${y}px`,
@@ -266,7 +266,7 @@ export const MatchupElement = ({
     return (
         <div className="flex justify-center items-center flex-shrink-0">
             <motion.div
-                className={`${viewType === BracketViewType.Normal ? "w-60" : "w-60"} bg-secondary rounded-lg shadow-xl overflow-hidden z-10 hover:cursor-pointer transition-all duration-300`}
+                className={`${viewType === BracketViewType.Normal ? "w-60" : "w-60"} bg-secondary rounded-lg shadow-xl overflow-hidden hover:cursor-pointer transition-all duration-300`}
                 whileHover={viewType === BracketViewType.Normal ? { scale: 1.05 } : undefined}
                 transition={{ type: "spring", stiffness: 130 }}
                 onClick={(e) => {

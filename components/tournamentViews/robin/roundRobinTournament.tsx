@@ -57,8 +57,8 @@ const RoundRobinCarousel = ({
   };
 
   return (
-    <div className="relative w-full h-96">
-      <div className="absolute top-8 left-1/2 -translate-x-1/2 flex space-x-6 z-20">
+    <div className="w-full mt-8">
+      <div className="flex space-x-6 z-20 items-center justify-center">
         <button
           onClick={handlePrev}
           disabled={activeIndex === 0}
@@ -95,7 +95,7 @@ const RoundRobinCarousel = ({
         </button>
       </div>
 
-      <div className="w-full h-full relative">
+      <div className="w-full flex mt-4 items-center justify-center space-x-2">
         {rounds.map((round: Round, index: number) => {
           const offset = index - activeIndex;
 
@@ -106,39 +106,37 @@ const RoundRobinCarousel = ({
           return (
             <AnimatePresence key={`round-${(round as any).id || index}`}>
               <motion.div
-                className="absolute"
-                initial={{ opacity: 0, scale: 0.8 }}
+                initial={{ opacity: 0 }}
                 animate={{
-                  opacity: 1,
-                  scale: Math.abs(offset) <= 1 ? 1 : 0.85,
-                  top: '50%',
-                  left: '50%',
-                  ...transform,
-                  y: '-50%',
-                  zIndex: 10 - Math.abs(offset),
+                  opacity: Math.abs(offset) <= 1 ? 1 : 0.6,
+                  scale:1
                 }}
-                exit={{ opacity: 0, scale: 0.7 }}
-                transition={{ duration: 0.4, ease: 'easeInOut' }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: .2, ease: 'easeInOut' }}
               >
-                <div className={`p-6 ${Math.abs(offset) <= 1 ? 'w-64 h-64' : 'w-56 h-56'} transition-all`}>
+                <div className={` ${Math.abs(offset) <= 1 ? 'w-64 h-64' : 'w-56 h-56'} transition-all`}>
                   <h3 className={`${Math.abs(offset) <= 1 ? 'text-xl' : 'text-base'} text-center font-bold text-highlight mb-2`}>
                     Round {index + 1}
                   </h3>
-                  {round.matches.map((match: Matchup, matchIndex: number) => (
-                    <div key={`match-${match.id || matchIndex}`} className="mb-2">
-                      <MatchupElement
-                        match={match}
-                        viewType={viewType}
-                        newPlayer={newPlayer}
-                        tournament={tournament}
-                        bracket={bracket}
-                        onMovePlayer={onMovePlayer}
-                        movingPlayer={movingPlayer}
-                        onClose={onClose}
-                        user={user}
-                      />
-                    </div>
-                  ))}
+                  {round.matches.map((match: Matchup, matchIndex: number) => {
+                    const individualViewTyoe = (movingPlayer && movingPlayer?.fromRound === index + 1) ? viewType : BracketViewType.Normal;
+
+                    return (
+                      <div key={`match-${match.id || matchIndex}`} className="mb-2">
+                        <MatchupElement
+                          match={match}
+                          viewType={individualViewTyoe}
+                          newPlayer={newPlayer}
+                          tournament={tournament}
+                          bracket={bracket}
+                          onMovePlayer={onMovePlayer}
+                          movingPlayer={movingPlayer}
+                          onClose={onClose}
+                          user={user}
+                        />
+                      </div>
+                    )
+                  })}
                 </div>
               </motion.div>
             </AnimatePresence>
@@ -158,7 +156,6 @@ export const RoundRobinTournament = ({
   onClose = null,
   user,
   bracketViewType = BracketViewType.Normal,
-
 }: {
   bracket: Bracket;
   newPlayer?: BracketPlayer | null;

@@ -11,6 +11,8 @@ import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import TournamentBracket, { BracketViewType } from "./single/bracketView";
 import { User } from "@/types/userType";
+import { RoundRobinRankedPlayer } from "@/types/rankedPlayerTypes";
+import { RankRoundRobinPlayers } from "@/utils/tournament-styles/robin";
 
 export const PlayersView = ({ tournamentID, bracket, user, setActiveTab }: { setActiveTab: (state: string) => void, tournamentID: number, bracket: Bracket, user: User }) => {
     const [activePlayer, setActivePlayer] = useState<Player | null>(null);
@@ -23,6 +25,10 @@ export const PlayersView = ({ tournamentID, bracket, user, setActiveTab }: { set
     const [messageText, setMessageText] = useState<string>("");
     const [currentFilter, setCurrentFilter] = useState<string>("all");
     const [expandedDetails, setExpandedDetails] = useState<boolean>(false);
+
+    // Touranment Rankings
+    const [rankingMap, setRankingMap] = useState<Map<string, number>>(new Map());
+    const [roundRobinRanked, setRoundRobinRanked] = useState<RoundRobinRankedPlayer[]>([]);
 
     const [contextMenu, setContextMenu] = useState<{
         x: number;
@@ -60,6 +66,21 @@ export const PlayersView = ({ tournamentID, bracket, user, setActiveTab }: { set
             document.removeEventListener('mousedown', handleClickOutside);
         };
     }, [openContextMenuId]);
+
+    useEffect(() => {
+        if (!tournament) return;
+
+        if (tournament?.tournament_type == "robin") {
+            const rankedPlayers = RankRoundRobinPlayers(bracket);
+
+            rankedPlayers.forEach((player, index) => {
+                rankingMap.set(player.player.uuid, index);
+            })
+
+            setRoundRobinRanked(rankedPlayers)
+        }
+
+    }, [tournament, bracket])
 
     const sendMessageSuccess = async () => {
         if (!activePlayer || !messageText.trim()) return;
@@ -148,9 +169,32 @@ export const PlayersView = ({ tournamentID, bracket, user, setActiveTab }: { set
     };
 
     const getFilteredPlayers = () => {
-        if (currentFilter === "all") return players;
-        return players.filter(player => (player as any).type === currentFilter);
-    }
+        let filtered = players;
+
+        if (currentFilter !== "all") {
+            filtered = players.filter(player => (player as any).type === currentFilter);
+        }
+
+        if (tournament?.tournament_type === "robin") {
+            console.log(rankingMap)
+
+            filtered = [...filtered].sort((a, b) => {
+                const rankA = rankingMap.get(a.member_uuid);
+                const rankB = rankingMap.get(b.member_uuid);
+
+                if (rankA === undefined && rankB === undefined) return 0;
+                if (rankA === undefined) return 1;
+                if (rankB === undefined) return -1;
+
+                return rankA - rankB;
+            });
+        }
+
+        console.log(filtered)
+
+        return filtered;
+    };
+
 
     const getStatusChip = (type: string) => {
         switch (type) {
@@ -189,8 +233,8 @@ export const PlayersView = ({ tournamentID, bracket, user, setActiveTab }: { set
 
     const getFilterButtonClass = (filter: string) => {
         return `px-4 py-2 rounded-lg text-sm transition-all duration-200 font-medium ${currentFilter === filter
-                ? "bg-[#7458da] text-white shadow-lg"
-                : "bg-[#2a1a66] text-[#a899e0] hover:bg-[#342373]"
+            ? "bg-[#7458da] text-white shadow-lg"
+            : "bg-[#2a1a66] text-[#a899e0] hover:bg-[#342373]"
             }`;
     };
 
@@ -310,21 +354,25 @@ export const PlayersView = ({ tournamentID, bracket, user, setActiveTab }: { set
                                             <table className="w-full mx-auto rounded-lg shadow-lg">
                                                 <thead className="bg-[#1b113d] sticky top-0">
                                                     <tr>
-                                                        <th className="p-4 text-left text-white font-semibold text-lg border-b-2 border-[#3a2b7d]">Name</th>
+                                                        <th className="px-6 py-3 text-left text-white font-semibold text-base border-b-2 border-[#3a2b7d]">Name</th>
+                                                        {tournament?.tournament_type == "robin" && (
+                                                            <th className="px-6 py-3 text-center text-white font-semibold text-base border-b-2 border-[#3a2b7d] w-20">History</th>
+                                                        )}
                                                         {tournament?.skill_fields?.map((skill, index) => (
                                                             <th
                                                                 key={index}
-                                                                className="p-4 text-left text-white font-semibold text-lg border-b-2 border-[#3a2b7d] truncate max-w-[150px]"
+                                                                className="px-6 py-3 text-left text-white font-semibold text-base border-b-2 border-[#3a2b7d] truncate max-w-[180px]"
                                                             >
                                                                 {skill.name}
                                                             </th>
                                                         ))}
-                                                        <th className="p-4 text-center text-white font-semibold text-lg border-b-2 border-[#3a2b7d] w-16">Status</th>
-                                                        <th />
+                                                        <th className="px-6 py-3 text-center text-white font-semibold text-base border-b-2 border-[#3a2b7d] w-24">Status</th>
+
+                                                        <th className="px-6 py-3 text-left text-white font-semibold text-base border-b-2 border-[#3a2b7d]" />
                                                     </tr>
                                                 </thead>
                                                 <tbody>
-                                                    {getFilteredPlayers().map((player) => (
+                                                    {getFilteredPlayers().map((player, index) => (
                                                         <motion.tr
                                                             key={player.id}
                                                             onClick={() => handlePlayerClick(player)}
@@ -337,7 +385,8 @@ export const PlayersView = ({ tournamentID, bracket, user, setActiveTab }: { set
                                                         >
                                                             <td className={`p-4 text-lg border-b border-[#3a2b7d] ${player.is_anonymous ? "text-white font-medium" : "text-[#d8d8d8] font-medium"}`}>
                                                                 <div className="flex items-center">
-                                                                    <div className="w-8 h-8 bg-[#3a2b7d] rounded-full flex items-center justify-center mr-3 flex-shrink-0">
+                                                                    {rankingMap.get(player.member_uuid) == undefined ? "-  " : `${rankingMap.get(player.member_uuid)! + 1}.`}
+                                                                    <div className="w-8 h-8 ml-4 bg-[#3a2b7d] rounded-full flex items-center justify-center mr-3 flex-shrink-0">
                                                                         <span className="text-sm font-bold text-white">
                                                                             {player.player_name.charAt(0).toUpperCase()}
                                                                         </span>
@@ -345,6 +394,17 @@ export const PlayersView = ({ tournamentID, bracket, user, setActiveTab }: { set
                                                                     {player.player_name}
                                                                 </div>
                                                             </td>
+                                                            {tournament?.tournament_type == "robin" && roundRobinRanked && (
+                                                                <td className="border-b border-[#3a2b7d]">
+                                                                    {(index >= players.length) ? (
+                                                                        ((player as any).type != "waitlist") ? (<div className="text-gray-300 text-center">0/0/0</div>) : (<div className="text-gray-300 text-center">-/-/-</div>)
+                                                                    ) : (
+                                                                        <h1 className="text-center text-white">
+                                                                            <span className="text-green-500">{roundRobinRanked[index].wins.length}</span>/<span className="text-red-200">{roundRobinRanked[index].losses.length}</span>/<span className="text-blue-200">{roundRobinRanked[index].ties.length}</span>
+                                                                        </h1>
+                                                                    )}
+                                                                </td>
+                                                            )}
                                                             {tournament?.skill_fields?.map((skill, index) => (
                                                                 <td
                                                                     key={index}
@@ -473,7 +533,7 @@ export const PlayersView = ({ tournamentID, bracket, user, setActiveTab }: { set
                                                                 >
                                                                     <p className="text-[#a899e0] text-sm">{skill.name}</p>
                                                                     <p className="text-white font-medium">
-                                                                        {activePlayer.skills[index].type === "numeric" ? 
+                                                                        {activePlayer.skills[index].type === "numeric" ?
                                                                             activePlayer.skills[index].value
                                                                             : activePlayer.skills[index].category_type}
                                                                     </p>
@@ -538,8 +598,8 @@ export const PlayersView = ({ tournamentID, bracket, user, setActiveTab }: { set
                                                                     </motion.button>
                                                                     <motion.button
                                                                         className={`px-4 py-2 rounded-md transition-colors flex items-center shadow-md ${messageText.trim()
-                                                                                ? "bg-gradient-to-r from-[#7458da] to-[#634bc1] hover:from-[#634bc1] hover:to-[#523aad] text-white"
-                                                                                : "bg-[#342575] text-[#a899e0] cursor-not-allowed"
+                                                                            ? "bg-gradient-to-r from-[#7458da] to-[#634bc1] hover:from-[#634bc1] hover:to-[#523aad] text-white"
+                                                                            : "bg-[#342575] text-[#a899e0] cursor-not-allowed"
                                                                             }`}
                                                                         onClick={sendMessageSuccess}
                                                                         disabled={!messageText.trim()}
