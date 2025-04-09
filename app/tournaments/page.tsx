@@ -14,6 +14,7 @@ import { CreateTournament } from "@/components/modals/createTournament";
 import { DeleteManyModal, DeleteModal } from "@/components/modals/delete";
 import { Checkbox } from "@/components/checkbox";
 import { Footer } from "@/components/footer";
+import { useRouter, useSearchParams } from "next/navigation";
 
 export default function Home() {
     const client = useClient();
@@ -23,7 +24,21 @@ export default function Home() {
     const [playingTournaments, setPlayingTournaments] = useState<Tournament[]>([]);
     const [invitations, setInvitations] = useState<Tournament[]>([]);
     const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
-    const [activeTab, setActiveTab] = useState<string>("organizing");
+
+
+    const router = useRouter();
+    const searchParams = useSearchParams();
+    const initialTab = searchParams.get("tab") || "organizing";
+    const [activeTab, setActiveTabState] = useState(initialTab);
+    
+    const setActiveTab = (tab: string) => {
+        setActiveTabState(tab);
+        const newParams = new URLSearchParams(window.location.search);
+        newParams.set("tab", tab);
+        const newUrl = `${window.location.pathname}?${newParams.toString()}`;
+        window.history.pushState({}, "", newUrl);
+    };
+
     const [searchTerm, setSearchTerm] = useState<string>("");
     const modalRef = useRef<HTMLDivElement>(null);
     const { triggerMessage } = useMessage();

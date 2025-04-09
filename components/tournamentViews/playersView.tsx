@@ -13,6 +13,7 @@ import TournamentBracket, { BracketViewType } from "./single/bracketView";
 import { User } from "@/types/userType";
 import { RoundRobinRankedPlayer } from "@/types/rankedPlayerTypes";
 import { RankRoundRobinPlayers } from "@/utils/tournament-styles/robin";
+import { h1 } from "framer-motion/client";
 
 export const PlayersView = ({ tournamentID, bracket, user, setActiveTab }: { setActiveTab: (state: string) => void, tournamentID: number, bracket: Bracket, user: User }) => {
     const [activePlayer, setActivePlayer] = useState<Player | null>(null);
@@ -400,7 +401,9 @@ export const PlayersView = ({ tournamentID, bracket, user, setActiveTab }: { set
                                                                         ((player as any).type != "waitlist") ? (<div className="text-gray-300 text-center">0/0/0</div>) : (<div className="text-gray-300 text-center">-/-/-</div>)
                                                                     ) : (
                                                                         <h1 className="text-center text-white">
-                                                                            <span className="text-green-500">{roundRobinRanked[index].wins.length}</span>/<span className="text-red-200">{roundRobinRanked[index].losses.length}</span>/<span className="text-blue-200">{roundRobinRanked[index].ties.length}</span>
+                                                                            {roundRobinRanked[index] != undefined && (
+                                                                                <div><span className="text-green-500">{roundRobinRanked[index].wins.length}</span> / <span className="text-red-300">{roundRobinRanked[index].losses.length}</span> / <span className="text-blue-300">{roundRobinRanked[index].ties.length}</span></div>
+                                                                            )}
                                                                         </h1>
                                                                     )}
                                                                 </td>

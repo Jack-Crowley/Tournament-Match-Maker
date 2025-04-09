@@ -9,6 +9,7 @@ import { useClient } from "@/context/clientContext";
 import { SpinningLoader } from "@/components/loading";
 import { Tournament } from "@/types/tournamentTypes";
 import { PlayerSkill } from "@/types/bracketTypes";
+import Link from "next/link";
 
 // Updated SkillField type
 interface SkillField {
@@ -31,6 +32,8 @@ export default function JoinTournament() {
     const { triggerMessage } = useMessage();
     const router = useRouter();
 
+    const [unavailableMessage, setUnavailableMessage] = useState<string | null>(null)
+
     const params = useParams();
     const joinCode = params.joinCode as string;
 
@@ -41,7 +44,9 @@ export default function JoinTournament() {
                 const result = await response.json();
 
                 if (!response.ok) {
-                    triggerMessage(result.error, "red");
+                    setUnavailableMessage(result.error)
+                    setLoading(false)
+                    console.log("TEST")
                     return;
                 }
 
@@ -111,7 +116,7 @@ export default function JoinTournament() {
         const skills: PlayerSkill[] = skillFields.map(skill => {
             let skillValue = 0;
             let categoryType: string | undefined = undefined;
-    
+
             if (skill.type === "numeric") {
                 // Convert numeric value
                 skillValue = Number(skill.value) || 0;
@@ -121,7 +126,7 @@ export default function JoinTournament() {
                 skillValue = categoryIndex !== -1 ? categoryIndex : 0; // Default to 0 if not found
                 categoryType = skill.value; // Store original category name
             }
-    
+
             return {
                 name: skill.name,
                 type: skill.type,
@@ -200,59 +205,74 @@ export default function JoinTournament() {
                 <SpinningLoader />
             ) : (
                 <div className="bg-[#2d2158] p-8 rounded-lg shadow-lg max-w-md w-full">
-                    <h2 className="text-[#7458da] font-bold text-2xl mb-6 text-center">Enter your name to join</h2>
-                    <form onSubmit={handleSubmit} className="space-y-6">
+                    {unavailableMessage ? (
                         <div>
-                            <label className="text-white block text-sm mb-2">Name</label>
-                            <input
-                                type="text"
-                                value={name}
-                                onChange={(e: ChangeEvent<HTMLInputElement>) => setName(e.target.value)}
-                                placeholder="Enter your name"
-                                className="w-full p-3 bg-[#1E1E1E] border-b-2 border-[#7458da] text-white focus:outline-none focus:border-[#604BAC]"
-                                required
-                                readOnly={!anonymous}
-                            />
+                            <h2 className="text-red-400 font-bold text-2xl mb-6 text-center">{unavailableMessage}</h2>
+                            <Link href="/tournaments">
+                                <button className="w-full bg-[#7458da] text-white px-4 py-2 rounded-lg hover:bg-[#604BAC] transition-colors">
+                                    Back To Tournament Page
+                                </button>
+                            </Link>
                         </div>
-
-                        {skillFields.length > 0 &&
-                            skillFields.map((skill, index) => (
-                                <div key={index}>
-                                    <label className="text-white block text-sm mb-2">{skill.name}</label>
-                                    {skill.type === "numeric" ? (
-                                        <input
-                                            type="number"
-                                            value={skill.value}
-                                            onChange={(e: ChangeEvent<HTMLInputElement>) => handleSkillChange(index, e.target.value)}
-                                            className="w-full p-3 bg-[#1E1E1E] border-b-2 border-[#7458da] text-white focus:outline-none focus:border-[#604BAC]"
-                                            required
-                                        />
-                                    ) : (
-                                        <select
-                                            value={skill.value}
-                                            onChange={(e: ChangeEvent<HTMLSelectElement>) => handleSkillChange(index, e.target.value)}
-                                            className="w-full p-3 bg-[#1E1E1E] border-b-2 border-[#7458da] text-white focus:outline-none focus:border-[#604BAC]"
-                                            required
-                                        >
-                                            <option value="">Select {skill.name}</option>
-                                            {skill.categories?.map((category, i) => (
-                                                <option key={i} value={category}>
-                                                    {category}
-                                                </option>
-                                            ))}
-                                        </select>
-                                    )}
+                    ) : (
+                        <div>
+                            <h2 className="text-[#7458da] font-bold text-2xl mb-6 text-center">Enter your name to join</h2>
+                            <form onSubmit={handleSubmit} className="space-y-6">
+                                <div>
+                                    <label className="text-white block text-sm mb-2">Name</label>
+                                    <input
+                                        type="text"
+                                        value={name}
+                                        onChange={(e: ChangeEvent<HTMLInputElement>) => setName(e.target.value)}
+                                        placeholder="Enter your name"
+                                        className="w-full p-3 bg-[#1E1E1E] border-b-2 border-[#7458da] text-white focus:outline-none focus:border-[#604BAC]"
+                                        required
+                                        readOnly={!anonymous}
+                                    />
                                 </div>
-                            ))
-                        }
+
+                                {skillFields.length > 0 &&
+                                    skillFields.map((skill, index) => (
+                                        <div key={index}>
+                                            <label className="text-white block text-sm mb-2">{skill.name}</label>
+                                            {skill.type === "numeric" ? (
+                                                <input
+                                                    type="number"
+                                                    value={skill.value}
+                                                    onChange={(e: ChangeEvent<HTMLInputElement>) => handleSkillChange(index, e.target.value)}
+                                                    className="w-full p-3 bg-[#1E1E1E] border-b-2 border-[#7458da] text-white focus:outline-none focus:border-[#604BAC]"
+                                                    required
+                                                />
+                                            ) : (
+                                                <select
+                                                    value={skill.value}
+                                                    onChange={(e: ChangeEvent<HTMLSelectElement>) => handleSkillChange(index, e.target.value)}
+                                                    className="w-full p-3 bg-[#1E1E1E] border-b-2 border-[#7458da] text-white focus:outline-none focus:border-[#604BAC]"
+                                                    required
+                                                >
+                                                    <option value="">Select {skill.name}</option>
+                                                    {skill.categories?.map((category, i) => (
+                                                        <option key={i} value={category}>
+                                                            {category}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                            )}
+                                        </div>
+                                    ))
+                                }
 
 
-                        <button type="submit" disabled={joining} className="w-full bg-[#7458da] text-white px-4 py-2 rounded-lg hover:bg-[#604BAC] transition-colors">
-                            {joining ? "Joining..." : `Join Tournament ${anonymous ? "As Anonymous" : ""}`}
-                        </button>
-                    </form>
-                </div>
+                                <button type="submit" disabled={joining} className="w-full bg-[#7458da] text-white px-4 py-2 rounded-lg hover:bg-[#604BAC] transition-colors">
+                                    {joining ? "Joining..." : `Join Tournament ${anonymous ? "As Anonymous" : ""}`}
+                                </button>
+                            </form>
+                        </div>
+                    )
+                    }
+
+                </div >
             )}
-        </div>
+        </div >
     );
 }

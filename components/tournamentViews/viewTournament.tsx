@@ -18,6 +18,7 @@ import { useMessage } from "@/context/messageContext";
 import { MessagingSystem } from "../messanging";
 import { TournamentInfoView } from "./infoView";
 import { RoundRobinTournament } from "./robin/roundRobinTournament";
+import { useRouter, useSearchParams } from 'next/navigation';
 
 export const SideNavbar = ({ tab, setTab, user }: {
     tab: string,
@@ -77,7 +78,18 @@ export const ViewTournament = ({ tournamentID, user }: { tournamentID: number, u
     const [tournament, setTournament] = useState<Tournament>();
 
     const supabase = createClient()
-    const [activeTab, setActiveTab] = useState("Bracket");
+    useRouter();
+    const searchParams = useSearchParams();
+    const initialTab = searchParams.get("tab") || "Bracket";
+    const [activeTab, setActiveTabState] = useState(initialTab);
+
+    const setActiveTab = (tab: string) => {
+        setActiveTabState(tab);
+        const newParams = new URLSearchParams(window.location.search);
+        newParams.set("tab", tab);
+        const newUrl = `${window.location.pathname}?${newParams.toString()}`;
+        window.history.pushState({}, "", newUrl);
+    };
 
     const { triggerMessage } = useMessage();
 
@@ -128,7 +140,7 @@ export const ViewTournament = ({ tournamentID, user }: { tournamentID: number, u
             if (tournament) {
                 const { id, created_at, owner, tournament_type, join_code, ...updateData } = tournament;
 
-                if (id && created_at && owner && tournament_type && join_code) {}
+                if (id && created_at && owner && tournament_type && join_code) { }
 
                 const { error } = await supabase
                     .from("tournaments")

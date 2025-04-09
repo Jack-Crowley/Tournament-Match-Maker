@@ -17,6 +17,7 @@ import { Tournament } from "@/types/tournamentTypes";
 import { SpinningLoader } from "../loading";
 import { useMessage } from "@/context/messageContext";
 import { User } from "@/types/userType";
+import { createClient } from "@/utils/supabase/client";
 
 export const TournamentInfoView = ({
     tournament,
@@ -30,6 +31,7 @@ export const TournamentInfoView = ({
     const [showQRCode, setShowQRCode] = useState<boolean>(false);
     const { triggerMessage } = useMessage();
     const joinLink = tournament ? `${window.location.origin}/tournament/join/${tournament.join_code}` : null;
+    const supabase = createClient()
 
     const handleCopyUrl = () => {
         if (!joinLink) return;
@@ -49,6 +51,26 @@ export const TournamentInfoView = ({
             minute: "2-digit",
             hour12: true,
         });
+    };
+
+    const handleAllowJoinToggle = async () => {
+        if (!tournament) return;
+
+        try {
+            const { error } = await supabase
+                .from('tournaments')
+                .update({ allow_join: !tournament.allow_join })
+                .eq('id', tournament.id);
+
+            if (error) {
+                triggerMessage("Error updating tournament: " + error.message, "red");
+            } else {
+                triggerMessage(`Player joining ${tournament.allow_join ? 'disabled' : 'enabled'}`, "green");
+                tournament.allow_join = !tournament.allow_join;
+            }
+        } catch {
+            triggerMessage("An error occurred while updating settings", "red");
+        }
     };
 
     return (
@@ -126,6 +148,31 @@ export const TournamentInfoView = ({
                     {joinLink && (
                         <div className="bg-[#2a1a66] rounded-xl p-8 shadow-md mt-10">
                             <h2 className="text-[#7458da] font-bold text-3xl mb-6">Join Tournament</h2>
+
+                            <div className="flex items-center justify-between mb-6 p-4 bg-[#22154F] rounded-lg">
+                                <div className="flex items-center">
+                                    <FontAwesomeIcon icon={faUsers} className="text-[#7458da] mr-3" />
+                                    <span className="text-white">Allow Players to Join</span>
+                                </div>
+
+                                <motion.div
+                                    className={`w-12 h-6 rounded-full flex items-center p-1 cursor-pointer ${tournament.allow_join ? "justify-end" : "justify-start"}`}
+                                    onClick={handleAllowJoinToggle}
+                                    initial={false}
+                                    animate={{
+                                        background: tournament.allow_join
+                                            ? "linear-gradient(45deg, #7458da, #8F78E6)"
+                                            : "linear-gradient(45deg, #3A3A3A, #5C5C5C)",
+                                    }}
+                                    transition={{ duration: 0.3 }}
+                                >
+                                    <motion.div
+                                        className="w-4 h-4 bg-white rounded-full shadow-md"
+                                        layout
+                                        transition={{ type: "spring", stiffness: 200, damping: 30 }}
+                                    />
+                                </motion.div>
+                            </div>
 
                             {/* Join Code */}
                             <div className="mb-6">
