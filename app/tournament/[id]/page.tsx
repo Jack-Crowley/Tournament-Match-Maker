@@ -10,6 +10,7 @@ import { createClient } from "@/utils/supabase/client";
 import { useMessage } from "@/context/messageContext";
 import { User } from "@/types/userType";
 import { useClient } from "@/context/clientContext";
+import Link from "next/link";
 
 export default function Home() {
     const [tournament, setTournament] = useState<Tournament | null>(null);
@@ -21,6 +22,8 @@ export default function Home() {
     const supabase = createClient();
     const { triggerMessage } = useMessage();
 
+    const [unavailableMessage, setUnavailableMessage] = useState<string | null>(null)
+
     useEffect(() => {
         async function loadTournament() {
             const { data, error } = await supabase
@@ -30,7 +33,7 @@ export default function Home() {
                 .single();
 
             if (error) {
-                triggerMessage("Error fetching tournament", "red");
+                setUnavailableMessage("Unable to find tournament")
                 return;
             }
 
@@ -89,10 +92,23 @@ export default function Home() {
                     </div>
                 ) : (
                     <div>
-                        <SpinningLoader />
+                        {unavailableMessage ? (
+                            <div className="w-full h-[90vh] flex items-center justify-center">
+                                <div className="bg-[#2d2158] p-8 rounded-lg shadow-lg max-w-md w-full">
+                                    <h2 className="text-red-400 font-bold text-2xl mb-6 text-center">{unavailableMessage}</h2>
+                                    <Link href="/tournaments">
+                                        <button className="w-full bg-[#7458da] text-white px-4 py-2 rounded-lg hover:bg-[#604BAC] transition-colors">
+                                            Back To Tournament Page
+                                        </button>
+                                    </Link>
+                                </div>
+                            </div>
+                        ) : (
+                            <SpinningLoader />
+                        )}
                     </div>
                 )}
             </div>
-        </div>
+        </div >
     );
 }

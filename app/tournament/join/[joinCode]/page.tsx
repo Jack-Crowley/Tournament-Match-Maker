@@ -169,6 +169,10 @@ export default function JoinTournament() {
             }
         }
 
+        if (tournament && tournament.status != "initialization") {
+            type = "waitlist";
+        }
+
         if (tournament.status === "completed") {
             triggerMessage("This tournament has already completed", "red");
             setLoading(false);
