@@ -13,7 +13,6 @@ import TournamentBracket, { BracketViewType } from "./single/bracketView";
 import { User } from "@/types/userType";
 import { RoundRobinRankedPlayer } from "@/types/rankedPlayerTypes";
 import { RankRoundRobinPlayers } from "@/utils/tournament-styles/robin";
-import { h1 } from "framer-motion/client";
 
 export const PlayersView = ({ tournamentID, bracket, user, setActiveTab }: { setActiveTab: (state: string) => void, tournamentID: number, bracket: Bracket, user: User }) => {
     const [activePlayer, setActivePlayer] = useState<Player | null>(null);
@@ -28,7 +27,7 @@ export const PlayersView = ({ tournamentID, bracket, user, setActiveTab }: { set
     const [expandedDetails, setExpandedDetails] = useState<boolean>(false);
 
     // Touranment Rankings
-    const [rankingMap, setRankingMap] = useState<Map<string, number>>(new Map());
+    const [rankingMap] = useState<Map<string, number>>(new Map());
     const [roundRobinRanked, setRoundRobinRanked] = useState<RoundRobinRankedPlayer[]>([]);
 
     const [contextMenu, setContextMenu] = useState<{
@@ -80,7 +79,7 @@ export const PlayersView = ({ tournamentID, bracket, user, setActiveTab }: { set
 
             setRoundRobinRanked(rankedPlayers)
         }
-
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [tournament, bracket])
 
     const sendMessageSuccess = async () => {

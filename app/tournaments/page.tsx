@@ -4,7 +4,7 @@ import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faInbox, faPlusCircle, faSearch, faSort, faSyncAlt, faTrash } from '@fortawesome/free-solid-svg-icons';
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, Suspense } from 'react';
 import { useMessage } from '@/context/messageContext';
 import { useClient } from "@/context/clientContext";
 import { createClient } from "@/utils/supabase/client";
@@ -16,7 +16,15 @@ import { Checkbox } from "@/components/checkbox";
 import { Footer } from "@/components/footer";
 import { useRouter, useSearchParams } from "next/navigation";
 
-export default function Home() {
+export default function Home() { 
+    return (
+        <Suspense fallback={<div>Loading tabs...</div>}>
+          <TournamentsPage />
+        </Suspense>
+      );
+}
+
+function TournamentsPage() {
     const client = useClient();
     const supabase = createClient();
     const [loading, setLoading] = useState<boolean>(true);
@@ -26,7 +34,7 @@ export default function Home() {
     const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
 
 
-    const router = useRouter();
+    useRouter();
     const searchParams = useSearchParams();
     const initialTab = searchParams.get("tab") || "organizing";
     const [activeTab, setActiveTabState] = useState(initialTab);

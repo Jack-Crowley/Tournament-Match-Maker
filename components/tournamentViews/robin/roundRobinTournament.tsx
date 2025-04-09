@@ -45,17 +45,6 @@ const RoundRobinCarousel = ({
     setActiveIndex(index);
   };
 
-  const getRoundTransform = (offset: number) => {
-    switch (offset) {
-      case 0: return { x: '-50%' };
-      case 1: return { x: '40%' };
-      case -1: return { x: '-140%' };
-      case 2: return { x: '140%' };
-      case -2: return { x: '-240%' };
-      default: return { x: '0%' };
-    }
-  };
-
   return (
     <div className="w-full mt-8">
       <div className="flex space-x-6 z-20 items-center justify-center">
@@ -100,8 +89,6 @@ const RoundRobinCarousel = ({
           const offset = index - activeIndex;
 
           if (Math.abs(offset) > 2) return null;
-
-          const transform = getRoundTransform(offset);
 
           return (
             <AnimatePresence key={`round-${(round as any).id || index}`}>
