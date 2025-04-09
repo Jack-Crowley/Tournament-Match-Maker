@@ -16,12 +16,12 @@ import { Checkbox } from "@/components/checkbox";
 import { Footer } from "@/components/footer";
 import { useRouter, useSearchParams } from "next/navigation";
 
-export default function Home() { 
+export default function Home() {
     return (
         <Suspense fallback={<div>Loading tabs...</div>}>
-          <TournamentsPage />
+            <TournamentsPage />
         </Suspense>
-      );
+    );
 }
 
 function TournamentsPage() {
@@ -32,13 +32,13 @@ function TournamentsPage() {
     const [playingTournaments, setPlayingTournaments] = useState<Tournament[]>([]);
     const [invitations, setInvitations] = useState<Tournament[]>([]);
     const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
-
+    const [anonymous, setAnonymous] = useState<boolean>(false)
 
     useRouter();
     const searchParams = useSearchParams();
     const initialTab = searchParams.get("tab") || "organizing";
     const [activeTab, setActiveTabState] = useState(initialTab);
-    
+
     const setActiveTab = (tab: string) => {
         setActiveTabState(tab);
         const newParams = new URLSearchParams(window.location.search);
@@ -95,15 +95,15 @@ function TournamentsPage() {
         try {
             const res = await fetch('/api/tournaments/get-users-tournament')
             const json = await res.json()
-    
+
             if (!res.ok) {
                 triggerMessage(json.error || "Failed to fetch data", "red")
                 setLoading(false)
                 return
             }
-    
+
             const { organizing, playing, invitations } = json
-    
+
             setOrganizingTournaments(organizing)
             setPlayingTournaments(playing)
             setInvitations(invitations)
@@ -113,7 +113,13 @@ function TournamentsPage() {
             setLoading(false)
         }
     }
-    
+
+
+    useEffect(() => {
+        if (!client || !client.session || !client.session.user) return;
+
+        setAnonymous(client.session.user.is_anonymous || client.session.user.is_anonymous == undefined)
+    }, [client, client.session?.user])
 
     useEffect(() => {
         loadTournamentData();
@@ -365,8 +371,8 @@ function TournamentsPage() {
 
             return (
                 <div className={`absolute top-4 right-4 px-3 py-1 rounded-full text-xs font-semibold ${isStarted
-                        ? "bg-[#3c0e51] text-white"
-                        : "bg-[#672287] text-white"
+                    ? "bg-[#3c0e51] text-white"
+                    : "bg-[#672287] text-white"
                     }`}>
                     {isStarted ? "Started" : "Initialization"}
                 </div>
@@ -535,12 +541,27 @@ function TournamentsPage() {
                     <div className="bg-[#2a1a66] rounded-lg p-10 text-center">
                         <p className="text-gray-300 text-lg mb-4">{getEmptyMessage()}</p>
                         {title === "Organizing Tournaments" && !searchTerm && (
-                            <button
-                                onClick={() => setIsModalOpen(true)}
-                                className="px-6 py-3 bg-highlight hover:bg-[#8569ea] text-white rounded-lg transition-colors font-medium"
-                            >
-                                Create Your First Tournament
-                            </button>
+                            <div>
+                                {!anonymous ? (
+                                    <button
+                                        onClick={() => setIsModalOpen(true)}
+                                        className="px-6 py-3 bg-highlight hover:bg-[#8569ea] text-white rounded-lg transition-colors font-medium"
+                                    >
+                                        Create your first Tournament
+
+                                    </button>
+                                ) : (
+                                    <Link href="/login">
+                                        <button
+                                            className="px-6 py-3 bg-highlight hover:bg-[#8569ea] text-white rounded-lg transition-colors font-medium"
+                                        >
+                                            Login to create your first Tournament
+
+                                        </button>
+                                    </Link>
+                                )}
+                            </div>
+
                         )}
                     </div>
                 )}
@@ -647,78 +668,81 @@ function TournamentsPage() {
                         </motion.div>
                     </AnimatePresence>
 
-                    <motion.button
-                        className="fixed bottom-8 right-8 flex items-center gap-2 bg-highlight hover:bg-[#8569ea] text-white px-6 py-4 rounded-full shadow-lg transition-all duration-300 ease-in-out hover:shadow-xl"
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={() => setIsModalOpen(true)}
-                    >
-                        <FontAwesomeIcon
-                            icon={faPlusCircle}
-                            className="text-white text-xl"
-                        />
-                        <span className="font-medium">New Tournament</span>
-                    </motion.button>
+                    {!anonymous && (
+                        <motion.button
+                            className="fixed bottom-8 right-8 flex items-center gap-2 bg-highlight hover:bg-[#8569ea] text-white px-6 py-4 rounded-full shadow-lg transition-all duration-300 ease-in-out hover:shadow-xl"
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            onClick={() => setIsModalOpen(true)}
+                        >
+                            <FontAwesomeIcon
+                                icon={faPlusCircle}
+                                className="text-white text-xl"
+                            />
+                            <span className="font-medium">New Tournament</span>
+                        </motion.button>
+                    )}
+
                 </div>
             )}
 
             <CreateTournament isModalOpen={isModalOpen} setIsModalOpen={setIsModalOpen} ref={modalRef} />
 
             <div className="m-6 bg-[#2a1a66] rounded-lg p-6 shadow-md">
-                        <div className="flex justify-between items-center mb-4">
-                            <div className="flex items-center">
-                                <h2 className="text-xl font-semibold">Unread Messages</h2>
-                                {unreadMessages && unreadMessages.length > 0 && (
-                                    <span className="ml-3 bg-highlight text-white text-xs font-medium px-2.5 py-0.5 rounded-full">
-                                        {unreadMessages.length}
-                                    </span>
-                                )}
-                            </div>
-                            <motion.button
-                                whileHover={{ scale: 1.05 }}
-                                whileTap={{ scale: 0.95 }}
-                                className="text-sm text-highlight hover:text-accent"
-                            >
-                                View All
-                            </motion.button>
-                        </div>
-                        
-                        {unreadMessages && unreadMessages.length > 0 ? (
-                            <div className="space-y-3">
-                                {unreadMessages.slice(0, 5).map((message, index) => (
-                                    <motion.div
-                                        key={index}
-                                        initial={{ opacity: 0, y: 10 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        transition={{ delay: index * 0.1 }}
-                                        className="p-4 bg-[#3f2c84] rounded-lg hover:bg-[#4a3795] cursor-pointer group"
-                                    >
-                                        <div className="flex justify-between mb-1">
-                                            <span className="font-medium text-highlight">{message.tournamentName}</span>
-                                            <span className="text-xs text-gray-300">{message.timeSent}</span>
-                                        </div>
-                                        <p className="text-sm text-gray-200 truncate">{message.content}</p>
-                                        <div className="mt-2 text-xs text-gray-400">
-                                            From: {message.sender}
-                                        </div>
-                                        <div className="mt-2 text-right">
-                                            <span className="text-xs text-highlight opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                                                Mark as read →
-                                            </span>
-                                        </div>
-                                    </motion.div>
-                                ))}
-                            </div>
-                        ) : (
-                            <div className="flex flex-col items-center justify-center py-8 text-gray-400">
-                                <FontAwesomeIcon
-                                    icon={faInbox}
-                                    className="text-4xl mb-3"
-                                />
-                                <p>No unread messages</p>
-                            </div>
+                <div className="flex justify-between items-center mb-4">
+                    <div className="flex items-center">
+                        <h2 className="text-xl font-semibold">Unread Messages</h2>
+                        {unreadMessages && unreadMessages.length > 0 && (
+                            <span className="ml-3 bg-highlight text-white text-xs font-medium px-2.5 py-0.5 rounded-full">
+                                {unreadMessages.length}
+                            </span>
                         )}
                     </div>
+                    <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        className="text-sm text-highlight hover:text-accent"
+                    >
+                        View All
+                    </motion.button>
+                </div>
+
+                {unreadMessages && unreadMessages.length > 0 ? (
+                    <div className="space-y-3">
+                        {unreadMessages.slice(0, 5).map((message, index) => (
+                            <motion.div
+                                key={index}
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: index * 0.1 }}
+                                className="p-4 bg-[#3f2c84] rounded-lg hover:bg-[#4a3795] cursor-pointer group"
+                            >
+                                <div className="flex justify-between mb-1">
+                                    <span className="font-medium text-highlight">{message.tournamentName}</span>
+                                    <span className="text-xs text-gray-300">{message.timeSent}</span>
+                                </div>
+                                <p className="text-sm text-gray-200 truncate">{message.content}</p>
+                                <div className="mt-2 text-xs text-gray-400">
+                                    From: {message.sender}
+                                </div>
+                                <div className="mt-2 text-right">
+                                    <span className="text-xs text-highlight opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                                        Mark as read →
+                                    </span>
+                                </div>
+                            </motion.div>
+                        ))}
+                    </div>
+                ) : (
+                    <div className="flex flex-col items-center justify-center py-8 text-gray-400">
+                        <FontAwesomeIcon
+                            icon={faInbox}
+                            className="text-4xl mb-3"
+                        />
+                        <p>No unread messages</p>
+                    </div>
+                )}
+            </div>
             <Footer />
         </div>
     );
