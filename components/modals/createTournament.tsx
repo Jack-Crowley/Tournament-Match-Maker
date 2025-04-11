@@ -108,7 +108,7 @@ export const CreateTournament = ({ isModalOpen, setIsModalOpen, ref }: { isModal
         setSkillFields([]);
         setNewSkillField('');
         setStep(1);
-        
+
         const startRules = {}
         generalRules.forEach((rule) => {
             (startRules as any)[rule.id] = false;
@@ -118,7 +118,7 @@ export const CreateTournament = ({ isModalOpen, setIsModalOpen, ref }: { isModal
 
     const Switch = ({ label, description, ruleKey }: { label: string, description?: string, ruleKey: string }) => {
         const [isOn, setIsOn] = useState<boolean>(rules[ruleKey] || false);
-    
+
         const handleSwitchChange = () => {
             setIsOn(!isOn);
             setRules(prev => ({
@@ -126,7 +126,7 @@ export const CreateTournament = ({ isModalOpen, setIsModalOpen, ref }: { isModal
                 [ruleKey]: !isOn
             }));
         };
-    
+
         return (
             <div className="flex items-center justify-between py-2 px-1 hover:bg-[#2C2C2C] rounded-md transition-colors">
                 <div className="flex flex-col">
@@ -227,13 +227,12 @@ export const CreateTournament = ({ isModalOpen, setIsModalOpen, ref }: { isModal
                                                 {buttons.map((button) => (
                                                     <div key={button.id} className="relative">
                                                         <motion.button
-                                                            className={`p-4 rounded-lg text-white text-center flex flex-col items-center justify-center ${
-                                                                selectedButton === button.id
+                                                            className={`p-4 rounded-lg text-white text-center flex flex-col items-center justify-center ${selectedButton === button.id
                                                                     ? "bg-gradient-to-br from-[#7458da] to-[#604BAC] shadow-lg shadow-[#7458da]/20"
                                                                     : isImplemented(button.id)
                                                                         ? "bg-[#2C2C2C] hover:bg-[#3C3C3C]"
                                                                         : "bg-[#2C2C2C] opacity-60 cursor-not-allowed"
-                                                            } w-full`}
+                                                                } w-full`}
                                                             whileHover={isImplemented(button.id) ? { scale: 1.03, y: -2 } : { scale: 1 }}
                                                             whileTap={isImplemented(button.id) ? { scale: 0.97 } : { scale: 1 }}
                                                             onClick={() => isImplemented(button.id) && handleButtonSelect(button.id)}
@@ -243,7 +242,7 @@ export const CreateTournament = ({ isModalOpen, setIsModalOpen, ref }: { isModal
                                                                 {button.description}
                                                             </span>
                                                         </motion.button>
-                                                        
+
                                                         {!isImplemented(button.id) && (
                                                             <div className="absolute inset-0 bg-black bg-opacity-50 rounded-lg flex items-center justify-center pointer-events-none">
                                                                 <div className="bg-black bg-opacity-70 text-white px-3 py-2 rounded text-xs font-medium flex items-center">
@@ -273,7 +272,7 @@ export const CreateTournament = ({ isModalOpen, setIsModalOpen, ref }: { isModal
                                 {step === 2 && (
                                     <>
                                         <div className="flex items-center mb-6">
-                                            <button 
+                                            <button
                                                 onClick={() => setStep(1)}
                                                 className="mr-3 text-[#7458da] hover:text-[#8a6ceb] transition-colors"
                                             >
@@ -360,7 +359,7 @@ export const CreateTournament = ({ isModalOpen, setIsModalOpen, ref }: { isModal
                                                 />
                                             </div>
 
-                                            <div className="p-4 bg-[#252525] rounded-lg border border-[#3A3A3A]">
+                                            {/* <div className="p-4 bg-[#252525] rounded-lg border border-[#3A3A3A]">
                                                 <div className="flex items-center mb-3">
                                                     <FontAwesomeIcon icon={faAward} className="mr-2 text-[#7458da]" />
                                                     <h3 className="text-white font-medium">Skill Fields</h3>
@@ -396,10 +395,10 @@ export const CreateTournament = ({ isModalOpen, setIsModalOpen, ref }: { isModal
                                                         ))}
                                                     </ul>
                                                 )}
-                                            </div>
+                                            </div> */}
                                         </div>
 
-                                        <div className="mt-6">
+                                        {/* <div className="mt-6">
                                             <h3 className="text-md font-medium mb-3 text-gray-300 flex items-center">
                                                 <FontAwesomeIcon icon={faUserShield} className="text-[#7458da] mr-2" />
                                                 General Settings
@@ -409,7 +408,7 @@ export const CreateTournament = ({ isModalOpen, setIsModalOpen, ref }: { isModal
                                                     <Switch key={id} label={fullName} description={description} ruleKey={id} />
                                                 ))}
                                             </div>
-                                        </div>
+                                        </div> */}
 
                                         <div className="mt-8 grid grid-cols-2 gap-4">
                                             <motion.button
