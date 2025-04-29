@@ -8,7 +8,8 @@ import { createClient } from "@/utils/supabase/client";
 import { Tournament } from "@/types/tournamentTypes";
 import { PlayerModal } from "./modals/editPlayersModal";
 import { ConfirmModal, ConfirmModalInformation } from "./modals/confirmationModal";
-
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faTrash, faUserClock, faUserMinus, faUserPlus, faUsers } from "@fortawesome/free-solid-svg-icons";
 export const PlayersTable = ({
     players,
     setPlayers,
@@ -139,7 +140,6 @@ export const PlayersTable = ({
         setSelectedPlayers(new Set());
     };
 
-
     return (
         <div>
             {modalPlayer && (
@@ -153,84 +153,104 @@ export const PlayersTable = ({
             <ConfirmModal information={confirmModalInfo} />
 
             {players.length > 0 && (
-                <div className={`mb-6 ${type == "active" ? "" : "mt-12"} mx-auto`}>
-                    <div className="flex justify-between items-center mb-6">
-                        <h2 className="text-[#7458da] font-bold text-2xl">{type == "active" ? "Registered Players" : "Waitlist"}</h2>
-                        {canDelete && (
-                            <div className="space-x-4">
+                <div className={`mb-6 ${type === "active" ? "" : "mt-8"}`}>
+                    <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-3">
+                        <h2 className="text-xl font-bold flex items-center">
+                            <div className="w-8 h-8 rounded-full flex items-center justify-center mr-3">
+                                <FontAwesomeIcon
+                                    icon={type === "active" ? faUsers : faUserClock}
+                                    className="text-purple-200"
+                                />
+                            </div>
+                            <span className="bg-clip-text text-transparent bg-gradient-to-r text-white">
+                                {type === "active" ? "Registered Players" : "Waitlist"}
+                                <span className="ml-2 text-lg">({players.length})</span>
+                            </span>
+                        </h2>
+
+                        {canDelete && selectedPlayers.size > 0 && (
+                            <div className="flex space-x-3">
                                 <button
-                                    className={`px-4 py-2 border-2 transition-all duration-300 ease-in-out rounded-lg text-white ${selectedPlayers.size > 0
-                                        ? "bg-[#1f1f1f] border-[#222222] hover:bg-[#171717] hover:border-[#171717]"
-                                        : "border-[#000000] bg-[#1717178d] cursor-not-allowed"
-                                        }`}
+                                    className="px-4 py-2 bg-indigo-600/20 hover:bg-indigo-600/30 transition-colors rounded-lg flex items-center justify-center gap-2 text-purple-200 border border-indigo-600/30"
                                     onClick={() => handleBulkSwitch()}
                                 >
-                                    {type == "active" ? "Move to Waitlist" : "Move to active"}
+                                    <FontAwesomeIcon icon={type === "active" ? faUserMinus : faUserPlus} />
+                                    <span>{type === "active" ? "Move to Waitlist" : "Move to Active"}</span>
                                 </button>
                                 <button
-                                    className={`px-4 py-2 border-2 transition-all duration-300 ease-in-out rounded-lg text-white ${selectedPlayers.size > 0
-                                        ? "bg-[#c02a2a] border-[#c02a2a] hover:bg-[#a32424] hover:border-[#a32424]"
-                                        : "border-[#c02a2a8b] bg-[#4512127b] cursor-not-allowed"
-                                        }`}
+                                    className="px-4 py-2 bg-red-600/20 hover:bg-red-600/30 transition-colors rounded-lg flex items-center justify-center gap-2 text-red-200 border border-red-600/30"
                                     onClick={() => handleBulkDelete()}
                                 >
-                                    Delete
+                                    <FontAwesomeIcon icon={faTrash} />
+                                    <span>Delete</span>
                                 </button>
                             </div>
                         )}
                     </div>
 
-                    <table className="w-full mx-auto bg-deep rounded-lg shadow-lg">
-                        <thead className="bg-[#1b113d]">
-                            <tr>
-                                {canDelete && (
-                                    <th className="p-3 text-left text-white w-10">
-                                        <Checkbox deep={true} checked={selectedPlayers.size === players.length} onChange={() => {
-                                            if (selectedPlayers.size !== players.length) {
-                                                setSelectedPlayers(new Set(players.map(player => player.id)));
-                                            } else {
-                                                setSelectedPlayers(new Set());
-                                            }
-                                        }} />
-                                    </th>
-                                )}
-                                <th className="p-3 text-left text-white">Name</th>
-                                {Array.isArray(tournament?.skill_fields) && tournament.skill_fields.map((skill, index) => (
-                                    <th key={index} className="p-3 text-left text-white">
-                                        {skill.name}
-                                    </th>
-                                ))}
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {players.map(player => (
-                                <tr
-                                    key={player.id}
-                                    onClick={(e) => {
-                                        if ((e.target as HTMLElement).tagName !== "INPUT") {
-                                            setModalPlayer(player);
-                                        }
-                                    }}
-                                    className="hover:bg-[#2a1b5f] bg-[#22154F] transition-colors duration-50 cursor-pointer"
-                                >
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                        {players.map((player) => (
+                            <div
+                                key={player.id}
+                                className={`bg-[#6a33a15c] rounded-xl border border-white/10 shadow-md p-4 flex flex-col justify-between cursor-pointer hover:bg-indigo-900/50 transition-colors duration-150 ${selectedPlayers.has(player.id) ? "bg-indigo-600" : ""
+                                    }`}
+                            >
+                                <div>
                                     {canDelete && (
-                                        <td className="p-3">
-                                            <CheckboxWithEvent checked={selectedPlayers.has(player.id)} onChange={(e) => {
-                                                e.stopPropagation();
-                                                handleSelectPlayer(player.id);
-                                            }} />
-                                        </td>
+                                        <div className="top-2 right-2">
+                                            <CheckboxWithEvent
+                                                checked={selectedPlayers.has(player.id)}
+                                                onChange={(e) => {
+                                                    e.stopPropagation();
+                                                    handleSelectPlayer(player.id);
+                                                }}
+                                                deep={true}
+                                            />
+                                        </div>
                                     )}
-                                    <td className="p-3 text-white">{player.player_name}</td>
-                                    {Array.isArray(tournament?.skill_fields) && tournament.skill_fields.map((skill, index) => (
-                                        <td key={index} className="p-3">
-                                            {player.skills[index].type === "numeric" ? player.skills[index].value : player.skills[index].category_type}
-                                        </td>
-                                    ))}
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                                    <h3
+                                        className="text-lg font-semibold text-white mb-2 cursor-pointer"
+                                        onClick={() => setModalPlayer(player)}
+                                    >
+                                        {player.player_name}
+                                    </h3>
+                                    {Array.isArray(tournament?.skill_fields) &&
+                                        tournament.skill_fields.map((skill, index) => (
+                                            <div key={index} className="mb-1">
+                                                <span className="text-purple-200/80 text-sm">{skill.name}:</span>
+                                                {player.skills[index]?.type === "numeric" ? (
+                                                    <div className="flex items-center ml-2">
+                                                        <div className="w-5 h-5 rounded-full bg-indigo-600/20 flex items-center justify-center mr-1">
+                                                            <span className="text-xs font-medium">{player.skills[index]?.value}</span>
+                                                        </div>
+                                                        <div className="w-16 bg-indigo-900/30 rounded-full h-1">
+                                                            <div
+                                                                className="h-1 rounded-full bg-gradient-to-r from-purple-400 to-indigo-400"
+                                                                style={{ width: `${(player.skills[index]?.value / 10) * 100}%` }}
+                                                            ></div>
+                                                        </div>
+                                                    </div>
+                                                ) : (
+                                                    <span className="ml-2 px-2 py-0.5 text-xs rounded-full bg-indigo-800/30 border border-indigo-800/50">
+                                                        {player.skills[index]?.category_type}
+                                                    </span>
+                                                )}
+                                            </div>
+                                        ))}
+                                </div>
+
+                                <div className="mt-4 flex justify-end">
+                                    
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    {canDelete && players.length > 0 && selectedPlayers.size === 0 && (
+                        <div className="text-center mt-8 text-purple-200/60 text-sm">
+                            Click on a player to edit details or select players to perform actions
+                        </div>
+                    )}
                 </div>
             )}
         </div>

@@ -25,28 +25,43 @@ export const PlayerManagementTabs = ({ tournamentID, onClose }: { tournamentID: 
 
     const addPlayer = async (player: TournamentPlayer | null) => {
         if (!player) return;
-
-        const bracketPlayer : BracketPlayer = {
+    
+        const bracketPlayer: BracketPlayer = {
             uuid: player.member_uuid,
             name: player.player_name,
             email: "",
             account_type: "active",
-        } 
-
-        const { error } = await supabase
-            .from("tournament_players")
-            .update({ type: "active" })
-            .eq("id", player.id)
-            .single();
-
-        if (error) {
-            triggerMessage("Error moving player", "red");
-            console.error(error);
-            return;
+        };
+    
+        try {
+            const response = await fetch("/api/tournament/bulk-switch", {
+                method: "PATCH",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    tournamentID: player.tournament_id,
+                    playerIDs: [player.id],
+                    type: player.type,
+                    maxPlayers: null,
+                    otherPlayersCount: 0,
+                }),
+            });
+    
+            if (!response.ok) {
+                const data = await response.json();
+                triggerMessage(data.error || "Error moving player", "red");
+                console.error(data);
+                return;
+            }
+    
+            onClose(bracketPlayer);
+        } catch (err) {
+            console.error(err);
+            triggerMessage("Unexpected error occurred", "red");
         }
-
-        onClose(bracketPlayer)
-    }
+    };
+    
 
     useEffect(() => {
         async function loadData() {

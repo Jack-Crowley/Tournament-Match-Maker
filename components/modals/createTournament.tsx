@@ -360,7 +360,7 @@ export const CreateTournament = ({ isModalOpen, setIsModalOpen, ref }: { isModal
                                                 />
                                             </div>
 
-                                            <div className="p-4 bg-[#252525] rounded-lg border border-[#3A3A3A]">
+                                            {/* <div className="p-4 bg-[#252525] rounded-lg border border-[#3A3A3A]">
                                                 <div className="flex items-center mb-3">
                                                     <FontAwesomeIcon icon={faAward} className="mr-2 text-[#7458da]" />
                                                     <h3 className="text-white font-medium">Skill Fields</h3>
@@ -396,7 +396,7 @@ export const CreateTournament = ({ isModalOpen, setIsModalOpen, ref }: { isModal
                                                         ))}
                                                     </ul>
                                                 )}
-                                            </div>
+                                            </div> */}
                                         </div>
 
                                         <div className="mt-6">
