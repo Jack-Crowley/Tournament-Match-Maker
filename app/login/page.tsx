@@ -1,8 +1,6 @@
 "use client"
 
 import { useEffect, useState, Suspense } from 'react';
-import { Auth } from '@supabase/auth-ui-react';
-import { ThemeSupa } from '@supabase/auth-ui-shared';
 import { createClient } from '@/utils/supabase/client';
 import ReCAPTCHA from 'react-google-recaptcha';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -43,7 +41,7 @@ const LoginPageContent = () => {
     } catch (err) {
       console.error('Unexpected error during anonymous sign-in:', err);
     }
-  };
+  }; 
 
   return (
     <div className="w-full min-h-screen flex justify-center items-center bg-gradient-to-b from-[#160A3A] to-[#2A1A5E] p-4">
@@ -54,7 +52,7 @@ const LoginPageContent = () => {
             <p className="text-purple-200 text-lg">Sign in to continue to your account</p>
           </div>
           
-          <div className="bg-[#ffffff15] backdrop-blur-md rounded-2xl shadow-xl border border-white/10 overflow-hidden">
+          <div className="bg-[#ffffff10] backdrop-blur-md rounded-2xl shadow-xl border border-white/10 overflow-hidden">
             {/* Sign in options container */}
             <div className="p-8">
               <h2 className="text-xl font-medium text-white mb-6 text-center">Choose how to sign in</h2>

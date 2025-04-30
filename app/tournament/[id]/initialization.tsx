@@ -11,7 +11,6 @@ import {
   faMapMarkerAlt, 
   faInfoCircle, 
   faDownload,
-  faChevronRight,
   faPlay,
   faUserPlus,
   faTrophy

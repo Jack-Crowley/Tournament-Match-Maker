@@ -3,20 +3,18 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Tournament } from "@/types/tournamentTypes";
-import { Player } from "@/types/playerTypes";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCheck, faTimes, faExclamationTriangle, faEdit, faPlus, faUser, faUserShield, faHistory } from "@fortawesome/free-solid-svg-icons";
+import { faCheck, faTimes, faExclamationTriangle, faPlus, faUser, faUserShield, faHistory } from "@fortawesome/free-solid-svg-icons";
 import { createClient } from "@/utils/supabase/client";
-import { useMessage } from "@/context/messageContext";
 import { ScoreReport } from "@/types/scoreReport";
 import { Bracket, Matchup } from "@/types/bracketTypes";
 import { User } from "@/types/userType";
 
 export function ScoreReports({ tournamentID, bracket, user, tournament }: { tournamentID: number, bracket: Bracket, user: User, tournament: Tournament }) {
+    if(tournament.id) {}
     const [userRole, setUserRole] = useState<"player" | "admin">("player");
     const [scoreReports, setScoreReports] = useState<ScoreReport[]>([]);
     const [matches, setMatches] = useState<Matchup[]>([]);
-    const [players, setPlayers] = useState<Player[]>([]);
     const [showNewReportForm, setShowNewReportForm] = useState(false);
 
     const [reportFormData, setReportFormData] = useState({
@@ -31,7 +29,6 @@ export function ScoreReports({ tournamentID, bracket, user, tournament }: { tour
         requireBothReports: true
     });
 
-    const { triggerMessage } = useMessage();
     const supabase = createClient();
 
     useEffect(() => {
@@ -51,7 +48,9 @@ export function ScoreReports({ tournamentID, bracket, user, tournament }: { tour
 
             setScoreReports(data)
         }
-    }, []);
+
+        loadData()
+    }, [bracket.rounds, supabase, tournamentID, user.uuid]);
 
     const toggleRole = () => {
         setUserRole(userRole === "player" ? "admin" : "player");
@@ -91,7 +90,7 @@ export function ScoreReports({ tournamentID, bracket, user, tournament }: { tour
 
     const submitScoreReport = async () => {};
 
-    const acceptScoreReport = (reportId: string) => {};
+    const acceptScoreReport = (reportId: string) => {if (reportId) {}};
 
     
     const getGroupedReports = () => {
@@ -273,7 +272,7 @@ export function ScoreReports({ tournamentID, bracket, user, tournament }: { tour
                                         </div>
 
                                         <div className="flex-1">
-                                            <label className="block mb-2">Opponent's Score</label>
+                                            <label className="block mb-2">Opponent&apos;s Score</label>
                                             <input
                                                 type="number"
                                                 min="0"
@@ -381,7 +380,7 @@ export function ScoreReports({ tournamentID, bracket, user, tournament }: { tour
                                     <div className="mt-4 flex justify-end space-x-4">
                                         {reports.length === 2 && !matchReportsMatch && (
                                             <div className="flex-1 bg-red-900/30 p-2 rounded-lg text-sm">
-                                                Reports don't match. Manual review required.
+                                                Reports don&apos;t match. Manual review required.
                                             </div>
                                         )}
 
@@ -392,7 +391,7 @@ export function ScoreReports({ tournamentID, bracket, user, tournament }: { tour
                                                 className="px-4 py-2 bg-green-700 text-white rounded-lg hover:bg-green-600 transition-colors flex items-center"
                                             >
                                                 <FontAwesomeIcon icon={faCheck} className="mr-2" />
-                                                Accept {getPlayerName(report, false)}'s Report
+                                                Accept {getPlayerName(report, false)}&apos;s Report
                                             </button>
                                         ))}
                                     </div>

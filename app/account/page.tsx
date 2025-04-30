@@ -21,7 +21,6 @@ import Link from "next/link";
 export default function AccountPage() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [organizingIndex, setOrganizingIndex] = useState<number>(4)
   const [playingTournaments, setPlayingTournaments] = useState<Tournament[]>([]);
   const [organizingTournaments, setOrganizingTournaments] = useState<Tournament[]>([]);
   const client = useClient();
@@ -196,7 +195,7 @@ export default function AccountPage() {
                   </Link>
 
                   <Link href="/tournaments">
-                    <div className="flex items-center justify-between p-3 bg-indigo-600/20 hover:bg-indigo-600/30 rounded-lg transition duration-200 cursor-pointer">
+                    <div className="flex mt-4 items-center justify-between p-3 bg-indigo-600/20 hover:bg-indigo-600/30 rounded-lg transition duration-200 cursor-pointer">
                       <div className="flex items-center">
                         <div className="w-8 h-8 rounded-full bg-indigo-600/50 flex items-center justify-center mr-3">
                           <FontAwesomeIcon icon={faGamepad} className="text-white" />
@@ -257,7 +256,7 @@ export default function AccountPage() {
 
                 {organizingTournaments.length > 0 ? (
                   <div className="space-y-3">
-                    {organizingTournaments.slice(0, organizingIndex).map(tournament => (
+                    {organizingTournaments.slice(0, 4).map(tournament => (
                       <Link href={`/tournaments/${tournament.id}/manage`} key={tournament.id}>
                         <div className="mb-4 flex items-center justify-between p-4 bg-white/5 hover:bg-white/10 rounded-xl transition duration-200 cursor-pointer border border-white/5">
                           <div>
@@ -279,7 +278,7 @@ export default function AccountPage() {
                       </Link>
                     ))}
 
-                    {organizingIndex < organizingTournaments.length && (
+                    {organizingTournaments.length >= 4 && (
                       <div className="rounded-xl p-2 text-center">
                         <Link href="/tournaments">
                           <button className="mt-4 bg-indigo-600 hover:bg-indigo-500 text-white font-medium py-2 px-4 rounded-lg transition duration-200">
