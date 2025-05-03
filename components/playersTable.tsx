@@ -1,13 +1,23 @@
 "use client";
 
 import { Player } from "@/types/playerTypes";
-import { Checkbox, CheckboxWithEvent } from "./checkbox";
 import { useEffect, useState } from "react";
 import { useMessage } from "@/context/messageContext";
 import { createClient } from "@/utils/supabase/client";
 import { Tournament } from "@/types/tournamentTypes";
 import { PlayerModal } from "./modals/editPlayersModal";
 import { ConfirmModal, ConfirmModalInformation } from "./modals/confirmationModal";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { 
+  faTrash, 
+  faUserClock, 
+  faUserMinus, 
+  faUserPlus, 
+  faUsers,
+  faCheck,
+  faXmark
+} from "@fortawesome/free-solid-svg-icons";
+import { AnimatePresence, motion } from "framer-motion";
 
 export const PlayersTable = ({
     players,
@@ -30,21 +40,67 @@ export const PlayersTable = ({
     const [modalPlayer, setModalPlayer] = useState<Player | null>(null);
     const [canDelete, setCanDelete] = useState<boolean>(false);
     const [confirmModalInfo, setConfirmModalInfo] = useState<ConfirmModalInformation | null>(null);
+    const [isProcessing, setIsProcessing] = useState<boolean>(false);
+    const [selectionMode, setSelectionMode] = useState<boolean>(false);
     const { triggerMessage } = useMessage();
     const supabase = createClient();
 
     useEffect(() => {
-        setCanDelete(permission_level == "admin" || permission_level == "owner");
+        setCanDelete(permission_level === "admin" || permission_level === "owner");
     }, [permission_level]);
 
-    const handleSelectPlayer = (playerId: string) => {
+    // Reset selection mode when no players are selected
+    useEffect(() => {
+        if (selectedPlayers.size === 0) {
+            setSelectionMode(false);
+        }
+    }, [selectedPlayers]);
+
+    const toggleSelectionMode = () => {
+        if (selectionMode) {
+            setSelectedPlayers(new Set());
+        }
+        setSelectionMode(!selectionMode);
+    };
+
+    const handleSelectPlayer = (playerId: string, event?: React.MouseEvent) => {
+        if (event) {
+            event.stopPropagation();
+        }
+        
         const newSelectedPlayers = new Set(selectedPlayers);
+        
         if (newSelectedPlayers.has(playerId)) {
             newSelectedPlayers.delete(playerId);
         } else {
             newSelectedPlayers.add(playerId);
         }
+        
         setSelectedPlayers(newSelectedPlayers);
+        
+        // If a player is selected, automatically enter selection mode
+        if (newSelectedPlayers.size > 0 && !selectionMode) {
+            setSelectionMode(true);
+        }
+    };
+
+    const handleSelectAll = () => {
+        if (selectedPlayers.size === players.length) {
+            // Deselect all
+            setSelectedPlayers(new Set());
+        } else {
+            // Select all
+            setSelectedPlayers(new Set(players.map(player => player.id)));
+        }
+    };
+
+    const handleCardClick = (player: Player, event: React.MouseEvent) => {
+        // If we're in selection mode, clicking the card selects the player
+        if (selectionMode) {
+            handleSelectPlayer(player.id, event);
+        } else {
+            setModalPlayer(player);
+        }
     };
 
     const handleBulkDelete = async () => {
@@ -53,18 +109,36 @@ export const PlayersTable = ({
             return;
         }
 
-        const { error } = await supabase
-            .from("tournament_players")
-            .delete()
-            .in("id", Array.from(selectedPlayers));
+        const confirmModal: ConfirmModalInformation = {
+            title: "Delete Players",
+            content: `Are you sure you want to delete ${selectedPlayers.size === 1 ? 'this player' : `these ${selectedPlayers.size} players`}? This action cannot be undone.`,
+            onCancel: () => setConfirmModalInfo(null),
+            onSuccess: async () => {
+                setIsProcessing(true);
+                
+                try {
+                    const { error } = await supabase
+                        .from("tournament_players")
+                        .delete()
+                        .in("id", Array.from(selectedPlayers));
 
-        if (error) {
-            triggerMessage("Error deleting players", "red");
-        } else {
-            triggerMessage("Players deleted successfully", "green");
-            setPlayers(players.filter(player => !selectedPlayers.has(player.id)));
-            setSelectedPlayers(new Set());
-        }
+                    if (error) {
+                        throw new Error(error.message);
+                    }
+                    
+                    triggerMessage(`${selectedPlayers.size === 1 ? 'Player' : 'Players'} deleted successfully`, "green");
+                    setPlayers(players.filter(player => !selectedPlayers.has(player.id)));
+                    setSelectedPlayers(new Set());
+                } catch (error) {
+                    triggerMessage(`Error deleting players: ${error instanceof Error ? error.message : 'Unknown error'}`, "red");
+                } finally {
+                    setIsProcessing(false);
+                    setConfirmModalInfo(null);
+                }
+            },
+        };
+
+        setConfirmModalInfo(confirmModal);
     };
 
     const handleBulkSwitch = async () => {
@@ -84,7 +158,37 @@ export const PlayersTable = ({
             otherPlayersCount: otherPlayers.length,
         };
 
-        const attemptSwitch = async () => {
+        const executeBulkSwitch = async () => {
+            setIsProcessing(true);
+            
+            try {
+                const res = await fetch("/api/tournament/bulk-switch", {
+                    method: "PATCH",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload),
+                });
+
+                const result = await res.json();
+
+                if (!res.ok) {
+                    throw new Error(result.error || "Something went wrong");
+                }
+
+                triggerMessage(`${selectedPlayers.size === 1 ? 'Player' : 'Players'} moved to ${newType} successfully`, "green");
+            
+                setOtherPlayers(prev => [...prev, ...players.filter(p => selectedPlayers.has(p.id))]);
+                setPlayers(players.filter(p => !selectedPlayers.has(p.id)));
+                setSelectedPlayers(new Set());
+            } catch (error) {
+                triggerMessage(`Error moving players: ${error instanceof Error ? error.message : 'Unknown error'}`, "red");
+            } finally {
+                setIsProcessing(false);
+                setConfirmModalInfo(null);
+            }
+        };
+
+        // First check if there's a potential issue
+        try {
             const res = await fetch("/api/tournament/bulk-switch", {
                 method: "PATCH",
                 headers: { "Content-Type": "application/json" },
@@ -93,52 +197,47 @@ export const PlayersTable = ({
 
             const result = await res.json();
 
-            if (!res.ok) {
-                triggerMessage(result.error || "Something went wrong", "red");
+            if (res.status === 409 && result.warning) {
+                const confirmModal: ConfirmModalInformation = {
+                    title: "Player Limit Warning",
+                    content: `Moving ${playerIDs.length > 1 ? `these ${playerIDs.length} players` : "this player"} to the active list would exceed the maximum player limit of ${tournament.max_players}. Do you want to proceed anyway?`,
+                    onCancel: () => setConfirmModalInfo(null),
+                    onSuccess: executeBulkSwitch,
+                };
+
+                setConfirmModalInfo(confirmModal);
                 return;
             }
 
-            triggerMessage(`Players moved to ${newType} successfully`, "green");
+            if (!res.ok) {
+                throw new Error(result.error || "Something went wrong");
+            }
 
-            setOtherPlayers(prev => [...prev, ...players.filter(p => selectedPlayers.has(p.id))]);
-            setPlayers(players.filter(p => !selectedPlayers.has(p.id)));
-            setSelectedPlayers(new Set());
-        };
-
-        const res = await fetch("/api/tournament/bulk-switch", {
-            method: "PATCH",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload),
-        });
-
-        const result = await res.json();
-
-        if (res.status === 409 && result.warning) {
-            const confirmModal: ConfirmModalInformation = {
-                title: "Are you sure you want to do this?",
-                content: `Switching ${playerIDs.length > 1 ? `these ${playerIDs.length} players` : "this 1 player"} over to the active players table would violate the maximum players constraint.`,
-                onCancel: () => setConfirmModalInfo(null),
-                onSuccess: async () => {
-                    await attemptSwitch();
-                    setConfirmModalInfo(null);
-                },
-            };
-
-            setConfirmModalInfo(confirmModal);
-            return;
+            // If no issues, execute the switch
+            await executeBulkSwitch();
+        } catch (error) {
+            triggerMessage(`Error checking player limits: ${error instanceof Error ? error.message : 'Unknown error'}`, "red");
         }
-
-        if (!res.ok) {
-            triggerMessage(result.error || "Something went wrong", "red");
-            return;
-        }
-
-        triggerMessage(`Players moved to ${newType} successfully`, "green");
-        setOtherPlayers(prev => [...prev, ...players.filter(p => selectedPlayers.has(p.id))]);
-        setPlayers(players.filter(p => !selectedPlayers.has(p.id)));
-        setSelectedPlayers(new Set());
     };
 
+    const getActionButtonClass = (variant: 'primary' | 'danger' | 'default' = 'default') => {
+        const baseClasses = "px-4 py-2 rounded-lg flex items-center justify-center gap-2 transition-all duration-200 text-sm font-medium";
+        
+        switch (variant) {
+            case 'primary':
+                return `${baseClasses} bg-indigo-600/20 hover:bg-indigo-600/30 text-purple-200 border border-indigo-600/30 hover:border-indigo-500/50`;
+            case 'danger':
+                return `${baseClasses} bg-red-600/20 hover:bg-red-600/30 text-red-200 border border-red-600/30 hover:border-red-500/50`;
+            default:
+                return `${baseClasses} bg-gray-700/50 hover:bg-gray-700/70 text-gray-200 border border-gray-600/30 hover:border-gray-500/50`;
+        }
+    };
+
+    const DestinationLabel = () => (
+        <span className="text-sm font-medium">
+            {type === "active" ? "Move to Waitlist" : "Move to Active List"}
+        </span>
+    );
 
     return (
         <div>
@@ -153,84 +252,158 @@ export const PlayersTable = ({
             <ConfirmModal information={confirmModalInfo} />
 
             {players.length > 0 && (
-                <div className={`mb-6 ${type == "active" ? "" : "mt-12"} mx-auto`}>
-                    <div className="flex justify-between items-center mb-6">
-                        <h2 className="text-[#7458da] font-bold text-2xl">{type == "active" ? "Registered Players" : "Waitlist"}</h2>
+                <div className={`mb-6 ${type === "active" ? "" : "mt-8"}`}>
+                    <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-3">
+                        <div className="flex items-center">
+                            <div className="w-10 h-10 rounded-full flex items-center justify-center mr-3 bg-indigo-900/30">
+                                <FontAwesomeIcon
+                                    icon={type === "active" ? faUsers : faUserClock}
+                                    className="text-purple-200"
+                                    size="lg"
+                                />
+                            </div>
+                            <div>
+                                <h2 className="text-xl font-bold flex items-center">
+                                    <span className="text-white">
+                                        {type === "active" ? "Registered Players" : "Waitlist"}
+                                        <span className="ml-2 text-lg text-purple-300">({players.length})</span>
+                                    </span>
+                                </h2>
+                                {selectedPlayers.size > 0 && (
+                                    <div className="text-sm text-purple-300 mt-1">
+                                        {selectedPlayers.size} {selectedPlayers.size === 1 ? 'player' : 'players'} selected
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
                         {canDelete && (
-                            <div className="space-x-4">
-                                <button
-                                    className={`px-4 py-2 border-2 transition-all duration-300 ease-in-out rounded-lg text-white ${selectedPlayers.size > 0
-                                        ? "bg-[#1f1f1f] border-[#222222] hover:bg-[#171717] hover:border-[#171717]"
-                                        : "border-[#000000] bg-[#1717178d] cursor-not-allowed"
-                                        }`}
-                                    onClick={() => handleBulkSwitch()}
-                                >
-                                    {type == "active" ? "Move to Waitlist" : "Move to active"}
-                                </button>
-                                <button
-                                    className={`px-4 py-2 border-2 transition-all duration-300 ease-in-out rounded-lg text-white ${selectedPlayers.size > 0
-                                        ? "bg-[#c02a2a] border-[#c02a2a] hover:bg-[#a32424] hover:border-[#a32424]"
-                                        : "border-[#c02a2a8b] bg-[#4512127b] cursor-not-allowed"
-                                        }`}
-                                    onClick={() => handleBulkDelete()}
-                                >
-                                    Delete
-                                </button>
+                            <div className="flex space-x-3">
+                                {selectionMode ? (
+                                    <>
+                                        <button
+                                            className={getActionButtonClass('default')}
+                                            onClick={handleSelectAll}
+                                            disabled={isProcessing}
+                                        >
+                                            <span>{selectedPlayers.size === players.length ? 'Deselect All' : 'Select All'}</span>
+                                        </button>
+                                        
+                                        {selectedPlayers.size > 0 && (
+                                            <>
+                                                <button
+                                                    className={getActionButtonClass('primary')}
+                                                    onClick={() => handleBulkSwitch()}
+                                                    disabled={isProcessing}
+                                                >
+                                                    <FontAwesomeIcon icon={type === "active" ? faUserMinus : faUserPlus} />
+                                                    <DestinationLabel />
+                                                </button>
+                                                <button
+                                                    className={getActionButtonClass('danger')}
+                                                    onClick={() => handleBulkDelete()}
+                                                    disabled={isProcessing}
+                                                >
+                                                    <FontAwesomeIcon icon={faTrash} />
+                                                    <span>Delete</span>
+                                                </button>
+                                            </>
+                                        )}
+                                        
+                                        <button
+                                            className={getActionButtonClass('default')}
+                                            onClick={toggleSelectionMode}
+                                            disabled={isProcessing}
+                                        >
+                                            <FontAwesomeIcon icon={faXmark} />
+                                            <span>Cancel</span>
+                                        </button>
+                                    </>
+                                ) : (
+                                    <button
+                                        className={getActionButtonClass('default')}
+                                        onClick={toggleSelectionMode}
+                                    >
+                                        <span>Select Players</span>
+                                    </button>
+                                )}
                             </div>
                         )}
                     </div>
 
-                    <table className="w-full mx-auto bg-deep rounded-lg shadow-lg">
-                        <thead className="bg-[#1b113d]">
-                            <tr>
-                                {canDelete && (
-                                    <th className="p-3 text-left text-white w-10">
-                                        <Checkbox deep={true} checked={selectedPlayers.size === players.length} onChange={() => {
-                                            if (selectedPlayers.size !== players.length) {
-                                                setSelectedPlayers(new Set(players.map(player => player.id)));
-                                            } else {
-                                                setSelectedPlayers(new Set());
-                                            }
-                                        }} />
-                                    </th>
-                                )}
-                                <th className="p-3 text-left text-white">Name</th>
-                                {Array.isArray(tournament?.skill_fields) && tournament.skill_fields.map((skill, index) => (
-                                    <th key={index} className="p-3 text-left text-white">
-                                        {skill.name}
-                                    </th>
-                                ))}
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {players.map(player => (
-                                <tr
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                        <AnimatePresence>
+                            {players.map((player) => (
+                                <motion.div
+                                    layout
                                     key={player.id}
-                                    onClick={(e) => {
-                                        if ((e.target as HTMLElement).tagName !== "INPUT") {
-                                            setModalPlayer(player);
-                                        }
-                                    }}
-                                    className="hover:bg-[#2a1b5f] bg-[#22154F] transition-colors duration-50 cursor-pointer"
+                                    initial={{ opacity: 0, scale: 0.95 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    exit={{ opacity: 0, scale: 0.95 }}
+                                    transition={{ duration: 0.2 }}
+                                    onClick={(e) => handleCardClick(player, e)}
+                                    className={`relative bg-[#6a33a15c] rounded-xl border shadow-md p-4 flex flex-col justify-between cursor-pointer transition-all duration-200 
+                                        ${selectionMode ? 'hover:bg-indigo-900/60' : 'hover:bg-indigo-900/40'}
+                                        ${selectedPlayers.has(player.id) 
+                                            ? 'bg-indigo-800/60 border-indigo-400/50 shadow-lg shadow-indigo-900/20' 
+                                            : 'border-white/10'}`
+                                    }
                                 >
-                                    {canDelete && (
-                                        <td className="p-3">
-                                            <CheckboxWithEvent checked={selectedPlayers.has(player.id)} onChange={(e) => {
-                                                e.stopPropagation();
-                                                handleSelectPlayer(player.id);
-                                            }} />
-                                        </td>
+                                    {/* Selection indicator */}
+                                    {selectionMode && (
+                                        <div className="absolute top-3 right-3">
+                                            <div className={`w-6 h-6 rounded-full flex items-center justify-center transition-colors duration-200
+                                                ${selectedPlayers.has(player.id) 
+                                                    ? 'bg-indigo-500 text-white' 
+                                                    : 'bg-indigo-800/50 border border-indigo-500/30'}`}
+                                            >
+                                                {selectedPlayers.has(player.id) && (
+                                                    <FontAwesomeIcon icon={faCheck} size="xs" />
+                                                )}
+                                            </div>
+                                        </div>
                                     )}
-                                    <td className="p-3 text-white">{player.player_name}</td>
-                                    {Array.isArray(tournament?.skill_fields) && tournament.skill_fields.map((skill, index) => (
-                                        <td key={index} className="p-3">
-                                            {player.skills[index].type === "numeric" ? player.skills[index].value : player.skills[index].category_type}
-                                        </td>
-                                    ))}
-                                </tr>
+
+                                    <div>
+                                        <h3 className="text-lg font-semibold text-white mb-2">
+                                            {player.player_name}
+                                        </h3>
+                                        {Array.isArray(tournament?.skill_fields) &&
+                                            tournament.skill_fields.map((skill, index) => (
+                                                <div key={index} className="mb-2 flex items-start">
+                                                    <span className="text-purple-200/80 text-sm mr-2">{skill.name}:</span>
+                                                    {player.skills[index]?.type === "numeric" ? (
+                                                        <div className="flex items-center">
+                                                            <div className="w-6 h-6 rounded-full bg-indigo-600/20 flex items-center justify-center mr-2 border border-indigo-500/30">
+                                                                <span className="text-xs font-medium">{player.skills[index]?.value}</span>
+                                                            </div>
+                                                            <div className="w-24 bg-indigo-900/30 rounded-full h-2">
+                                                                <div
+                                                                    className="h-2 rounded-full bg-gradient-to-r from-purple-400 to-indigo-400"
+                                                                    style={{ width: `${(player.skills[index]?.value / 10) * 100}%` }}
+                                                                ></div>
+                                                            </div>
+                                                        </div>
+                                                    ) : (
+                                                        <span className="px-2 py-1 text-xs rounded-full bg-indigo-800/50 border border-indigo-700/50">
+                                                            {player.skills[index]?.category_type}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            ))}
+                                    </div>
+                                </motion.div>
                             ))}
-                        </tbody>
-                    </table>
+                        </AnimatePresence>
+                    </div>
+
+                    {canDelete && players.length > 0 && !selectionMode && (
+                        <div className="text-center mt-6 text-purple-200/60 text-sm">
+                            {type === "active" 
+                                ? "Click on a player card to view details or use 'Select Players' to manage multiple players" 
+                                : "Click on a waitlisted player to view details or select players to move them to the active list"}
+                        </div>
+                    )}
                 </div>
             )}
         </div>

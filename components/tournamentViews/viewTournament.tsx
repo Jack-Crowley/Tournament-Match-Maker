@@ -19,6 +19,7 @@ import { MessagingSystem } from "../messanging";
 import { TournamentInfoView } from "./infoView";
 import { RoundRobinTournament } from "./robin/roundRobinTournament";
 import { useRouter, useSearchParams } from 'next/navigation';
+import { ScoreReports } from "./scoreReports";
 
 export const SideNavbar = ({ tab, setTab, user }: {
     tab: string,
@@ -216,6 +217,10 @@ export const ViewTournament = ({ tournamentID, user }: { tournamentID: number, u
 
                         {activeTab == "Players" && (
                             <PlayersView tournamentID={tournamentID} bracket={bracket} user={user} setActiveTab={setActiveTab} />
+                        )}
+
+                        {activeTab == "Score Report" && tournament && (
+                            <ScoreReports tournamentID={tournamentID} tournament={tournament} bracket={bracket} user={user}/>
                         )}
 
                         {activeTab === "Announcements" && (

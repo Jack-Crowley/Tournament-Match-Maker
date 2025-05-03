@@ -35,6 +35,7 @@ export async function PATCH(req: NextRequest) {
         .eq('tournament_id', tournamentID)
         .eq('member_uuid', uuid)
         .eq('accepted', true)
+        .eq("permission_level", "Admin")
         .single()
 
     if (!isOwner && !organizer) {

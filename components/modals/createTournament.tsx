@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { ChangeEvent, useEffect, useState } from 'react';
 import { createClient } from '@/utils/supabase/client';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTrophy, faUserShield, faInfoCircle, faMapPin, faCalendar, faUsers, faAward, faChevronLeft } from '@fortawesome/free-solid-svg-icons';
+import { faTrophy, faUserShield, faInfoCircle, faMapPin, faCalendar, faUsers, faChevronLeft } from '@fortawesome/free-solid-svg-icons';
 
 interface Button {
     id: string;
@@ -41,7 +41,7 @@ export const CreateTournament = ({ isModalOpen, setIsModalOpen, ref }: { isModal
     const [endTime, setEndTime] = useState<string>('');
     const [maxPlayers, setMaxPlayers] = useState<number>(0);
     const [skillFields, setSkillFields] = useState<string[]>([]);
-    const [newSkillField, setNewSkillField] = useState<string>('');
+    // const [newSkillField, setNewSkillField] = useState<string>('');
     const [step, setStep] = useState<number>(1);
     const { triggerMessage } = useMessage()
     const client = useClient()
@@ -106,7 +106,7 @@ export const CreateTournament = ({ isModalOpen, setIsModalOpen, ref }: { isModal
         setEndTime('');
         setMaxPlayers(0);
         setSkillFields([]);
-        setNewSkillField('');
+        // setNewSkillField('');
         setStep(1);
 
         const startRules = {}
@@ -159,18 +159,18 @@ export const CreateTournament = ({ isModalOpen, setIsModalOpen, ref }: { isModal
         setStep(2);
     };
 
-    const addSkillField = () => {
-        if (newSkillField.trim() && !skillFields.includes(newSkillField.trim())) {
-            setSkillFields([...skillFields, newSkillField.trim()]);
-            setNewSkillField('');
-        }
-    };
+    // const addSkillField = () => {
+    //     if (newSkillField.trim() && !skillFields.includes(newSkillField.trim())) {
+    //         setSkillFields([...skillFields, newSkillField.trim()]);
+    //         setNewSkillField('');
+    //     }
+    // };
 
-    const removeSkillField = (index: number) => {
-        const updatedFields = [...skillFields];
-        updatedFields.splice(index, 1);
-        setSkillFields(updatedFields);
-    };
+    // const removeSkillField = (index: number) => {
+    //     const updatedFields = [...skillFields];
+    //     updatedFields.splice(index, 1);
+    //     setSkillFields(updatedFields);
+    // };
 
     const isImplemented = (buttonId: string) => {
         return implemented.includes(buttonId);

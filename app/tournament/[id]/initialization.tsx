@@ -2,7 +2,19 @@
 
 import { motion } from "framer-motion";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCopy, faGear, faQrcode, faUsers, faCalendarAlt, faMapMarkerAlt, faInfoCircle, faDownload } from '@fortawesome/free-solid-svg-icons';
+import { 
+  faCopy, 
+  faGear, 
+  faQrcode, 
+  faUsers, 
+  faCalendarAlt, 
+  faMapMarkerAlt, 
+  faInfoCircle, 
+  faDownload,
+  faPlay,
+  faUserPlus,
+  faTrophy
+} from '@fortawesome/free-solid-svg-icons';
 import { useState, useRef, useEffect } from 'react';
 import { useMessage } from '@/context/messageContext';
 import { createClient } from "@/utils/supabase/client";
@@ -227,7 +239,6 @@ export default function Initialization({ refreshTournament, user }: { user: User
 
         setStarting(true)
 
-
         if (!tournament) return;
 
         if (tournament.max_players && activePlayers.length > tournament.max_players) {
@@ -245,6 +256,7 @@ export default function Initialization({ refreshTournament, user }: { user: User
 
         startTournamentAfterConfirmation();
     };
+    
     const getMaxRounds = (numPlayers: number): number => {
         return Math.ceil(Math.log2(numPlayers));
     };
@@ -336,7 +348,6 @@ export default function Initialization({ refreshTournament, user }: { user: User
             };
         });
 
-
         function seedPlayers(playersToSeed: BracketPlayer[]) {
             return [...playersToSeed].sort((a, b) => {
                 // go in order of the skills arra
@@ -409,22 +420,9 @@ export default function Initialization({ refreshTournament, user }: { user: User
         saveMatchupsToDatabase(generatedMatchups);
     };
 
-    const ActionButton = ({ onClick, children, color = "#7458da", hoverColor = "#604BAC", className = "" }:
-        { onClick: () => void; children: React.ReactNode; color?: string; hoverColor?: string; className?: string }) => (
-        <button
-            className={`flex items-center justify-center px-4 py-2 rounded-lg text-white transition-all duration-300 shadow-md hover:shadow-lg ${className}`}
-            style={{ backgroundColor: color }}
-            onClick={onClick}
-            onMouseOver={(e) => (e.currentTarget.style.backgroundColor = hoverColor)}
-            onMouseOut={(e) => (e.currentTarget.style.backgroundColor = color)}
-        >
-            {children}
-        </button>
-    );
-
     if (loading) {
         return (
-            <div className="flex items-center justify-center h-screen" style={{ backgroundColor: "#160A3A" }}>
+            <div className="flex items-center justify-center min-h-screen bg-gradient-to-b from-[#160A3A] to-[#2A1A5E]">
                 <SpinningLoader />
             </div>
         );
@@ -432,88 +430,125 @@ export default function Initialization({ refreshTournament, user }: { user: User
 
     if (!tournament) {
         return (
-            <div className="flex flex-col items-center justify-center h-screen text-white" style={{ backgroundColor: "#160A3A" }}>
-                <h1 className="text-2xl font-bold mb-4">Tournament Not Found</h1>
-                <p>Unable to load tournament information.</p>
+            <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-b from-[#160A3A] to-[#2A1A5E] text-white p-4">
+                <div className="bg-white/5 backdrop-blur-md rounded-2xl p-8 border border-white/10 shadow-xl max-w-md w-full text-center">
+                    <div className="w-16 h-16 mx-auto rounded-full bg-indigo-600/50 flex items-center justify-center mb-4">
+                        <FontAwesomeIcon icon={faTrophy} className="text-2xl text-white" />
+                    </div>
+                    <h2 className="text-2xl font-bold mb-2">Tournament Not Found</h2>
+                    <p className="text-purple-200/80 mb-6">Unable to load tournament information.</p>
+                </div>
             </div>
         );
     }
 
     return (
-        <div className="relative min-h-screen py-10 px-4 md:px-8" style={{ backgroundColor: "#160A3A" }}>
+        <div className="min-h-screen bg-gradient-to-b from-[#160A3A] to-[#2A1A5E] text-white py-10 px-4">
             <ConfirmModal information={confirmModalInfo} />
 
-            <div className="max-w-6xl mx-auto bg-[#201644] rounded-2xl shadow-2xl overflow-hidden">
-                <div className="relative px-6 pt-8 md:px-10">
-                    <div className="flex items-center justify-between">
-                        <h1 className="text-[#7458da] font-bold text-3xl md:text-4xl text-center">{tournament.name}</h1>
-                        {(user.permission_level == "owner" || user.permission_level == "admin") && (
+            <div className="container mx-auto max-w-6xl">
+                {/* Header */}
+                <div className="mb-8">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <h1 className="text-4xl font-bold text-center md:text-left bg-clip-text text-transparent bg-gradient-to-r from-purple-200 to-indigo-300">
+                            {tournament.name}
+                        </h1>
+                        
+                        {(user.permission_level === "owner" || user.permission_level === "admin") && (
                             <button
                                 onClick={() => setIsTournamentEditModalOpen(true)}
-                                className="bg-[#7458da] hover:bg-[#604BAC] transition-colors p-2 rounded-full px-4"
-                                title="Edit Tournament Settings"
+                                className="bg-white/10 hover:bg-white/15 transition-colors p-2 rounded-lg flex items-center justify-center gap-2 px-4 text-purple-200 border border-white/10 shadow-md"
                             >
-                                Settings <FontAwesomeIcon icon={faGear} size="lg" />
+                                <span>Settings</span>
+                                <FontAwesomeIcon icon={faGear} />
                             </button>
                         )}
                     </div>
-
+                    
                     {tournament.description && (
-                        <div className="mt-4 text-gray-300 max-w-3xl">
+                        <div className="mt-4 text-purple-200/80 max-w-3xl">
                             <div className="flex items-start">
-                                <FontAwesomeIcon icon={faInfoCircle} className="text-[#7458da] mt-1 mr-3" />
+                                <FontAwesomeIcon icon={faInfoCircle} className="text-purple-300 mt-1 mr-3" />
                                 <p>{tournament.description}</p>
                             </div>
                         </div>
                     )}
                 </div>
 
-
-
-                <div className="p-6 md:p-8">
-                    {(tournament.location || tournament.start_time || tournament.end_time || tournament.max_players) && (
-                        <div className="bg-[#2a1a66] rounded-xl p-6 shadow-md mb-8">
-                            <h2 className="text-[#7458da] font-bold text-2xl mb-4">Tournament Details</h2>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                {tournament.location && (
-                                    <div className="flex items-center text-gray-300">
-                                        <FontAwesomeIcon icon={faMapMarkerAlt} className="text-[#7458da] mr-3" />
-                                        <span>{tournament.location}</span>
-                                    </div>
-                                )}
-
-                                {tournament.start_time && (
-                                    <div className="flex items-center text-gray-300">
-                                        <FontAwesomeIcon icon={faCalendarAlt} className="text-[#7458da] mr-3" />
-                                        <span>Start: {formatDateTime(tournament.start_time)}</span>
-                                    </div>
-                                )}
-
-                                {tournament.end_time && (
-                                    <div className="flex items-center text-gray-300">
-                                        <FontAwesomeIcon icon={faCalendarAlt} className="text-[#7458da] mr-3" />
-                                        <span>End: {formatDateTime(tournament.end_time)}</span>
-                                    </div>
-                                )}
-
-                                {tournament.max_players && (
-                                    <div className="flex items-center text-gray-300">
-                                        <FontAwesomeIcon icon={faUsers} className="text-[#7458da] mr-3" />
-                                        <span>Max Players: {tournament.max_players}</span>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    )}
-
-
-                    {(user.permission_level == "owner" || user.permission_level == "admin") && (
-                        <div className="bg-[#2a1a66] rounded-xl p-6 shadow-md mb-8">
-                            <h2 className="text-[#7458da] font-bold text-2xl mb-6">Player Registration</h2>
-
-                            <div className="flex items-center justify-between mb-6 p-4 bg-[#22154F] rounded-lg">
+                {/* Tournament Details Card */}
+                {(tournament.location || tournament.start_time || tournament.end_time || tournament.max_players) && (
+                    <div className="bg-white/5 backdrop-blur-md rounded-2xl p-6 border border-white/10 shadow-xl mb-8">
+                        <h2 className="text-xl font-bold mb-4 flex items-center">
+                            <FontAwesomeIcon icon={faInfoCircle} className="text-purple-300 mr-3" />
+                            <span>Tournament Details</span>
+                        </h2>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {tournament.location && (
                                 <div className="flex items-center">
-                                    <FontAwesomeIcon icon={faUsers} className="text-[#7458da] mr-3" />
+                                    <div className="w-10 h-10 rounded-full bg-indigo-600/30 flex items-center justify-center mr-3">
+                                        <FontAwesomeIcon icon={faMapMarkerAlt} className="text-purple-200" />
+                                    </div>
+                                    <div>
+                                        <p className="text-sm text-purple-200/70">Location</p>
+                                        <p className="text-white">{tournament.location}</p>
+                                    </div>
+                                </div>
+                            )}
+
+                            {tournament.start_time && (
+                                <div className="flex items-center">
+                                    <div className="w-10 h-10 rounded-full bg-indigo-600/30 flex items-center justify-center mr-3">
+                                        <FontAwesomeIcon icon={faCalendarAlt} className="text-purple-200" />
+                                    </div>
+                                    <div>
+                                        <p className="text-sm text-purple-200/70">Start Time</p>
+                                        <p className="text-white">{formatDateTime(tournament.start_time)}</p>
+                                    </div>
+                                </div>
+                            )}
+
+                            {tournament.end_time && (
+                                <div className="flex items-center">
+                                    <div className="w-10 h-10 rounded-full bg-indigo-600/30 flex items-center justify-center mr-3">
+                                        <FontAwesomeIcon icon={faCalendarAlt} className="text-purple-200" />
+                                    </div>
+                                    <div>
+                                        <p className="text-sm text-purple-200/70">End Time</p>
+                                        <p className="text-white">{formatDateTime(tournament.end_time)}</p>
+                                    </div>
+                                </div>
+                            )}
+
+                            {tournament.max_players && (
+                                <div className="flex items-center">
+                                    <div className="w-10 h-10 rounded-full bg-indigo-600/30 flex items-center justify-center mr-3">
+                                        <FontAwesomeIcon icon={faUsers} className="text-purple-200" />
+                                    </div>
+                                    <div>
+                                        <p className="text-sm text-purple-200/70">Player Limit</p>
+                                        <p className="text-white">{tournament.max_players} players</p>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                )}
+
+                {/* Registration Section */}
+                {(user.permission_level === "owner" || user.permission_level === "admin") && (
+                    <div className="bg-white/5 backdrop-blur-md rounded-2xl p-6 border border-white/10 shadow-xl mb-8">
+                        <h2 className="text-xl font-bold mb-6 flex items-center">
+                            <FontAwesomeIcon icon={faPlay} className="text-purple-300 mr-3" />
+                            <span>Joining</span>
+                        </h2>
+
+                        <div className="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/5 mb-6">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center">
+                                    <div className="w-10 h-10 rounded-full bg-indigo-600/30 flex items-center justify-center mr-3">
+                                        <FontAwesomeIcon icon={faUserPlus} className="text-purple-200" />
+                                    </div>
                                     <span className="text-white">Allow Players to Join</span>
                                 </div>
 
@@ -535,75 +570,80 @@ export default function Initialization({ refreshTournament, user }: { user: User
                                     />
                                 </motion.div>
                             </div>
+                        </div>
 
-                            {joinLink && tournament.allow_join && (
-                                <div className="space-y-8">
-                                    <div className="space-y-8">
-                                        <div className="relative">
-                                            <label className="text-white text-sm mb-2 block">Join Code</label>
-                                            <div className="flex">
-                                                <input
-                                                    type="text"
-                                                    value={(tournament as any).join_code}
-                                                    readOnly
-                                                    className="w-full p-3 bg-[#22154F] border-l-4 border-[#7458da] text-white focus:outline-none rounded-l-lg"
-                                                />
-                                            </div>
-                                        </div>
-                                        <div className="relative">
-                                            <label className="text-white text-sm mb-2 block">Share Tournament Join Link</label>
-                                            <div className="md:flex block">
-                                                <div className="flex w-full">
-                                                    <input
-                                                        type="text"
-                                                        value={joinLink}
-                                                        readOnly
-                                                        className="w-full p-3 bg-[#22154F] border-l-4 border-[#7458da] text-white focus:outline-none rounded-l-lg"
-                                                    />
-                                                    <ActionButton onClick={handleCopyUrl} className="rounded-l-none">
-                                                        <FontAwesomeIcon icon={faCopy} />
-                                                    </ActionButton>
-                                                </div>
-
-                                                <ActionButton
-                                                    onClick={() => setShowQRCode(!showQRCode)}
-                                                    className="border-l w-fit border-[#604BAC] ml-8 flex items-center gap-2"
-                                                >
-                                                    <p className="m-0">QR</p>
-                                                    <FontAwesomeIcon icon={faQrcode} />
-                                                </ActionButton>
-                                            </div>
-                                        </div>
-
-                                        {showQRCode && (
-                                            <motion.div
-                                                initial={{ opacity: 0, height: 0 }}
-                                                animate={{ opacity: 1, height: "auto" }}
-                                                exit={{ opacity: 0, height: 0 }}
-                                                transition={{ duration: 0.3 }}
-                                                className="flex flex-col items-center p-4"
-                                            >
-                                                <div ref={qrRef} className="p-4 bg-white rounded-lg inline-block mb-3">
-                                                    <QRCode value={joinLink} size={160} />
-                                                </div>
-
-                                                <ActionButton
-                                                    onClick={downloadQRCode}
-                                                    className="flex items-center gap-2 mt-2"
-                                                >
-                                                    <p className="m-0">Download QR</p>
-                                                    <FontAwesomeIcon icon={faDownload} />
-                                                </ActionButton>
-                                            </motion.div>
-                                        )}
+                        {joinLink && tournament.allow_join && (
+                            <div className="space-y-6">
+                                <div className="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/5">
+                                    <label className="text-sm text-purple-200/70 mb-2 block">Join Code</label>
+                                    <div className="flex">
+                                        <input
+                                            type="text"
+                                            value={(tournament as any).join_code}
+                                            readOnly
+                                            className="w-full p-3 bg-[#22154F]/50 text-white focus:outline-none rounded-lg border border-white/5"
+                                        />
                                     </div>
                                 </div>
-                            )}
-                        </div>
-                    )}
+                                
+                                <div className="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/5">
+                                    <label className="text-sm text-purple-200/70 mb-2 block">Share Tournament Join Link</label>
+                                    <div className="flex flex-col md:flex-row gap-4">
+                                        <div className="flex flex-1">
+                                            <input
+                                                type="text"
+                                                value={joinLink}
+                                                readOnly
+                                                className="flex-1 p-3 bg-[#22154F]/50 text-white focus:outline-none rounded-l-lg border border-white/5"
+                                            />
+                                            <button
+                                                onClick={handleCopyUrl}
+                                                className="bg-indigo-600 hover:bg-indigo-500 text-white font-medium py-2 px-4 rounded-r-lg transition duration-200 flex items-center justify-center"
+                                            >
+                                                <FontAwesomeIcon icon={faCopy} />
+                                            </button>
+                                        </div>
 
-                    {(activePlayers.length > 0 || waitlistedPlayers.length > 0) && (
-                        <div className="bg-[#2a1a66] rounded-xl p-6 shadow-md mb-8 space-y-8">
+                                        <button
+                                            onClick={() => setShowQRCode(!showQRCode)}
+                                            className="bg-indigo-600/20 hover:bg-indigo-600/30 transition-colors p-2 rounded-lg flex items-center justify-center gap-2 px-4 text-white border border-indigo-600/30"
+                                        >
+                                            <span>{showQRCode ? "Hide QR" : "Show QR"}</span>
+                                            <FontAwesomeIcon icon={faQrcode} />
+                                        </button>
+                                    </div>
+
+                                    {showQRCode && (
+                                        <motion.div
+                                            initial={{ opacity: 0, height: 0 }}
+                                            animate={{ opacity: 1, height: "auto" }}
+                                            exit={{ opacity: 0, height: 0 }}
+                                            transition={{ duration: 0.3 }}
+                                            className="flex flex-col items-center mt-6"
+                                        >
+                                            <div ref={qrRef} className="p-4 bg-white rounded-lg inline-block mb-4">
+                                                <QRCode value={joinLink} size={160} />
+                                            </div>
+
+                                            <button
+                                                onClick={downloadQRCode}
+                                                className="bg-indigo-600 hover:bg-indigo-500 text-white font-medium py-2 px-4 rounded-lg transition duration-200 flex items-center gap-2"
+                                            >
+                                                <span>Download QR Code</span>
+                                                <FontAwesomeIcon icon={faDownload} />
+                                            </button>
+                                        </motion.div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {/* Players Tables */}
+                {(activePlayers.length > 0 || waitlistedPlayers.length > 0) && (
+                    <div className="bg-white/5 backdrop-blur-md rounded-2xl p-6 border border-white/10 shadow-xl mb-8">
+                        <div className="mb-8">
                             <PlayersTable
                                 players={activePlayers}
                                 otherPlayers={waitlistedPlayers}
@@ -613,7 +653,9 @@ export default function Initialization({ refreshTournament, user }: { user: User
                                 tournament={tournament}
                                 permission_level={user.permission_level}
                             />
+                        </div>
 
+                        {waitlistedPlayers.length > 0 && (
                             <PlayersTable
                                 players={waitlistedPlayers}
                                 otherPlayers={activePlayers}
@@ -623,34 +665,31 @@ export default function Initialization({ refreshTournament, user }: { user: User
                                 tournament={tournament}
                                 permission_level={user.permission_level}
                             />
-                        </div>
-                    )}
+                        )}
+                    </div>
+                )}
 
-                    {(user.permission_level == "owner" || user.permission_level == "admin") && (
-                        <div className="flex flex-wrap justify-center gap-4 mb-6">
-                            <ActionButton
-                                onClick={() => setIsPlaceholderPlayersModalOpen(true)}
-                                color="#4A6FFF"
-                                hoverColor="#3A5FEF"
-                                className="min-w-[180px]"
-                            >
-                                <FontAwesomeIcon icon={faUsers} className="mr-2" />
-                                Add Placeholder Players
-                            </ActionButton>
+                {/* Action Buttons */}
+                {(user.permission_level === "owner" || user.permission_level === "admin") && (
+                    <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-6">
+                        <button
+                            onClick={() => setIsPlaceholderPlayersModalOpen(true)}
+                            className="w-full sm:w-auto bg-indigo-600/80 hover:bg-indigo-600 text-white font-medium py-3 px-6 rounded-lg transition duration-200 flex items-center justify-center gap-2 shadow-lg hover:shadow-indigo-700/30"
+                        >
+                            <FontAwesomeIcon icon={faUserPlus} />
+                            <span>Add Placeholder Players</span>
+                        </button>
 
-                            <ActionButton
-                                onClick={handleStartTournament}
-                                className="min-w-[180px]"
-                            >
-                                <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
-                                </svg>
-                                {starting ? "Working..." : "Start Tournament"}
-                            </ActionButton>
-                        </div>
-                    )}
-                </div>
-
+                        <button
+                            onClick={handleStartTournament}
+                            disabled={starting}
+                            className={`w-full sm:w-auto bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-medium py-3 px-6 rounded-lg transition duration-200 flex items-center justify-center gap-2 shadow-lg hover:shadow-indigo-700/30 ${starting ? 'opacity-75' : 'hover:translate-y-[-2px]'}`}
+                        >
+                            <FontAwesomeIcon icon={faPlay} />
+                            <span>{starting ? "Starting..." : "Start Tournament"}</span>
+                        </button>
+                    </div>
+                )}
             </div>
 
             <TournamentModal
