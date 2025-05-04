@@ -9,7 +9,7 @@ import { Tournament } from "@/types/tournamentTypes";
 import { useMessage } from "@/context/messageContext";
 import { User } from "@/types/userType";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faArrowRight, faArrowsAlt, faCrown, faExchangeAlt, faTrophy } from "@fortawesome/free-solid-svg-icons";
+import { faArrowRight, faArrowsAlt, faExchangeAlt, faTrophy } from "@fortawesome/free-solid-svg-icons";
 
 import { AddPlayerButton, BracketViewType, MovingPlayer, OnMovePlayer } from "./bracketView";
 
@@ -96,8 +96,7 @@ export const MatchupElement = ({
         index: number;
     } | null>(null);
     const { triggerMessage } = useMessage?.() || { triggerMessage: () => { } };
-    const [isHovered, setIsHovered] = useState(false);
-
+    if (bracket) {}
     function openModal() {
         if (viewType === BracketViewType.Normal && tournament?.status !== "completed") {
             if (["owner", "admin", "scorekeeper"].includes(user.permission_level.toLowerCase())) {

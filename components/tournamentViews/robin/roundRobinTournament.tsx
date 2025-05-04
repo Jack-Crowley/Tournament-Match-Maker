@@ -17,11 +17,9 @@ import {
   faFilter, 
   faChevronDown,
   faTimes,
-  faArrowsAlt
 } from '@fortawesome/free-solid-svg-icons';
 import { MatchupElement } from '../single/matchupElement';
 import { MatchupModal } from '@/components/modals/displayMatchup';
-import { useMessage } from '@/context/messageContext';
 
 enum DisplayMode {
   Bracket = "bracket",
@@ -397,7 +395,6 @@ export const RoundRobinTournament = ({
   const [tournament, setTournament] = useState<Tournament | null>(null);
   const [selectedMatch, setSelectedMatch] = useState<Matchup | null>(null);
   const [isMatchupModalOpen, setIsMatchupModalOpen] = useState<boolean>(false);
-  const { triggerMessage } = useMessage?.() || { triggerMessage: () => { } };
 
   const handleMovePlayer: OnMovePlayer = (player) => {
     if (player === null) {

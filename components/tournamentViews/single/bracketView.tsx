@@ -19,7 +19,6 @@ import { User } from "@/types/userType";
 import { createClient } from "@/utils/supabase/client";
 import BracketCreator from "./bracketCreator";
 import { MatchupModal } from "@/components/modals/displayMatchup";
-import { useMessage } from "@/context/messageContext";
 
 export const AddPlayerButton = ({ onAddPlayer }: { onAddPlayer: () => void }) => {
   return (
@@ -315,7 +314,6 @@ const TournamentBracket = ({
   const [tournament, setTournament] = useState<Tournament | null>(null);
   const [selectedMatch, setSelectedMatch] = useState<Matchup | null>(null);
   const [isMatchupModalOpen, setIsMatchupModalOpen] = useState<boolean>(false);
-  const { triggerMessage } = useMessage?.() || { triggerMessage: () => { } };
 
   const handleMovePlayer: OnMovePlayer = (player) => {
     if (player === null) {

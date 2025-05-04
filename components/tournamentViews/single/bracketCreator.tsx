@@ -35,7 +35,6 @@ export const BracketCreator = ({
     const [box, setBox] = useState<DOMRect | null>(null);
     const heightOffset = (bracket.rounds.length - roundIndex - 1) * (viewType === BracketViewType.Normal ? 8 : 7);
     const connectionColor = "bg-primary";
-    const connectionThickness = "2px";
     const connectionSpacing = "3rem";
 
     useEffect(() => {

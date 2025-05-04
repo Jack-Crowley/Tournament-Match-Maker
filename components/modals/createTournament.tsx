@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { ChangeEvent, useEffect, useState } from 'react';
 import { createClient } from '@/utils/supabase/client';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTrophy, faUserShield, faInfoCircle, faMapPin, faCalendar, faUsers, faChevronLeft } from '@fortawesome/free-solid-svg-icons';
+import { faTrophy, faInfoCircle, faMapPin, faCalendar, faUsers, faChevronLeft } from '@fortawesome/free-solid-svg-icons';
 
 interface Button {
     id: string;
@@ -115,44 +115,6 @@ export const CreateTournament = ({ isModalOpen, setIsModalOpen, ref }: { isModal
         })
         setRules(startRules)
     }
-
-    const Switch = ({ label, description, ruleKey }: { label: string, description?: string, ruleKey: string }) => {
-        const [isOn, setIsOn] = useState<boolean>(rules[ruleKey] || false);
-
-        const handleSwitchChange = () => {
-            setIsOn(!isOn);
-            setRules(prev => ({
-                ...prev,
-                [ruleKey]: !isOn
-            }));
-        };
-
-        return (
-            <div className="flex items-center justify-between py-2 px-1 hover:bg-[#2C2C2C] rounded-md transition-colors">
-                <div className="flex flex-col">
-                    <span className="text-white font-medium">{label}</span>
-                    {description && <span className="text-gray-400 text-xs mt-1">{description}</span>}
-                </div>
-                <motion.div
-                    className={`w-12 h-6 rounded-full flex items-center p-1 cursor-pointer ${isOn ? "justify-end" : "justify-start"}`}
-                    onClick={handleSwitchChange}
-                    initial={false}
-                    animate={{
-                        background: isOn
-                            ? "linear-gradient(45deg, #7458da, #9c8aeb)"
-                            : "linear-gradient(45deg, #3A3A3A, #5C5C5C)",
-                    }}
-                    transition={{ duration: 0.2 }}
-                >
-                    <motion.div
-                        className="w-4 h-4 bg-white rounded-full shadow-md"
-                        layout
-                        transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                    />
-                </motion.div>
-            </div>
-        );
-    };
 
     const handleButtonSelect = (id: string) => {
         setSelectedButton(id);
