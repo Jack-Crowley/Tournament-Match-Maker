@@ -230,8 +230,8 @@ function TournamentsPage() {
         const [deleteView, setDeleteView] = useState<boolean>(false);
         const [deleteManyModal, setDeleteManyModal] = useState<boolean>(false);
         const [deleteIndexes, setDeleteIndexes] = useState<string[]>([]);
-        const [sortField, setSortField] = useState<'name' | 'created_at' | 'tournament_type'>('name');
-        const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+        const [sortField, setSortField] = useState<'name' | 'created_at' | 'tournament_type'>('created_at');
+        const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
         const [localSearchTerm, setLocalSearchTerm] = useState<string>(searchTerm);
         const [showSortMenu, setShowSortMenu] = useState<boolean>(false);
 
