@@ -9,7 +9,7 @@ import { Tournament } from "@/types/tournamentTypes";
 import { useMessage } from "@/context/messageContext";
 import { User } from "@/types/userType";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faArrowRight, faArrowsAlt, faCrown, faExchangeAlt } from "@fortawesome/free-solid-svg-icons";
+import { faArrowRight, faArrowsAlt, faCrown, faExchangeAlt, faTrophy } from "@fortawesome/free-solid-svg-icons";
 
 import { AddPlayerButton, BracketViewType, MovingPlayer, OnMovePlayer } from "./bracketView";
 
@@ -43,7 +43,7 @@ const ContextMenu = ({ x, y, player, round, matchNumber, index, onMovePlayer, on
     return (
         <div
             ref={menuRef}
-            className="fixed bg-deep rounded-md shadow-lg z-4 overflow-hidden"
+            className="fixed bg-deep rounded-md shadow-lg z-50 overflow-hidden"
             style={{
                 left: `${x}px`,
                 top: `${y}px`,
@@ -96,10 +96,7 @@ export const MatchupElement = ({
         index: number;
     } | null>(null);
     const { triggerMessage } = useMessage?.() || { triggerMessage: () => { } };
-
-    if (bracket) {
-
-    }
+    const [isHovered, setIsHovered] = useState(false);
 
     function openModal() {
         if (viewType === BracketViewType.Normal && tournament?.status !== "completed") {
@@ -128,10 +125,8 @@ export const MatchupElement = ({
     };
     const handleCancelMove = () => {
         onMovePlayer(null);
-        // viewType = BracketViewType.Single;
         triggerMessage("Move operation canceled", "yellow");
     };
-
 
     useEffect(() => {
         const handleClickOutside = () => {
@@ -178,7 +173,6 @@ export const MatchupElement = ({
         else {
             triggerMessage(`Failed to move/swap player. Error code: ${errorCode}`, "red");
         }
-        // setIsMatchupModalOpen(false);
     };
  
     const addPlayerFromWaitlist = async (index: number) => {
@@ -220,13 +214,16 @@ export const MatchupElement = ({
                 }
                 return (
                     <>
-                        <span className="truncate mr-2">  {isWinner && <FontAwesomeIcon icon={faCrown} className="text-yellow-500 mr-2" />} {player.name}</span>
+                        <span className="truncate mr-2">
+                            {isWinner && <FontAwesomeIcon icon={faTrophy} className="text-yellow-500 mr-2" />} 
+                            {player.name}
+                        </span>
                        
                         <div
                             className={`w-6 h-6 flex items-center justify-center flex-shrink-0
                             ${match.winner
                                     ? player.uuid === match.winner
-                                        ? "bg-[#baa6f6a2]"
+                                        ? "bg-[#7458DA]"
                                         : "bg-[#1e153e9b]"
                                     : "bg-soft"
                                 } 
@@ -241,7 +238,6 @@ export const MatchupElement = ({
                 return player.name ?
                     <span className="truncate mr-2">{player.name}</span>
                     : <AddPlayerButton onAddPlayer={() => addPlayerFromWaitlist(index)} />;
-    
             case BracketViewType.MovePlayer:
                 if (movingPlayer) {
                     return (
