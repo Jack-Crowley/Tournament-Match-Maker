@@ -1,7 +1,7 @@
 import { useState, useEffect, ChangeEvent } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useMessage } from '@/context/messageContext';
-import { Tournament } from '@/types/tournamentTypes';
+import { Rules, Tournament } from '@/types/tournamentTypes';
 import { createClient } from '@/utils/supabase/client';
 import { ModalList, SkillField } from './modalList';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -28,7 +28,8 @@ export const TournamentModal = ({
     const [endTime, setEndTime] = useState<string>(tournament.end_time || '');
     const [maxPlayers, setMaxPlayers] = useState<number>(tournament.max_players || 0);
     const [skillFields, setSkillFields] = useState<SkillField[]>(tournament.skill_fields || []);
-    const [rules, setRules] = useState<string[]>(tournament.rules || []);
+    const [rules, setRules] = useState<Rules>(tournament.rules || []);
+    const [minAutoWinScore, setMinAutoWinScore] = useState<number>(0);
     const [activeTab, setActiveTab] = useState<'info' | 'organizers'>('info');
     const [organizers, setOrganizers] = useState<{ email: string; permission: 'Admin' | 'Scorekeeper' | 'Viewer' }[]>([]);
     const [newOrganizerEmail, setNewOrganizerEmail] = useState<string>('');
@@ -63,6 +64,11 @@ export const TournamentModal = ({
             setMaxPlayers(tournament.max_players || 0);
             setSkillFields(tournament.skill_fields || []);
             setRules(tournament.rules || []);
+
+            const autoWinRule = tournament.rules.find(
+              rule => typeof rule === "object" && rule.type === 'autoWinScore' && typeof rule.value === "number"
+            );
+            setMinAutoWinScore(autoWinRule ? autoWinRule.value : 0)
 
             fetchOrganizers(tournament.id).then((organizers) => {
                 setOrganizers(organizers);

@@ -16,6 +16,12 @@ export interface Tournament {
     owner: string;
     status: string;
     skill_fields: SkillField[];
+    min_score_to_win: number;
     tournament_type: string;
-    rules: string[];
+    rules: Rules;
 }
+
+export type Rules = Array<{
+    type: string,
+    value: any,
+}>;

@@ -1,0 +1,19 @@
+high priority to make things nice!
+settings:
+	certain score auto sets winner
+	auto-declare winner (true, false)
+
+
+[big things]
+- matching pairs
+- settings * (starting) 
+
+
+more matching pairs 
+
+LIMIT Text for
+	- player names
+	- skill fields
+	- max players
+
+Fix API route bulkswitch.tsx where moving waitlist things dont work

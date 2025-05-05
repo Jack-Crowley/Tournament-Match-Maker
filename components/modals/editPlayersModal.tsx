@@ -84,7 +84,6 @@ export const PlayerModal = ({ isOpen, onClose, playerForModal, tournament }: { p
                                 </div>
                             )}
 
-
                             <div>
                                 <label className="text-white block text-sm mb-2">Anonymous</label>
                                 <input
