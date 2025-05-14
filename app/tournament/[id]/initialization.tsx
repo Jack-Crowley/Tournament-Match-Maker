@@ -2,18 +2,18 @@
 
 import { motion } from "framer-motion";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { 
-  faCopy, 
-  faGear, 
-  faQrcode, 
-  faUsers, 
-  faCalendarAlt, 
-  faMapMarkerAlt, 
-  faInfoCircle, 
-  faDownload,
-  faPlay,
-  faUserPlus,
-  faTrophy
+import {
+    faCopy,
+    faGear,
+    faQrcode,
+    faUsers,
+    faCalendarAlt,
+    faMapMarkerAlt,
+    faInfoCircle,
+    faDownload,
+    faPlay,
+    faUserPlus,
+    faTrophy
 } from '@fortawesome/free-solid-svg-icons';
 import { useState, useRef, useEffect } from 'react';
 import { useMessage } from '@/context/messageContext';
@@ -30,6 +30,8 @@ import { PlayersTable } from "@/components/playersTable";
 import { ConfirmModal, ConfirmModalInformation } from "@/components/modals/confirmationModal";
 import { User } from "@/types/userType";
 import { ConfigureRoundRobin } from "@/matching/robin";
+import { SingleSettings, RobinSettings, SwissSettings } from '@/types/tournamentTypes';
+import { ConfigureSwissStyleTournament } from "@/matching/swiss";
 
 export default function Initialization({ refreshTournament, user }: { user: User, refreshTournament: () => void }) {
     const supabase = createClient();
@@ -256,7 +258,7 @@ export default function Initialization({ refreshTournament, user }: { user: User
 
         startTournamentAfterConfirmation();
     };
-    
+
     const getMaxRounds = (numPlayers: number): number => {
         return Math.ceil(Math.log2(numPlayers));
     };
@@ -276,7 +278,7 @@ export default function Initialization({ refreshTournament, user }: { user: User
             const result = await response.json();
 
             if (response.ok) {
-                triggerMessage(result.message, "green");
+                // triggerMessage(result.message, "green");
                 const { error } = await supabase
                     .from('tournaments')
                     .update({ status: "started", max_rounds: getMaxRounds(activePlayers.length) })
@@ -288,10 +290,15 @@ export default function Initialization({ refreshTournament, user }: { user: User
                     setTournament({ ...tournament, status: "started" });
 
                     if (tournament.tournament_type == "single") {
-                        setupBracket();
+                        var single = tournament.style_specific_settings as SingleSettings
+                        setupBracket(single.sorting_algo, single.sorting_value);
                     }
                     else if (tournament.tournament_type == "robin") {
                         ConfigureRoundRobin(tournament, refreshTournament, triggerMessage)
+                    }
+                    else if (tournament.tournament_type == "swiss") {
+                        var swiss = tournament.style_specific_settings as SwissSettings
+                        ConfigureSwissStyleTournament(tournament, refreshTournament, triggerMessage, swiss.sorting_algo, swiss.sorting_value);
                     }
                 }
             } else {
@@ -305,7 +312,7 @@ export default function Initialization({ refreshTournament, user }: { user: User
         setConfirmModalInfo(null);
     }
 
-    const setupBracket = async () => {
+    const setupBracket = async (sorting_algo: "ranked" | "random" | "seeded", sorting_value: number) => {
         if (!tournament) return;
 
         const { data: tournamentPlayers, error: playerError } = await supabase
@@ -314,85 +321,98 @@ export default function Initialization({ refreshTournament, user }: { user: User
             .eq('tournament_id', tournament.id)
             .eq("type", "active");
 
-        if (playerError) {
+        if (playerError || !tournamentPlayers?.length) {
             triggerMessage("Error! You have no players in the database!!!", "red");
             return;
         }
 
         const formattedPlayers: BracketPlayer[] = tournamentPlayers.map(player => {
             const formattedSkills: PlayerSkill[] = [];
-        
+
             if (Array.isArray(tournament.skill_fields)) {
                 tournament.skill_fields.forEach(skill => {
-                    let skillValue: number = 0; // Default for missing skills
-        
+                    let skillValue: number = 0;
                     if (Array.isArray(player.skills)) {
-                        const playerSkill: PlayerSkill = player.skills.find((s: { name: string; }) => s.name === skill.name);
-                        if (playerSkill) {
-                            skillValue = playerSkill.value;
-                        }
-        
+                        const playerSkill = player.skills.find((s: { name: string }) => s.name === skill.name);
+                        if (playerSkill) skillValue = playerSkill.value;
                     }
-        
                     formattedSkills.push({ name: skill.name, type: skill.type, value: skillValue });
                 });
             }
-        
+
             return {
                 uuid: player.member_uuid,
                 name: player.player_name || "Unknown",
                 email: player.email || "",
                 account_type: player.is_anonymous ? "anonymous" : "logged_in",
                 score: 0,
-                skills: formattedSkills, // Store skills as structured objects
+                skills: formattedSkills,
             };
         });
 
-        function seedPlayers(playersToSeed: BracketPlayer[]) {
-            return [...playersToSeed].sort((a, b) => {
-                // go in order of the skills arra
+        function seedPlayers(players: BracketPlayer[]) {
+            return [...players].sort((a: any, b: any) => {
                 for (let i = 0; i < Math.min(a.skills?.length || 0, b.skills?.length || 0); i++) {
-                    // get their respective skill values
-                    const aSkillValue = a.skills?.[i].value || 0;
-                    const bSkillValue = b.skills?.[i].value || 0;
-
-                    // but if they're the same, lets move on to the next skill value to determine who's better
-                    if (aSkillValue !== bSkillValue) {
-                        return bSkillValue - aSkillValue;
-                    }
+                    const aSkill = a.skills[i]?.value || 0;
+                    const bSkill = b.skills[i]?.value || 0;
+                    if (aSkill !== bSkill) return bSkill - aSkill;
                 }
                 return 0;
             });
         }
 
-        function generateMatchups(players: BracketPlayer[]) {
-            if (!tournament) return [];
-            const seededPlayers = seedPlayers(players);
+        function shuffleArray<T>(array: T[]): T[] {
+            return [...array].sort(() => Math.random() - 0.5);
+        }
+
+        function sortPlayers(players: BracketPlayer[]): BracketPlayer[] {
+            if (sorting_algo === "random") {
+                return shuffleArray(players);
+            } else if (sorting_algo === "seeded") {
+                const seededGroups: BracketPlayer[] = [];
+                const sorted = seedPlayers(players);
+                for (let i = 0; i < sorted.length; i += sorting_value) {
+                    const group = sorted.slice(i, i + sorting_value);
+                    seededGroups.push(...shuffleArray(group));
+                }
+                return seededGroups;
+            } else {
+                // ranked (default)
+                return seedPlayers(players);
+            }
+        }
+
+        function generateMatchups(players: BracketPlayer[]): Matchup[] {
+            const sortedPlayers = sortPlayers(players);
             const matchups: Matchup[] = [];
-            const totalPlayers = seededPlayers.length;
+            const totalPlayers = sortedPlayers.length;
 
-            for (let i = 0; i < totalPlayers; i += 2) {
-                const player1 = seededPlayers[i];
-                const player2 = seededPlayers[i + 1] || {
-                    uuid: "",
-                    name: "",
-                    account_type: "placeholder",
-                    placeholder_player: true,
-                };
 
-                matchups.push({
-                    match_number: i / 2 + 1,
-                    players: [player1, player2],
-                    round: 1,
-                    tournament_id: Number(tournament.id),
-                    id: -1,
-                });
+            if (tournament) {
+                for (let i = 0; i < totalPlayers; i += 2) {
+                    const player1 = sortedPlayers[i];
+                    const player2 = sortedPlayers[i + 1] || {
+                        uuid: "",
+                        name: "",
+                        account_type: "placeholder",
+                        placeholder_player: true,
+                    };
+
+                    matchups.push({
+                        match_number: i / 2 + 1,
+                        players: [player1, player2],
+                        round: 1,
+                        tournament_id: Number(tournament.id),
+                        id: -1,
+                        is_tie:false
+                    });
+                }
             }
 
             return matchups;
         }
 
-        const saveMatchupsToDatabase = async (matchups: any[]) => {
+        const saveMatchupsToDatabase = async (matchups: Matchup[]) => {
             try {
                 const { error } = await supabase
                     .from("tournament_matches")
@@ -419,6 +439,7 @@ export default function Initialization({ refreshTournament, user }: { user: User
         const generatedMatchups = generateMatchups(formattedPlayers);
         saveMatchupsToDatabase(generatedMatchups);
     };
+
 
     if (loading) {
         return (
@@ -453,7 +474,7 @@ export default function Initialization({ refreshTournament, user }: { user: User
                         <h1 className="text-4xl font-bold text-center md:text-left bg-clip-text text-transparent bg-gradient-to-r from-purple-200 to-indigo-300">
                             {tournament.name}
                         </h1>
-                        
+
                         {(user.permission_level === "owner" || user.permission_level === "admin") && (
                             <button
                                 onClick={() => setIsTournamentEditModalOpen(true)}
@@ -464,7 +485,7 @@ export default function Initialization({ refreshTournament, user }: { user: User
                             </button>
                         )}
                     </div>
-                    
+
                     {tournament.description && (
                         <div className="mt-4 text-purple-200/80 max-w-3xl">
                             <div className="flex items-start">
@@ -482,7 +503,7 @@ export default function Initialization({ refreshTournament, user }: { user: User
                             <FontAwesomeIcon icon={faInfoCircle} className="text-purple-300 mr-3" />
                             <span>Tournament Details</span>
                         </h2>
-                        
+
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             {tournament.location && (
                                 <div className="flex items-center">
@@ -585,7 +606,7 @@ export default function Initialization({ refreshTournament, user }: { user: User
                                         />
                                     </div>
                                 </div>
-                                
+
                                 <div className="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/5">
                                     <label className="text-sm text-purple-200/70 mb-2 block">Share Tournament Join Link</label>
                                     <div className="flex flex-col md:flex-row gap-4">

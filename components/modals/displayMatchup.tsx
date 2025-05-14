@@ -15,7 +15,7 @@ interface MatchupModalProps {
     setOpen: (state: boolean) => void;
     matchup: Matchup;
     user: User;
-    tournament_type:string;
+    tournament_type: string;
 }
 
 export const MatchupModal = ({ isOpen, setOpen, matchup, user, tournament_type }: MatchupModalProps) => {
@@ -32,7 +32,7 @@ export const MatchupModal = ({ isOpen, setOpen, matchup, user, tournament_type }
     const [removedPlayersList, setRemovedPlayersList] = useState<[string, number][]>([]);
 
 
-    if (user) {}
+    if (user) { }
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -55,15 +55,30 @@ export const MatchupModal = ({ isOpen, setOpen, matchup, user, tournament_type }
         async function LookupNextMatch() {
             if (!isOpen) return;
 
-            const { data } = await supabase
-                .from("tournament_matches")
-                .select("*")
-                .eq("tournament_id", matchup.tournament_id)
-                .eq("match_number", Math.ceil(matchup.match_number / 2))
-                .eq("round", matchup.round + 1)
-                .single();
+            if (tournament_type == "single") {
+                const { data } = await supabase
+                    .from("tournament_matches")
+                    .select("*")
+                    .eq("tournament_id", matchup.tournament_id)
+                    .eq("match_number", Math.ceil(matchup.match_number / 2))
+                    .eq("round", matchup.round + 1)
+                    .single();
 
-            setLocked(data && data.winner);
+                setLocked(data && data.winner);
+            }
+            else if (tournament_type == "swiss") {
+                const { data } = await supabase
+                    .from("tournament_matches")
+                    .select("*")
+                    .eq("tournament_id", matchup.tournament_id)
+                    .eq("round", matchup.round + 1)
+                    .limit(1)
+                    .single();
+
+                setLocked(data);
+            }
+
+
         }
 
         setEditedMatchup(matchup);
@@ -279,7 +294,7 @@ export const MatchupModal = ({ isOpen, setOpen, matchup, user, tournament_type }
             .select("max_rounds")
             .eq("id", matchup.tournament_id)
             .single();
-        
+
         if (round > tournament_data?.max_rounds) {
             return;
         }
@@ -569,9 +584,17 @@ export const MatchupModal = ({ isOpen, setOpen, matchup, user, tournament_type }
                 {locked ? (
                     <div className="text-center w-full mt-6">
                         <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4 mb-5">
-                            <p className="text-yellow-200 text-sm">
-                                This match has been locked because the next match in the tournament already has a winner declared.
-                            </p>
+                            {tournament_type == "single" && (
+                                <p className="text-yellow-200 text-sm">
+                                    This match has been locked because the next match in the tournament already has a winner declared.
+                                </p>
+                            )}
+                            {tournament_type == "swiss" && (
+                                <p className="text-yellow-200 text-sm">
+                                    This match has been locked because the next round has already been started.
+                                </p>
+                            )}
+
                         </div>
                         <motion.button
                             className="mt-2 bg-[#3A3A3A] text-white px-6 py-3 rounded-xl hover:bg-[#4A4A4A] transition-colors font-medium"

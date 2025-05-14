@@ -5,7 +5,22 @@ import { Tournament } from '@/types/tournamentTypes';
 import { createClient } from '@/utils/supabase/client';
 import { ModalList, SkillField } from './modalList';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faEdit, faMapPin, faCalendar, faUsers, faTimes, faPlus, faTrashAlt, faCheck } from '@fortawesome/free-solid-svg-icons';
+import { faEdit, faMapPin, faCalendar, faUsers, faTimes, faPlus, faTrashAlt, faCheck, faChessBoard, faStar } from '@fortawesome/free-solid-svg-icons';
+
+// Updated interfaces to match createTournament.tsx
+interface SwissSettings {
+    type: 'rounds' | 'points';
+    type_value: number;
+    sorting_algo: 'random' | "seeded" | "ranked";
+    sorting_value: number;
+}
+
+interface SingleSettings { 
+    sorting_algo: 'random' | "seeded" | "ranked";
+    sorting_value: number;
+}
+
+interface RobinSettings { }
 
 export const TournamentModal = ({
     isOpen,
@@ -34,6 +49,21 @@ export const TournamentModal = ({
     const [newOrganizerEmail, setNewOrganizerEmail] = useState<string>('');
     const [newOrganizerPermission, setNewOrganizerPermission] = useState<'Admin' | 'Scorekeeper' | 'Viewer'>('Viewer');
     const [isLoading, setIsLoading] = useState<boolean>(false);
+    
+    // Updated state to use the same structure as createTournament.tsx
+    const [swissSettings, setSwissSettings] = useState<SwissSettings>({ 
+        type: 'rounds', 
+        type_value: 3,
+        sorting_algo: 'random',
+        sorting_value: 4
+    });
+    
+    const [singleSettings, setSingleSettings] = useState<SingleSettings>({ 
+        sorting_algo: 'random',
+        sorting_value: 4
+    });
+    
+    const [robinSettings, setRobinSettings] = useState<RobinSettings>({});
 
     useEffect(() => {
         const fetchOrganizers = async (tournamentId: string) => {
@@ -63,6 +93,34 @@ export const TournamentModal = ({
             setMaxPlayers(tournament.max_players || 0);
             setSkillFields(tournament.skill_fields || []);
             setRules(tournament.rules || []);
+            
+            // Extract style_specific_settings based on tournament type
+            if (tournament.tournament_type === 'swiss' && tournament.style_specific_settings) {
+                setSwissSettings((tournament.style_specific_settings as any) as SwissSettings);
+            } else if (tournament.tournament_type === 'swiss') {
+                // Default values if swiss format but no settings yet
+                setSwissSettings({ 
+                    type: 'rounds', 
+                    type_value: 3,
+                    sorting_algo: 'random',
+                    sorting_value: 4  
+                });
+            }
+
+            if (tournament.tournament_type === 'single' && tournament.style_specific_settings) {
+                setSingleSettings((tournament.style_specific_settings as any) as SingleSettings);
+            } else if (tournament.tournament_type === 'single') {
+                setSingleSettings({ 
+                    sorting_algo: 'random',
+                    sorting_value: 4
+                });
+            }
+
+            if (tournament.tournament_type === 'robin' && tournament.style_specific_settings) {
+                setRobinSettings(tournament.style_specific_settings as RobinSettings);
+            } else if (tournament.tournament_type === 'robin') {
+                setRobinSettings({});
+            }
 
             fetchOrganizers(tournament.id).then((organizers) => {
                 setOrganizers(organizers);
@@ -76,13 +134,22 @@ export const TournamentModal = ({
 
         try {
             // Update tournament details
-            const update: Partial<Tournament> = {
+            const update: any = {
                 name,
                 description,
                 location,
                 skill_fields: skillFields,
                 rules,
             };
+
+            // Include style-specific settings based on tournament type
+            if (tournament.tournament_type === 'swiss') {
+                update.style_specific_settings = swissSettings;
+            } else if (tournament.tournament_type === 'single') {
+                update.style_specific_settings = singleSettings;
+            } else if (tournament.tournament_type === 'robin') {
+                update.style_specific_settings = robinSettings;
+            }
 
             if (startTime) {
                 update.start_time = startTime;
@@ -325,15 +392,194 @@ export const TournamentModal = ({
                                     )}
                                 </div>
 
-                                <ModalList name="Skill Fields" list={skillFields} setList={setSkillFields} />
+                                {/* Single Elimination Tournament Settings */}
+                                {tournament?.tournament_type === 'single' && (
+                                    <div className="p-4 bg-[#252525] rounded-lg border border-[#3A3A3A]">
+                                        <div className="flex items-center mb-3">
+                                            <FontAwesomeIcon icon={faStar} className="mr-2 text-[#7458da]" />
+                                            <h3 className="text-white font-medium">Single Tournament Settings</h3>
+                                        </div>
 
-                                {/* <div className="p-4 bg-[#252525] rounded-lg border border-[#3A3A3A]">
-                                    <div className="flex items-center mb-3">
-                                        <FontAwesomeIcon icon={faBook} className="mr-2 text-[#7458da]" />
-                                        <h3 className="text-white font-medium">Tournament Rules</h3>
+                                        <div className="mb-3">
+                                            <label className="text-gray-300 block text-sm mb-2 font-medium">Matchmaking</label>
+                                            <div className="flex space-x-2">
+                                                <button
+                                                    className={`flex-1 p-2 rounded ${singleSettings.sorting_algo === 'random'
+                                                        ? 'bg-[#7458da] text-white'
+                                                        : 'bg-[#2a2a2a] text-gray-300 hover:bg-[#3a3a3a]'}`}
+                                                    onClick={() => setSingleSettings({ ...singleSettings, sorting_algo: 'random' })}
+                                                    disabled={tournament?.status === "started"}
+                                                >
+                                                    Random
+                                                </button>
+                                                <button
+                                                    className={`flex-1 p-2 rounded ${singleSettings.sorting_algo === 'seeded'
+                                                        ? 'bg-[#7458da] text-white'
+                                                        : 'bg-[#2a2a2a] text-gray-300 hover:bg-[#3a3a3a]'}`}
+                                                    onClick={() => setSingleSettings({ ...singleSettings, sorting_algo: 'seeded' })}
+                                                    disabled={tournament?.status === "started"}
+                                                >
+                                                    Seeded
+                                                </button>
+                                                <button
+                                                    className={`flex-1 p-2 rounded ${singleSettings.sorting_algo === 'ranked'
+                                                        ? 'bg-[#7458da] text-white'
+                                                        : 'bg-[#2a2a2a] text-gray-300 hover:bg-[#3a3a3a]'}`}
+                                                    onClick={() => setSingleSettings({ ...singleSettings, sorting_algo: 'ranked' })}
+                                                    disabled={tournament?.status === "started"}
+                                                >
+                                                    Ranked
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        {singleSettings.sorting_algo === "seeded" && (
+                                            <div>
+                                                <label className="text-gray-300 block text-sm mb-2 font-medium">
+                                                    How many players per group
+                                                </label>
+                                                <input
+                                                    type="number"
+                                                    value={singleSettings.sorting_value}
+                                                    onChange={(e) => setSingleSettings({
+                                                        ...singleSettings,
+                                                        sorting_value: parseInt(e.target.value) || 0
+                                                    })}
+                                                    min="1"
+                                                    className="w-full p-3 bg-[#2a2a2a] border-l-4 border-[#7458da] rounded-md text-white focus:outline-none focus:ring-2 focus:ring-[#7458da] focus:ring-opacity-50 transition-all"
+                                                    disabled={tournament?.status === "started"}
+                                                />
+                                            </div>
+                                        )}
+                                        
+                                        {tournament?.status === "started" && (
+                                            <p className="text-sm text-red-400 mt-2">
+                                                Tournament has already started. Cannot change tournament settings.
+                                            </p>
+                                        )}
                                     </div>
-                                    <ModalList name="Rules" list={rules} setList={setRules} />
-                                </div> */}
+                                )}
+
+                                {/* Swiss Tournament Settings */}
+                                {tournament?.tournament_type === 'swiss' && (
+                                    <div className="p-4 bg-[#252525] rounded-lg border border-[#3A3A3A]">
+                                        <div className="flex items-center mb-3">
+                                            <FontAwesomeIcon icon={faChessBoard} className="mr-2 text-[#7458da]" />
+                                            <h3 className="text-white font-medium">Swiss Tournament Settings</h3>
+                                        </div>
+                                        <div className="mb-4">
+                                            <div className="flex space-x-4 mb-4">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setSwissSettings({ ...swissSettings, type: 'rounds' })}
+                                                    className={`px-4 py-2 rounded-lg text-white transition-colors flex-1 ${
+                                                        swissSettings.type === 'rounds' 
+                                                            ? 'bg-[#7458da]' 
+                                                            : 'bg-[#3A3A3A] hover:bg-[#4A4A4A]'
+                                                    }`}
+                                                    disabled={tournament?.status === "started"}
+                                                >
+                                                    Fixed Rounds
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setSwissSettings({ ...swissSettings, type: 'points' })}
+                                                    className={`px-4 py-2 rounded-lg text-white transition-colors flex-1 ${
+                                                        swissSettings.type === 'points' 
+                                                            ? 'bg-[#7458da]' 
+                                                            : 'bg-[#3A3A3A] hover:bg-[#4A4A4A]'
+                                                    }`}
+                                                    disabled={tournament?.status === "started"}
+                                                >
+                                                    Points to Win
+                                                </button>
+                                            </div>
+                                            <div className="mb-2">
+                                                <label className="text-white text-sm mb-2 font-medium">
+                                                    {swissSettings.type === 'rounds' ? 'Number of Rounds' : 'Points to Win'}
+                                                </label>
+                                                <input
+                                                    type="number"
+                                                    min="1"
+                                                    value={swissSettings.type_value}
+                                                    onChange={(e: ChangeEvent<HTMLInputElement>) => 
+                                                        setSwissSettings({
+                                                            ...swissSettings,
+                                                            type_value: parseInt(e.target.value) || 1
+                                                        })
+                                                    }
+                                                    className="w-full p-3 bg-[#2D2D2D] rounded-lg border-2 border-[#3A3A3A] text-white focus:outline-none focus:border-[#7458da] transition-colors"
+                                                    disabled={tournament?.status === "started"}
+                                                />
+                                            </div>
+                                            <p className="text-gray-400 text-sm">
+                                                {swissSettings.type === 'rounds' 
+                                                    ? 'Tournament will end after this many rounds, regardless of standings.' 
+                                                    : 'Tournament will continue until a player reaches this many points.'}
+                                            </p>
+                                            
+                                            <div className="mb-3 mt-12">
+                                                <label className="text-gray-300 block text-sm mb-2 font-medium">Matchmaking</label>
+                                                <div className="flex space-x-2">
+                                                    <button
+                                                        className={`flex-1 p-2 rounded ${swissSettings.sorting_algo === 'random'
+                                                            ? 'bg-[#7458da] text-white'
+                                                            : 'bg-[#2a2a2a] text-gray-300 hover:bg-[#3a3a3a]'}`}
+                                                        onClick={() => setSwissSettings({ ...swissSettings, sorting_algo: 'random' })}
+                                                        disabled={tournament?.status === "started"}
+                                                    >
+                                                        Random
+                                                    </button>
+                                                    <button
+                                                        className={`flex-1 p-2 rounded ${swissSettings.sorting_algo === 'seeded'
+                                                            ? 'bg-[#7458da] text-white'
+                                                            : 'bg-[#2a2a2a] text-gray-300 hover:bg-[#3a3a3a]'}`}
+                                                        onClick={() => setSwissSettings({ ...swissSettings, sorting_algo: 'seeded' })}
+                                                        disabled={tournament?.status === "started"}
+                                                    >
+                                                        Seeded
+                                                    </button>
+                                                    <button
+                                                        className={`flex-1 p-2 rounded ${swissSettings.sorting_algo === 'ranked'
+                                                            ? 'bg-[#7458da] text-white'
+                                                            : 'bg-[#2a2a2a] text-gray-300 hover:bg-[#3a3a3a]'}`}
+                                                        onClick={() => setSwissSettings({ ...swissSettings, sorting_algo: 'ranked' })}
+                                                        disabled={tournament?.status === "started"}
+                                                    >
+                                                        Ranked
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            {swissSettings.sorting_algo === "seeded" && (
+                                                <div>
+                                                    <label className="text-gray-300 block text-sm mb-2 font-medium">
+                                                        How many players per group
+                                                    </label>
+                                                    <input
+                                                        type="number"
+                                                        value={swissSettings.sorting_value}
+                                                        onChange={(e) => setSwissSettings({
+                                                            ...swissSettings,
+                                                            sorting_value: parseInt(e.target.value) || 0
+                                                        })}
+                                                        min="1"
+                                                        className="w-full p-3 bg-[#2a2a2a] border-l-4 border-[#7458da] rounded-md text-white focus:outline-none focus:ring-2 focus:ring-[#7458da] focus:ring-opacity-50 transition-all"
+                                                        disabled={tournament?.status === "started"}
+                                                    />
+                                                </div>
+                                            )}
+                                            
+                                            {tournament?.status === "started" && (
+                                                <p className="text-sm text-red-400 mt-2">
+                                                    Tournament has already started. Cannot change Swiss tournament settings.
+                                                </p>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+
+                                <ModalList name="Skill Fields" list={skillFields} setList={setSkillFields} />
                             </motion.div>
                         )}
 

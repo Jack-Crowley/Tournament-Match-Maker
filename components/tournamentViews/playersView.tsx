@@ -70,7 +70,7 @@ export const PlayersView = ({ tournamentID, bracket, user, setActiveTab }: { set
     useEffect(() => {
         if (!tournament) return;
 
-        if (tournament?.tournament_type == "robin") {
+        if ((tournament?.tournament_type == "robin" || tournament?.tournament_type == "swiss")) {
             const rankedPlayers = RankRoundRobinPlayers(bracket);
 
             rankedPlayers.forEach((player, index) => {
@@ -175,7 +175,7 @@ export const PlayersView = ({ tournamentID, bracket, user, setActiveTab }: { set
             filtered = players.filter(player => (player as any).type === currentFilter);
         }
 
-        if (tournament?.tournament_type === "robin") {
+        if (tournament?.tournament_type === "robin" || tournament?.tournament_type == "swiss") {
             console.log(rankingMap)
 
             filtered = [...filtered].sort((a, b) => {
@@ -355,7 +355,7 @@ export const PlayersView = ({ tournamentID, bracket, user, setActiveTab }: { set
                                                 <thead className="bg-[#1b113d] sticky top-0">
                                                     <tr>
                                                         <th className="px-6 py-3 text-left text-white font-semibold text-base border-b-2 border-[#3a2b7d]">Name</th>
-                                                        {tournament?.tournament_type == "robin" && (
+                                                        {(tournament?.tournament_type == "robin" || tournament?.tournament_type == "swiss") && (
                                                             <th className="px-6 py-3 text-center text-white font-semibold text-base border-b-2 border-[#3a2b7d] w-20">History</th>
                                                         )}
                                                         {tournament?.skill_fields?.map((skill, index) => (
@@ -394,7 +394,7 @@ export const PlayersView = ({ tournamentID, bracket, user, setActiveTab }: { set
                                                                     {player.player_name}
                                                                 </div>
                                                             </td>
-                                                            {tournament?.tournament_type == "robin" && roundRobinRanked && (
+                                                            {(tournament?.tournament_type == "robin" || tournament?.tournament_type == "swiss") && roundRobinRanked && (
                                                                 <td className="border-b border-[#3a2b7d]">
                                                                     {(index >= players.length) ? (
                                                                         ((player as any).type != "waitlist") ? (<div className="text-gray-300 text-center">0/0/0</div>) : (<div className="text-gray-300 text-center">-/-/-</div>)

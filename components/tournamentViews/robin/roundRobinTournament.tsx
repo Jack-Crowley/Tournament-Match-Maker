@@ -7,16 +7,18 @@ import { User } from '@/types/userType';
 
 import { motion, AnimatePresence } from 'framer-motion';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { 
-  faChevronLeft, 
-  faChevronRight, 
-  faCircle, 
-  faListUl, 
-  faSitemap, 
-  faSearch, 
-  faFilter, 
+import {
+  faChevronLeft,
+  faChevronRight,
+  faCircle,
+  faListUl,
+  faSitemap,
+  faSearch,
+  faFilter,
   faChevronDown,
   faTimes,
+  faTrophy,
+  faGamepad,
 } from '@fortawesome/free-solid-svg-icons';
 import { MatchupElement } from '../single/matchupElement';
 import { MatchupModal } from '@/components/modals/displayMatchup';
@@ -39,17 +41,17 @@ const MatchupTable = ({
 }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [roundFilter, setRoundFilter] = useState<number | null>(null);
-  const [completedFilter, setCompletedFilter, ] = useState<boolean | null>(null);
+  const [completedFilter, setCompletedFilter] = useState<boolean | null>(null);
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
-  
+
   const allMatchups: Matchup[] = bracket.rounds.flatMap(round => round.matches);
-  
+
   const filteredMatchups = allMatchups.filter(match => {
     // Apply round filter
     if (roundFilter !== null && match.round !== roundFilter) {
       return false;
     }
-    
+
     // Apply completed filter
     if (completedFilter !== null) {
       const isCompleted = !!match.winner;
@@ -57,21 +59,21 @@ const MatchupTable = ({
         return false;
       }
     }
-    
+
     // Apply search term
     if (searchTerm) {
       const lowerSearch = searchTerm.toLowerCase();
-      return match.players.some(player => 
+      return match.players.some(player =>
         player.name && player.name.toLowerCase().includes(lowerSearch)
       );
     }
-    
+
     return true;
   });
-  
+
   // Get all round numbers for filter dropdown
   const rounds = [...new Set(allMatchups.map(match => match.round))].sort((a, b) => a - b);
-  
+
   const toggleFilters = () => setIsFiltersOpen(!isFiltersOpen);
 
   const resetFilters = () => {
@@ -79,39 +81,42 @@ const MatchupTable = ({
     setRoundFilter(null);
     setCompletedFilter(null);
   };
-  
+
+  const isUserAllowedToEdit = (tournament?.status !== "completed") &&
+    ["owner", "admin", "scorekeeper"].includes(user.permission_level.toLowerCase());
+
   return (
-    <div className="px-4 py-6">
+    <div className="max-w-6xl mx-auto px-4 py-8">
       <div className="flex flex-col mb-6">
         <div className="flex flex-col md:flex-row gap-4 mb-2">
           <div className="flex-1">
             <div className="relative">
-              <input 
+              <input
                 type="text"
                 placeholder="Search players..."
-                className="w-full pl-10 pr-4 py-3 rounded-lg bg-[#1e153e] border border-[#947ed7]/40 focus:border-[#947ed7] focus:outline-none text-white shadow-md"
+                className="w-full pl-10 pr-4 py-3 rounded-lg bg-[#1e153e] border border-[#947ed7]/40 focus:border-[#947ed7] focus:ring-2 focus:ring-[#947ed7]/30 focus:outline-none text-white shadow-md transition-all duration-200"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
-              <FontAwesomeIcon 
-                icon={faSearch} 
+              <FontAwesomeIcon
+                icon={faSearch}
                 className="absolute left-3 top-1/2 -translate-y-1/2 text-[#947ed7]"
               />
             </div>
           </div>
-          
+
           <div className="flex">
-            <motion.button 
+            <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={toggleFilters}
-              className="py-3 px-5 rounded-lg bg-[#1e153e] border border-[#947ed7]/40 hover:border-[#947ed7] text-white font-medium flex items-center gap-2 shadow-md"
+              className="py-3 px-5 rounded-lg bg-[#1e153e] border border-[#947ed7]/40 hover:border-[#947ed7] text-white font-medium flex items-center gap-2 shadow-md transition-all duration-200"
             >
               <FontAwesomeIcon icon={faFilter} />
               Filters
-              <FontAwesomeIcon 
-                icon={faChevronDown} 
-                className={`transition-transform ${isFiltersOpen ? "rotate-180" : ""}`}
+              <FontAwesomeIcon
+                icon={faChevronDown}
+                className={`transition-transform duration-300 ${isFiltersOpen ? "rotate-180" : ""}`}
               />
             </motion.button>
           </div>
@@ -120,17 +125,18 @@ const MatchupTable = ({
         {/* Filters Section */}
         <AnimatePresence>
           {isFiltersOpen && (
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: "auto" }}
               exit={{ opacity: 0, height: 0 }}
-              className="mt-3 p-4 bg-[#1e153e] border border-[#947ed7]/40 rounded-lg shadow-lg"
+              transition={{ duration: 0.3 }}
+              className="mt-3 p-6 bg-[#1e153e] border border-[#947ed7]/40 rounded-lg shadow-lg"
             >
-              <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+              <div className="flex flex-col md:flex-row justify-between items-center gap-6">
                 <div className="w-full md:w-auto">
-                  <label className="block text-sm font-medium text-[#947ed7] mb-1">Round</label>
-                  <select 
-                    className="w-full md:w-40 px-4 py-2 rounded-lg bg-[#160a3a] border border-[#947ed7]/40 focus:border-[#947ed7] focus:outline-none text-white"
+                  <label className="block text-sm font-medium text-[#947ed7] mb-2">Round</label>
+                  <select
+                    className="w-full md:w-48 px-4 py-2 rounded-lg bg-[#160a3a] border border-[#947ed7]/40 focus:border-[#947ed7] focus:ring-2 focus:ring-[#947ed7]/30 focus:outline-none text-white transition-all duration-200"
                     value={roundFilter === null ? "" : roundFilter}
                     onChange={(e) => setRoundFilter(e.target.value === "" ? null : Number(e.target.value))}
                   >
@@ -140,11 +146,11 @@ const MatchupTable = ({
                     ))}
                   </select>
                 </div>
-                
+
                 <div className="w-full md:w-auto">
-                  <label className="block text-sm font-medium text-[#947ed7] mb-1">Status</label>
-                  <select 
-                    className="w-full md:w-40 px-4 py-2 rounded-lg bg-[#160a3a] border border-[#947ed7]/40 focus:border-[#947ed7] focus:outline-none text-white"
+                  <label className="block text-sm font-medium text-[#947ed7] mb-2">Status</label>
+                  <select
+                    className="w-full md:w-48 px-4 py-2 rounded-lg bg-[#160a3a] border border-[#947ed7]/40 focus:border-[#947ed7] focus:ring-2 focus:ring-[#947ed7]/30 focus:outline-none text-white transition-all duration-200"
                     value={completedFilter === null ? "" : completedFilter ? "completed" : "ongoing"}
                     onChange={(e) => {
                       if (e.target.value === "") setCompletedFilter(null);
@@ -156,93 +162,110 @@ const MatchupTable = ({
                     <option value="ongoing">Ongoing</option>
                   </select>
                 </div>
-                
+
                 <div className="w-full md:w-auto md:self-end">
-                  <button 
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
                     className="w-full px-6 py-2 rounded-lg bg-[#947ed7] hover:bg-[#af9ce7] text-white font-medium transition-colors shadow-md"
                     onClick={resetFilters}
                   >
                     Reset Filters
-                  </button>
+                  </motion.button>
                 </div>
               </div>
             </motion.div>
           )}
         </AnimatePresence>
       </div>
-      
-      <div className="bg-[#1e153e] rounded-lg shadow-xl overflow-hidden border border-[#947ed7]/30">
+
+      <div className="bg-gradient-to-br from-[#1e153e] to-[#160a3a] rounded-xl shadow-2xl overflow-hidden border border-[#947ed7]/30">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
               <tr className="bg-[#160a3a] text-white">
-                <th className="px-4 py-4 text-left font-semibold text-[#947ed7] border-b border-[#947ed7]/20">Match #</th>
-                <th className="px-4 py-4 text-left font-semibold text-[#947ed7] border-b border-[#947ed7]/20">Round</th>
-                <th className="px-4 py-4 text-left font-semibold text-[#947ed7] border-b border-[#947ed7]/20">Players</th>
-                <th className="px-4 py-4 text-left font-semibold text-[#947ed7] border-b border-[#947ed7]/20">Score</th>
-                <th className="px-4 py-4 text-left font-semibold text-[#947ed7] border-b border-[#947ed7]/20">Status</th>
+                <th className="px-6 py-5 text-left font-semibold text-[#947ed7] border-b border-[#947ed7]/30">Match #</th>
+                <th className="px-6 py-5 text-left font-semibold text-[#947ed7] border-b border-[#947ed7]/30">Round</th>
+                <th className="px-6 py-5 text-left font-semibold text-[#947ed7] border-b border-[#947ed7]/30">Players</th>
+                <th className="px-6 py-5 text-left font-semibold text-[#947ed7] border-b border-[#947ed7]/30">Score</th>
+                <th className="px-6 py-5 text-left font-semibold text-[#947ed7] border-b border-[#947ed7]/30">Status</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#947ed7]/20">
               {filteredMatchups.map((match) => {
-                const isClickable = (tournament?.status !== "completed") && 
-                  ["owner", "admin", "scorekeeper"].includes(user.permission_level.toLowerCase());
-                
+                const isClickable = isUserAllowedToEdit;
+
                 return (
-                  <tr 
+                  <motion.tr
                     key={`${match.round}-${match.match_number}`}
-                    className={`${isClickable ? 'cursor-pointer hover:bg-[#947ed7]/10' : ''} transition-all duration-150`}
+                    whileHover={isClickable ? { backgroundColor: "rgba(148, 126, 215, 0.1)" } : {}}
+                    className={`${isClickable ? 'cursor-pointer' : ''} transition-all duration-200`}
                     onClick={() => isClickable && onMatchClick(match)}
                   >
-                    <td className="px-4 py-4">{match.match_number}</td>
-                    <td className="px-4 py-4">{match.round}</td>
-                    <td className="px-4 py-4">
-                      <div className="flex flex-col gap-2">
+                    <td className="px-6 py-5 text-lg font-medium text-white">{match.match_number}</td>
+                    <td className="px-6 py-5">
+                      <div className="inline-flex items-center px-3 py-1 rounded-full bg-[#2a1c58] text-white">
+                        Round {match.round}
+                      </div>
+                    </td>
+                    <td className="px-6 py-5">
+                      <div className="flex flex-col gap-4">
                         {match.players.map((player, idx) => (
-                          <div 
-                            key={idx} 
-                            className={`${player.uuid === match.winner ? 'text-[#af9ce7] font-semibold' : player.name ? 'text-white' : 'text-gray-400 italic'}`}
+                          <div
+                            key={idx}
+                            className={`flex items-center ${player.uuid === match.winner ? 'text-[#af9ce7] font-bold' : player.name ? 'text-white' : 'text-gray-400 italic'}`}
                           >
+                            {player.uuid === match.winner && (
+                              <FontAwesomeIcon icon={faTrophy} className="mr-2 text-yellow-400" />
+                            )}
                             {player.name || 'Empty slot'}
                           </div>
                         ))}
                       </div>
                     </td>
-                    <td className="px-4 py-4">
-                      <div className="flex flex-col gap-2">
+                    <td className="px-6 py-5">
+                      <div className="flex flex-col gap-4">
                         {match.players.map((player, idx) => (
-                          <div 
+                          <div
                             key={idx}
-                            className={`${player.uuid === match.winner ? 'text-[#af9ce7] font-semibold' : ''}`}
+                            className={`${player.uuid === match.winner ? 'text-[#af9ce7] font-bold' : 'text-white'}`}
                           >
                             {player.score ?? '0'}
                           </div>
                         ))}
                       </div>
                     </td>
-                    <td className="px-4 py-4">
-                      <span 
-                        className={`px-3 py-1 rounded-full text-sm font-medium 
-                          ${match.winner ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}
-                      >
-                        {match.winner ? 'Completed' : 'Ongoing'}
-                      </span>
+                    <td className="px-6 py-5">
+                      {match.winner ? (
+                        <span className="inline-flex items-center gap-1 px-4 py-1.5 rounded-full text-sm font-medium bg-green-900/30 text-green-300 border border-green-500/30">
+                          <span className="w-2 h-2 rounded-full bg-green-400"></span>
+                          Completed
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 px-4 py-1.5 rounded-full text-sm font-medium bg-yellow-900/30 text-yellow-300 border border-yellow-500/30">
+                          <FontAwesomeIcon icon={faGamepad} className="text-yellow-400" />
+                          Ongoing
+                        </span>
+                      )}
                     </td>
-                  </tr>
+                  </motion.tr>
                 );
               })}
             </tbody>
           </table>
-          
+
           {filteredMatchups.length === 0 && (
-            <div className="text-center py-12 text-gray-400">
-              <p className="text-lg">No matches found matching your filters</p>
-              <button 
-                onClick={resetFilters} 
-                className="mt-4 px-6 py-2 rounded-lg bg-[#947ed7]/20 hover:bg-[#947ed7]/30 text-white font-medium transition-colors"
+            <div className="text-center py-16 text-gray-400">
+              <p className="text-xl mb-2">No matches found matching your filters</p>
+              <p className="text-gray-500 mb-6">Try adjusting your search criteria</p>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={resetFilters}
+                className="px-6 py-2 rounded-lg bg-[#947ed7]/20 hover:bg-[#947ed7]/30 text-white font-medium transition-colors border border-[#947ed7]/30"
               >
-                Clear Filters
-              </button>
+                Clear All Filters
+              </motion.button>
             </div>
           )}
         </div>
@@ -336,7 +359,7 @@ const RoundRobinCarousel = ({
                 initial={{ opacity: 0 }}
                 animate={{
                   opacity: Math.abs(offset) <= 1 ? 1 : 0.6,
-                  scale:1
+                  scale: 1
                 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: .2, ease: 'easeInOut' }}
@@ -414,9 +437,9 @@ export const RoundRobinTournament = ({
   // Floating status bar for move player mode
   const renderMovePlayerStatus = () => {
     if (viewType !== BracketViewType.MovePlayer || !movingPlayer) return null;
-    
+
     return (
-      <motion.div 
+      <motion.div
         initial={{ y: 50, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         className="fixed top-6 left-1/2 transform -translate-x-1/2 bg-[#1e153e] text-white px-6 py-3 rounded-lg shadow-xl 
@@ -426,7 +449,7 @@ export const RoundRobinTournament = ({
           <span className="text-[#947ed7] font-medium">Moving Player: </span>
           <span className="font-semibold">{movingPlayer.player.name}</span>
         </div>
-        <button 
+        <button
           onClick={() => handleMovePlayer(null)}
           className="bg-[#947ed7]/20 hover:bg-[#947ed7]/40 p-2 rounded-full transition-colors"
         >
@@ -468,7 +491,32 @@ export const RoundRobinTournament = ({
   return (
     <div className="relative h-[89vh] bg-[#160a3a]/30">
       {renderMovePlayerStatus()}
-      
+      <header className="bg-[#160a3a] w-[80%] ml-[10%] p-4 border-b border-[#947ed7]/30">
+        <div className="container mx-auto flex justify-between items-center">
+          <h1 className="text-2xl font-bold text-[#947ed7]">
+            {tournament?.name || 'Round Robin Tournament'}
+          </h1>
+
+          <div className="flex gap-4">
+            <button
+              onClick={() => setDisplayMode(DisplayMode.Bracket)}
+              className={`px-4 py-2 rounded-lg flex items-center gap-2 ${displayMode === DisplayMode.Bracket ? 'bg-[#947ed7] text-white' : 'bg-[#1e153e] text-[#947ed7]'}`}
+            >
+              <FontAwesomeIcon icon={faSitemap} />
+              Bracket
+            </button>
+
+            <button
+              onClick={() => setDisplayMode(DisplayMode.List)}
+              className={`px-4 py-2 rounded-lg flex items-center gap-2 ${displayMode === DisplayMode.List ? 'bg-[#947ed7] text-white' : 'bg-[#1e153e] text-[#947ed7]'}`}
+            >
+              <FontAwesomeIcon icon={faListUl} />
+              Table
+            </button>
+          </div>
+        </div>
+      </header>
+
       <div className="h-[calc(89vh-60px)] overflow-auto pb-16">
         <AnimatePresence mode="wait">
           {displayMode === DisplayMode.Bracket ? (
@@ -500,9 +548,9 @@ export const RoundRobinTournament = ({
               transition={{ duration: 0.3 }}
               className="list-container"
             >
-              <MatchupTable 
-                bracket={bracket} 
-                tournament={tournament} 
+              <MatchupTable
+                bracket={bracket}
+                tournament={tournament}
                 user={user}
                 onMatchClick={handleMatchClick}
               />
@@ -511,47 +559,12 @@ export const RoundRobinTournament = ({
         </AnimatePresence>
       </div>
 
-      {/* View Toggle */}
-      <div className="fixed bottom-0 left-0 right-0 flex justify-center pb-4 z-10">
-        <motion.div 
-          className="bg-[#1e153e] rounded-full shadow-xl p-1.5 flex border border-[#947ed7]/30"
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.3 }}
-        >
-          <motion.button
-            className={`px-7 py-3 rounded-full flex items-center gap-2 font-medium transition-all duration-200 ${
-              displayMode === DisplayMode.Bracket 
-                ? 'bg-[#947ed7] text-white shadow-md' 
-                : 'text-[#947ed7] hover:text-white'
-            }`}
-            onClick={() => setDisplayMode(DisplayMode.Bracket)}
-            whileHover={{ scale: displayMode === DisplayMode.Bracket ? 1 : 1.05 }}
-          >
-            <FontAwesomeIcon icon={faSitemap} />
-            Bracket
-          </motion.button>
-          <motion.button
-            className={`px-7 py-3 rounded-full flex items-center gap-2 font-medium transition-all duration-200 ${
-              displayMode === DisplayMode.List 
-                ? 'bg-[#947ed7] text-white shadow-md' 
-                : 'text-[#947ed7] hover:text-white'
-            }`}
-            onClick={() => setDisplayMode(DisplayMode.List)}
-            whileHover={{ scale: displayMode === DisplayMode.List ? 1 : 1.05 }}
-          >
-            <FontAwesomeIcon icon={faListUl} />
-            List
-          </motion.button>
-        </motion.div>
-      </div>
-
       {selectedMatch && tournament && (
-        <MatchupModal 
-          matchup={selectedMatch} 
-          isOpen={isMatchupModalOpen} 
-          setOpen={setIsMatchupModalOpen} 
-          user={user} 
+        <MatchupModal
+          matchup={selectedMatch}
+          isOpen={isMatchupModalOpen}
+          setOpen={setIsMatchupModalOpen}
+          user={user}
           tournament_type={tournament?.tournament_type}
         />
       )}

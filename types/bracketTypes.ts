@@ -22,6 +22,7 @@ export interface Matchup {
     winner?: string;
     players: BracketPlayer[];
     round:number;
+    is_tie:boolean;
 }
 
 export interface Round {

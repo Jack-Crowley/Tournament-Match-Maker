@@ -18,4 +18,19 @@ export interface Tournament {
     skill_fields: SkillField[];
     tournament_type: string;
     rules: string[];
+    style_specific_settings: SwissSettings | SingleSettings | RobinSettings;
 }
+
+export interface SwissSettings {
+    type: 'rounds' | 'points';
+    type_value: number;
+    sorting_algo: 'random' | "seeded" | "ranked";
+    sorting_value: number;
+}
+
+export interface SingleSettings { 
+    sorting_algo: 'random' | "seeded" | "ranked";
+    sorting_value: number;
+}
+
+export interface RobinSettings { }

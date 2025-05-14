@@ -5,8 +5,8 @@ import { useRouter } from 'next/navigation';
 import { ChangeEvent, useEffect, useState } from 'react';
 import { createClient } from '@/utils/supabase/client';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTrophy, faInfoCircle, faMapPin, faCalendar, faUsers, faChevronLeft } from '@fortawesome/free-solid-svg-icons';
-
+import { faTrophy, faInfoCircle, faMapPin, faCalendar, faUsers, faChevronLeft, faStar } from '@fortawesome/free-solid-svg-icons';
+import { SingleSettings, RobinSettings, SwissSettings } from '@/types/tournamentTypes';
 interface Button {
     id: string;
     label: string;
@@ -29,7 +29,7 @@ const buttons: Button[] = [
     { id: "swiss", label: "Swiss System", description: "Players with similar scores face each other" },
 ];
 
-const implemented = ["robin", "single"]
+const implemented = ["robin", "single", "swiss"]
 
 export const CreateTournament = ({ isModalOpen, setIsModalOpen, ref }: { isModalOpen: boolean, ref: any, setIsModalOpen: (state: boolean) => void }) => {
     const [rules, setRules] = useState<Rules>({});
@@ -41,8 +41,10 @@ export const CreateTournament = ({ isModalOpen, setIsModalOpen, ref }: { isModal
     const [endTime, setEndTime] = useState<string>('');
     const [maxPlayers, setMaxPlayers] = useState<number>(0);
     const [skillFields, setSkillFields] = useState<string[]>([]);
-    // const [newSkillField, setNewSkillField] = useState<string>('');
     const [step, setStep] = useState<number>(1);
+    const [swissSettings, setSwissSettings] = useState<SwissSettings>({ type: 'rounds', type_value: 3, sorting_algo: "random", sorting_value: 4 });
+    const [singleSettings, setSingleSettings] = useState<SingleSettings>({ sorting_algo: "random", sorting_value: 4 });
+    const [robinSettings, setRobinSettings] = useState<RobinSettings>({});
     const { triggerMessage } = useMessage()
     const client = useClient()
     const supabase = createClient()
@@ -76,7 +78,17 @@ export const CreateTournament = ({ isModalOpen, setIsModalOpen, ref }: { isModal
             end_time: endTime || null,
             max_players: maxPlayers || null,
             skill_fields: skillFields,
-            require_account: rules['accounts'] || false
+            require_account: rules['accounts'] || false,
+            // Add Swiss settings if tournament type is Swiss
+            ...(selectedButton === 'swiss' && {
+                style_specific_settings: swissSettings
+            }),
+            ...(selectedButton === 'robin' && {
+                style_specific_settings: robinSettings
+            }),
+            ...(selectedButton === 'single' && {
+                style_specific_settings: singleSettings
+            }),
         };
 
         const { data, error } = await supabase
@@ -106,7 +118,9 @@ export const CreateTournament = ({ isModalOpen, setIsModalOpen, ref }: { isModal
         setEndTime('');
         setMaxPlayers(0);
         setSkillFields([]);
-        // setNewSkillField('');
+        setSwissSettings({ type: 'rounds', type_value: 3, sorting_algo: "random", sorting_value: 4 });
+        setSingleSettings({ sorting_algo: "random", sorting_value: 4 });
+        setRobinSettings({ });
         setStep(1);
 
         const startRules = {}
@@ -120,19 +134,6 @@ export const CreateTournament = ({ isModalOpen, setIsModalOpen, ref }: { isModal
         setSelectedButton(id);
         setStep(2);
     };
-
-    // const addSkillField = () => {
-    //     if (newSkillField.trim() && !skillFields.includes(newSkillField.trim())) {
-    //         setSkillFields([...skillFields, newSkillField.trim()]);
-    //         setNewSkillField('');
-    //     }
-    // };
-
-    // const removeSkillField = (index: number) => {
-    //     const updatedFields = [...skillFields];
-    //     updatedFields.splice(index, 1);
-    //     setSkillFields(updatedFields);
-    // };
 
     const isImplemented = (buttonId: string) => {
         return implemented.includes(buttonId);
@@ -190,10 +191,10 @@ export const CreateTournament = ({ isModalOpen, setIsModalOpen, ref }: { isModal
                                                     <div key={button.id} className="relative">
                                                         <motion.button
                                                             className={`p-4 rounded-lg text-white text-center flex flex-col items-center justify-center ${selectedButton === button.id
-                                                                    ? "bg-gradient-to-br from-[#7458da] to-[#604BAC] shadow-lg shadow-[#7458da]/20"
-                                                                    : isImplemented(button.id)
-                                                                        ? "bg-[#2C2C2C] hover:bg-[#3C3C3C]"
-                                                                        : "bg-[#2C2C2C] opacity-60 cursor-not-allowed"
+                                                                ? "bg-gradient-to-br from-[#7458da] to-[#604BAC] shadow-lg shadow-[#7458da]/20"
+                                                                : isImplemented(button.id)
+                                                                    ? "bg-[#2C2C2C] hover:bg-[#3C3C3C]"
+                                                                    : "bg-[#2C2C2C] opacity-60 cursor-not-allowed"
                                                                 } w-full`}
                                                             whileHover={isImplemented(button.id) ? { scale: 1.03, y: -2 } : { scale: 1 }}
                                                             whileTap={isImplemented(button.id) ? { scale: 0.97 } : { scale: 1 }}
@@ -321,56 +322,166 @@ export const CreateTournament = ({ isModalOpen, setIsModalOpen, ref }: { isModal
                                                 />
                                             </div>
 
-                                            {/* <div className="p-4 bg-[#252525] rounded-lg border border-[#3A3A3A]">
-                                                <div className="flex items-center mb-3">
-                                                    <FontAwesomeIcon icon={faAward} className="mr-2 text-[#7458da]" />
-                                                    <h3 className="text-white font-medium">Skill Fields</h3>
-                                                </div>
-                                                <div className="flex mb-2">
-                                                    <input
-                                                        type="text"
-                                                        value={newSkillField}
-                                                        onChange={(e: ChangeEvent<HTMLInputElement>) => setNewSkillField(e.target.value)}
-                                                        placeholder="ELO..."
-                                                        className="flex-grow p-2 bg-[#2a2a2a] rounded-l-md text-white focus:outline-none"
-                                                    />
-                                                    <button
-                                                        onClick={addSkillField}
-                                                        className="bg-[#7458da] hover:bg-[#604BAC] text-white px-3 rounded-r-md transition-colors"
-                                                        disabled={!newSkillField.trim()}
-                                                    >
-                                                        Add
-                                                    </button>
-                                                </div>
-                                                {skillFields.length > 0 && (
-                                                    <ul className="space-y-1">
-                                                        {skillFields.map((field, index) => (
-                                                            <li key={index} className="flex justify-between items-center bg-[#2a2a2a] p-2 rounded">
-                                                                <span className="text-white">{field}</span>
-                                                                <button
-                                                                    onClick={() => removeSkillField(index)}
-                                                                    className="text-red-400 hover:text-red-300"
-                                                                >
-                                                                    Remove
-                                                                </button>
-                                                            </li>
-                                                        ))}
-                                                    </ul>
-                                                )}
-                                            </div> */}
-                                        </div>
+                                            
+                                            {selectedButton === 'single' && (
+                                                <div className="p-4 bg-[#252525] rounded-lg border border-[#3A3A3A]">
+                                                    <div className="flex items-center mb-3">
+                                                        <FontAwesomeIcon icon={faStar} className="mr-2 text-[#7458da]" />
+                                                        <h3 className="text-white font-medium">Single Tournament Settings</h3>
+                                                    </div>
 
-                                        {/* <div className="mt-6">
-                                            <h3 className="text-md font-medium mb-3 text-gray-300 flex items-center">
-                                                <FontAwesomeIcon icon={faUserShield} className="text-[#7458da] mr-2" />
-                                                General Settings
-                                            </h3>
-                                            <div className="space-y-1 bg-[#2a2a2a] p-3 rounded-lg">
-                                                {generalRules.map(({ fullName, id, description }) => (
-                                                    <Switch key={id} label={fullName} description={description} ruleKey={id} />
-                                                ))}
-                                            </div>
-                                        </div> */}
+                                                    <div className="mb-3">
+                                                        <label className="text-gray-300 block text-sm mb-2 font-medium">Matchmaking</label>
+                                                        <div className="flex space-x-2">
+                                                            <button
+                                                                className={`flex-1 p-2 rounded ${singleSettings.sorting_algo === 'random'
+                                                                    ? 'bg-[#7458da] text-white'
+                                                                    : 'bg-[#2a2a2a] text-gray-300 hover:bg-[#3a3a3a]'}`}
+                                                                onClick={() => setSingleSettings({ ...singleSettings, sorting_algo: 'random' })}
+                                                            >
+                                                                Random
+                                                            </button>
+                                                            <button
+                                                                className={`flex-1 p-2 rounded ${singleSettings.sorting_algo === 'seeded'
+                                                                    ? 'bg-[#7458da] text-white'
+                                                                    : 'bg-[#2a2a2a] text-gray-300 hover:bg-[#3a3a3a]'}`}
+                                                                onClick={() => setSingleSettings({ ...singleSettings, sorting_algo: 'seeded' })}
+                                                            >
+                                                                Seeded
+                                                            </button>
+                                                            <button
+                                                                className={`flex-1 p-2 rounded ${singleSettings.sorting_algo === 'ranked'
+                                                                    ? 'bg-[#7458da] text-white'
+                                                                    : 'bg-[#2a2a2a] text-gray-300 hover:bg-[#3a3a3a]'}`}
+                                                                onClick={() => setSingleSettings({ ...singleSettings, sorting_algo: 'ranked' })}
+                                                            >
+                                                                Ranked
+                                                            </button>
+                                                        </div>
+                                                    </div>
+
+                                                    {singleSettings.sorting_algo == "seeded" && (
+                                                        <div>
+                                                            <label className="text-gray-300 block text-sm mb-2 font-medium">
+                                                                How many players per group
+                                                            </label>
+                                                            <input
+                                                                type="number"
+                                                                value={singleSettings.sorting_value}
+                                                                onChange={(e) => setSingleSettings({
+                                                                    ...singleSettings,
+                                                                    sorting_value: parseInt(e.target.value) || 0
+                                                                })}
+                                                                min="1"
+                                                                className="w-full p-3 bg-[#2a2a2a] border-l-4 border-[#7458da] rounded-md text-white focus:outline-none focus:ring-2 focus:ring-[#7458da] focus:ring-opacity-50 transition-all"
+                                                            />
+                                                        </div>
+                                                    )}
+
+                                                </div>
+                                            )}
+
+                                            {selectedButton === 'swiss' && (
+                                                <div className="p-4 bg-[#252525] rounded-lg border border-[#3A3A3A]">
+                                                    <div className="flex items-center mb-3">
+                                                        <FontAwesomeIcon icon={faStar} className="mr-2 text-[#7458da]" />
+                                                        <h3 className="text-white font-medium">Swiss Tournament Settings</h3>
+                                                    </div>
+
+                                                    <div className="mb-3">
+                                                        <label className="text-gray-300 block text-sm mb-2 font-medium">Format Type</label>
+                                                        <div className="flex space-x-2">
+                                                            <button
+                                                                className={`flex-1 p-2 rounded ${swissSettings.type === 'rounds'
+                                                                    ? 'bg-[#7458da] text-white'
+                                                                    : 'bg-[#2a2a2a] text-gray-300 hover:bg-[#3a3a3a]'}`}
+                                                                onClick={() => setSwissSettings({ ...swissSettings, type: 'rounds' })}
+                                                            >
+                                                                Fixed Rounds
+                                                            </button>
+                                                            <button
+                                                                className={`flex-1 p-2 rounded ${swissSettings.type === 'points'
+                                                                    ? 'bg-[#7458da] text-white'
+                                                                    : 'bg-[#2a2a2a] text-gray-300 hover:bg-[#3a3a3a]'}`}
+                                                                onClick={() => setSwissSettings({ ...swissSettings, type: 'points' })}
+                                                            >
+                                                                Points to Win
+                                                            </button>
+                                                        </div>
+                                                    </div>
+
+                                                    <div>
+                                                        <label className="text-gray-300 block text-sm mb-2 font-medium">
+                                                            {swissSettings.type === 'rounds' ? 'Number of Rounds' : 'Points to Win'}
+                                                        </label>
+                                                        <input
+                                                            type="number"
+                                                            value={swissSettings.type_value}
+                                                            onChange={(e) => setSwissSettings({
+                                                                ...swissSettings,
+                                                                type_value: parseInt(e.target.value) || 0
+                                                            })}
+                                                            min="1"
+                                                            className="w-full p-3 bg-[#2a2a2a] border-l-4 border-[#7458da] rounded-md text-white focus:outline-none focus:ring-2 focus:ring-[#7458da] focus:ring-opacity-50 transition-all"
+                                                        />
+                                                        <p className="text-xs text-gray-400 mt-1">
+                                                            {swissSettings.type === 'rounds'
+                                                                ? 'Set the fixed number of rounds for all participants'
+                                                                : 'Tournament ends when a player reaches this number of points'}
+                                                        </p>
+                                                    </div>
+
+                                                    <div className="mb-3 mt-12">
+                                                        <label className="text-gray-300 block text-sm mb-2 font-medium">Matchmaking</label>
+                                                        <div className="flex space-x-2">
+                                                            <button
+                                                                className={`flex-1 p-2 rounded ${swissSettings.sorting_algo === 'random'
+                                                                    ? 'bg-[#7458da] text-white'
+                                                                    : 'bg-[#2a2a2a] text-gray-300 hover:bg-[#3a3a3a]'}`}
+                                                                onClick={() => setSwissSettings({ ...swissSettings, sorting_algo: 'random' })}
+                                                            >
+                                                                Random
+                                                            </button>
+                                                            <button
+                                                                className={`flex-1 p-2 rounded ${swissSettings.sorting_algo === 'seeded'
+                                                                    ? 'bg-[#7458da] text-white'
+                                                                    : 'bg-[#2a2a2a] text-gray-300 hover:bg-[#3a3a3a]'}`}
+                                                                onClick={() => setSwissSettings({ ...swissSettings, sorting_algo: 'seeded' })}
+                                                            >
+                                                                Seeded
+                                                            </button>
+                                                            <button
+                                                                className={`flex-1 p-2 rounded ${swissSettings.sorting_algo === 'ranked'
+                                                                    ? 'bg-[#7458da] text-white'
+                                                                    : 'bg-[#2a2a2a] text-gray-300 hover:bg-[#3a3a3a]'}`}
+                                                                onClick={() => setSwissSettings({ ...swissSettings, sorting_algo: 'ranked' })}
+                                                            >
+                                                                Ranked
+                                                            </button>
+                                                        </div>
+                                                    </div>
+
+                                                    {swissSettings.sorting_algo == "seeded" && (
+                                                        <div>
+                                                            <label className="text-gray-300 block text-sm mb-2 font-medium">
+                                                                How many players per group
+                                                            </label>
+                                                            <input
+                                                                type="number"
+                                                                value={swissSettings.sorting_value}
+                                                                onChange={(e) => setSwissSettings({
+                                                                    ...swissSettings,
+                                                                    sorting_value: parseInt(e.target.value) || 0
+                                                                })}
+                                                                min="1"
+                                                                className="w-full p-3 bg-[#2a2a2a] border-l-4 border-[#7458da] rounded-md text-white focus:outline-none focus:ring-2 focus:ring-[#7458da] focus:ring-opacity-50 transition-all"
+                                                            />
+                                                        </div>
+                                                    )}
+
+                                                </div>
+                                            )}
+                                        </div>
 
                                         <div className="mt-8 grid grid-cols-2 gap-4">
                                             <motion.button
@@ -382,7 +493,7 @@ export const CreateTournament = ({ isModalOpen, setIsModalOpen, ref }: { isModal
                                                 Back
                                             </motion.button>
                                             <motion.button
-                                                className="bg-gradient-to-r from-[#7458da] to-[#604BAC] text-white px-4 py-3 rounded-lg font-medium shadow-md shadow-[#7458da]/20"
+                                                className={`bg-gradient-to-r ${tournamentName ? 'from-[#7458da] to-[#604BAC]' : 'from-[#231b3f] to-[#1d1049] border-[1px] border-[#604BAC]'} text-white px-4 py-3 rounded-lg font-medium shadow-md shadow-[#7458da]/20`}
                                                 whileHover={{ scale: 1.02, shadow: "0px 8px 15px rgba(116, 88, 218, 0.4)" }}
                                                 whileTap={{ scale: 0.98 }}
                                                 onClick={handleCreateTournament}

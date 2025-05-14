@@ -20,6 +20,7 @@ import { TournamentInfoView } from "./infoView";
 import { RoundRobinTournament } from "./robin/roundRobinTournament";
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ScoreReports } from "./scoreReports";
+import { SwissTournament } from "./swiss/swissStyleTournament";
 
 export const SideNavbar = ({ tab, setTab, user }: {
     tab: string,
@@ -213,6 +214,10 @@ export const ViewTournament = ({ tournamentID, user }: { tournamentID: number, u
 
                         {activeTab === "Bracket" && (tournament?.tournament_type == "robin") && (
                             <RoundRobinTournament bracket={bracket} bracketViewType={BracketViewType.Normal} tournamentID={tournamentID} user={user} />
+                        )}
+
+                        {activeTab === "Bracket" && (tournament?.tournament_type == "swiss") && (
+                            <SwissTournament bracket={bracket} bracketViewType={BracketViewType.Normal} tournamentID={tournamentID} user={user} />
                         )}
 
                         {activeTab == "Players" && (

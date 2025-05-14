@@ -8,16 +8,28 @@ import { Tournament } from "@/types/tournamentTypes";
 import { PlayerModal } from "./modals/editPlayersModal";
 import { ConfirmModal, ConfirmModalInformation } from "./modals/confirmationModal";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { 
-  faTrash, 
-  faUserClock, 
-  faUserMinus, 
-  faUserPlus, 
-  faUsers,
-  faCheck,
-  faXmark
+import {
+    faTrash,
+    faUserClock,
+    faUserMinus,
+    faUserPlus,
+    faUsers,
+    faCheck,
+    faXmark,
+    faSort,
+    faSortUp,
+    faSortDown,
+    faFilter
 } from "@fortawesome/free-solid-svg-icons";
 import { AnimatePresence, motion } from "framer-motion";
+
+// Define the SortConfig type
+type SortConfig = {
+    key: string;
+    direction: 'asc' | 'desc';
+    type: 'text' | 'numeric' | 'categorical';
+    skillIndex?: number;
+}
 
 export const PlayersTable = ({
     players,
@@ -42,8 +54,51 @@ export const PlayersTable = ({
     const [confirmModalInfo, setConfirmModalInfo] = useState<ConfirmModalInformation | null>(null);
     const [isProcessing, setIsProcessing] = useState<boolean>(false);
     const [selectionMode, setSelectionMode] = useState<boolean>(false);
+    const [sortConfig, setSortConfig] = useState<SortConfig | null>(null);
+    const [sortMenuOpen, setSortMenuOpen] = useState<boolean>(false);
+    const [displayedPlayers, setDisplayedPlayers] = useState<Player[]>(players);
+
     const { triggerMessage } = useMessage();
     const supabase = createClient();
+
+    // Update displayed players when original players or sort config changes
+    useEffect(() => {
+        if (sortConfig) {
+            const sortedPlayers = [...players].sort((a, b) => {
+                if (sortConfig.key === 'player_name') {
+                    // Sort by player name
+                    return sortConfig.direction === 'asc'
+                        ? a.player_name.localeCompare(b.player_name)
+                        : b.player_name.localeCompare(a.player_name);
+                } else if (sortConfig.key.startsWith('skill_')) {
+                    const skillIndex = sortConfig.skillIndex !== undefined ? sortConfig.skillIndex : 0;
+                    const aSkill = a.skills[skillIndex];
+                    const bSkill = b.skills[skillIndex];
+
+                    // Handle missing skill values
+                    if (!aSkill && !bSkill) return 0;
+                    if (!aSkill) return sortConfig.direction === 'asc' ? -1 : 1;
+                    if (!bSkill) return sortConfig.direction === 'asc' ? 1 : -1;
+
+                    // Sort based on skill type
+                    if (sortConfig.type === 'numeric') {
+                        return sortConfig.direction === 'asc'
+                            ? aSkill.value - bSkill.value
+                            : bSkill.value - aSkill.value;
+                    } else if (sortConfig.type === 'categorical') {
+                        // Sort categorical values alphabetically
+                        return sortConfig.direction === 'asc'
+                            ? (aSkill.category_type || '').localeCompare(bSkill.category_type || '')
+                            : (bSkill.category_type || '').localeCompare(aSkill.category_type || '');
+                    }
+                }
+                return 0;
+            });
+            setDisplayedPlayers(sortedPlayers);
+        } else {
+            setDisplayedPlayers(players);
+        }
+    }, [players, sortConfig]);
 
     useEffect(() => {
         setCanDelete(permission_level === "admin" || permission_level === "owner");
@@ -67,17 +122,17 @@ export const PlayersTable = ({
         if (event) {
             event.stopPropagation();
         }
-        
+
         const newSelectedPlayers = new Set(selectedPlayers);
-        
+
         if (newSelectedPlayers.has(playerId)) {
             newSelectedPlayers.delete(playerId);
         } else {
             newSelectedPlayers.add(playerId);
         }
-        
+
         setSelectedPlayers(newSelectedPlayers);
-        
+
         // If a player is selected, automatically enter selection mode
         if (newSelectedPlayers.size > 0 && !selectionMode) {
             setSelectionMode(true);
@@ -85,12 +140,12 @@ export const PlayersTable = ({
     };
 
     const handleSelectAll = () => {
-        if (selectedPlayers.size === players.length) {
+        if (selectedPlayers.size === displayedPlayers.length) {
             // Deselect all
             setSelectedPlayers(new Set());
         } else {
             // Select all
-            setSelectedPlayers(new Set(players.map(player => player.id)));
+            setSelectedPlayers(new Set(displayedPlayers.map(player => player.id)));
         }
     };
 
@@ -115,7 +170,7 @@ export const PlayersTable = ({
             onCancel: () => setConfirmModalInfo(null),
             onSuccess: async () => {
                 setIsProcessing(true);
-                
+
                 try {
                     const { error } = await supabase
                         .from("tournament_players")
@@ -125,7 +180,7 @@ export const PlayersTable = ({
                     if (error) {
                         throw new Error(error.message);
                     }
-                    
+
                     triggerMessage(`${selectedPlayers.size === 1 ? 'Player' : 'Players'} deleted successfully`, "green");
                     setPlayers(players.filter(player => !selectedPlayers.has(player.id)));
                     setSelectedPlayers(new Set());
@@ -160,7 +215,7 @@ export const PlayersTable = ({
 
         const executeBulkSwitch = async () => {
             setIsProcessing(true);
-            
+
             try {
                 const res = await fetch("/api/tournament/bulk-switch", {
                     method: "PATCH",
@@ -175,7 +230,7 @@ export const PlayersTable = ({
                 }
 
                 triggerMessage(`${selectedPlayers.size === 1 ? 'Player' : 'Players'} moved to ${newType} successfully`, "green");
-            
+
                 setOtherPlayers(prev => [...prev, ...players.filter(p => selectedPlayers.has(p.id))]);
                 setPlayers(players.filter(p => !selectedPlayers.has(p.id)));
                 setSelectedPlayers(new Set());
@@ -222,7 +277,7 @@ export const PlayersTable = ({
 
     const getActionButtonClass = (variant: 'primary' | 'danger' | 'default' = 'default') => {
         const baseClasses = "px-4 py-2 rounded-lg flex items-center justify-center gap-2 transition-all duration-200 text-sm font-medium";
-        
+
         switch (variant) {
             case 'primary':
                 return `${baseClasses} bg-indigo-600/20 hover:bg-indigo-600/30 text-purple-200 border border-indigo-600/30 hover:border-indigo-500/50`;
@@ -238,6 +293,29 @@ export const PlayersTable = ({
             {type === "active" ? "Move to Waitlist" : "Move to Active List"}
         </span>
     );
+
+    // Sort handling functions
+    const handleSort = (key: string, type: 'text' | 'numeric' | 'categorical', skillIndex?: number) => {
+        setSortMenuOpen(false);
+
+        // If clicking the same key, toggle direction or reset
+        if (sortConfig?.key === key) {
+            if (sortConfig.direction === 'asc') {
+                setSortConfig({ key, direction: 'desc', type, skillIndex });
+            } else {
+                // Reset sorting
+                setSortConfig(null);
+            }
+        } else {
+            // New sort key, default to ascending
+            setSortConfig({ key, direction: 'asc', type, skillIndex });
+        }
+    };
+
+    const getSortDirectionIcon = (key: string) => {
+        if (sortConfig?.key !== key) return faSort;
+        return sortConfig.direction === 'asc' ? faSortUp : faSortDown;
+    };
 
     return (
         <div>
@@ -277,18 +355,76 @@ export const PlayersTable = ({
                             </div>
                         </div>
 
-                        {canDelete && (
-                            <div className="flex space-x-3">
-                                {selectionMode ? (
+                        <div className="flex space-x-3">
+                            {/* Sorting dropdown */}
+                            <div className="relative">
+                                <button
+                                    className={`${getActionButtonClass('default')} ${sortConfig ? 'border-indigo-500/50' : ''}`}
+                                    onClick={() => setSortMenuOpen(!sortMenuOpen)}
+                                >
+                                    <FontAwesomeIcon icon={faFilter} />
+                                    <span>
+                                        {sortConfig
+                                            ? `Sorted by ${sortConfig.key === 'player_name'
+                                                ? 'Name'
+                                                : tournament?.skill_fields[sortConfig.skillIndex || 0]?.name}`
+                                            : 'Sort Players'}
+                                    </span>
+                                    {sortConfig && (
+                                        <FontAwesomeIcon
+                                            icon={sortConfig.direction === 'asc' ? faSortUp : faSortDown}
+                                            className="ml-1"
+                                        />
+                                    )}
+                                </button>
+
+                                {sortMenuOpen && (
+                                    <div className="absolute z-10 right-0 mt-2 w-56 rounded-md shadow-lg bg-gray-800 border border-gray-700">
+                                        <div className="py-1">
+                                            <button
+                                                onClick={() => handleSort('player_name', 'text')}
+                                                className="w-full text-left px-4 py-2 text-sm text-gray-200 hover:bg-gray-700 flex justify-between items-center"
+                                            >
+                                                <span>Player Name</span>
+                                                <FontAwesomeIcon icon={getSortDirectionIcon('player_name')} />
+                                            </button>
+
+                                            {Array.isArray(tournament?.skill_fields) && tournament.skill_fields.map((skill, index) => (
+                                                <button
+                                                    key={index}
+                                                    onClick={() => handleSort(`skill_${index}`, skill.type === 'numeric' ? 'numeric' : 'categorical', index)}
+                                                    className="w-full text-left px-4 py-2 text-sm text-gray-200 hover:bg-gray-700 flex justify-between items-center"
+                                                >
+                                                    <span>{skill.name}</span>
+                                                    <FontAwesomeIcon icon={getSortDirectionIcon(`skill_${index}`)} />
+                                                </button>
+                                            ))}
+
+                                            {sortConfig && (
+                                                <button
+                                                    onClick={() => setSortConfig(null)}
+                                                    className="w-full text-left px-4 py-2 text-sm text-red-300 hover:bg-gray-700 flex items-center"
+                                                >
+                                                    <FontAwesomeIcon icon={faXmark} className="mr-2" />
+                                                    <span>Clear Sorting</span>
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                            {canDelete && (
+                                selectionMode ? (
                                     <>
                                         <button
                                             className={getActionButtonClass('default')}
                                             onClick={handleSelectAll}
                                             disabled={isProcessing}
                                         >
-                                            <span>{selectedPlayers.size === players.length ? 'Deselect All' : 'Select All'}</span>
+                                            <span>{selectedPlayers.size === displayedPlayers.length ? 'Deselect All' : 'Select All'}</span>
                                         </button>
-                                        
+
                                         {selectedPlayers.size > 0 && (
                                             <>
                                                 <button
@@ -309,7 +445,7 @@ export const PlayersTable = ({
                                                 </button>
                                             </>
                                         )}
-                                        
+
                                         <button
                                             className={getActionButtonClass('default')}
                                             onClick={toggleSelectionMode}
@@ -326,14 +462,14 @@ export const PlayersTable = ({
                                     >
                                         <span>Select Players</span>
                                     </button>
-                                )}
-                            </div>
-                        )}
+                                )
+                            )}
+                        </div>
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                         <AnimatePresence>
-                            {players.map((player) => (
+                            {displayedPlayers.map((player) => (
                                 <motion.div
                                     layout
                                     key={player.id}
@@ -344,8 +480,8 @@ export const PlayersTable = ({
                                     onClick={(e) => handleCardClick(player, e)}
                                     className={`relative bg-[#6a33a15c] rounded-xl border shadow-md p-4 flex flex-col justify-between cursor-pointer transition-all duration-200 
                                         ${selectionMode ? 'hover:bg-indigo-900/60' : 'hover:bg-indigo-900/40'}
-                                        ${selectedPlayers.has(player.id) 
-                                            ? 'bg-indigo-800/60 border-indigo-400/50 shadow-lg shadow-indigo-900/20' 
+                                        ${selectedPlayers.has(player.id)
+                                            ? 'bg-indigo-800/60 border-indigo-400/50 shadow-lg shadow-indigo-900/20'
                                             : 'border-white/10'}`
                                     }
                                 >
@@ -353,8 +489,8 @@ export const PlayersTable = ({
                                     {selectionMode && (
                                         <div className="absolute top-3 right-3">
                                             <div className={`w-6 h-6 rounded-full flex items-center justify-center transition-colors duration-200
-                                                ${selectedPlayers.has(player.id) 
-                                                    ? 'bg-indigo-500 text-white' 
+                                                ${selectedPlayers.has(player.id)
+                                                    ? 'bg-indigo-500 text-white'
                                                     : 'bg-indigo-800/50 border border-indigo-500/30'}`}
                                             >
                                                 {selectedPlayers.has(player.id) && (
@@ -370,23 +506,26 @@ export const PlayersTable = ({
                                         </h3>
                                         {Array.isArray(tournament?.skill_fields) &&
                                             tournament.skill_fields.map((skill, index) => (
-                                                <div key={index} className="mb-2 flex items-start">
-                                                    <span className="text-purple-200/80 text-sm mr-2">{skill.name}:</span>
+                                                <div
+                                                    key={index}
+                                                    className={`mb-2 flex items-start ${sortConfig?.skillIndex === index ? 'bg-indigo-900/80 -mx-2 px-2 py-1 rounded-md' : ''}`}
+                                                >
+                                                    
                                                     {player.skills[index]?.type === "numeric" ? (
                                                         <div className="flex items-center">
-                                                            <div className="w-6 h-6 rounded-full bg-indigo-600/20 flex items-center justify-center mr-2 border border-indigo-500/30">
+                                                            <h1 className="text-xs text-gradient-to-r from-purple-400 to-indigo-400">
+                                                                <span className="text-purple-200/80 text-sm mr-2">{skill.name}:</span> {player.skills[index]?.value}
+                                                            </h1>
+                                                            {/* <div className="w-6 h-6 rounded-full bg-indigo-600/20 flex items-center justify-center mr-2 border border-indigo-500/30">
                                                                 <span className="text-xs font-medium">{player.skills[index]?.value}</span>
                                                             </div>
-                                                            <div className="w-24 bg-indigo-900/30 rounded-full h-2">
-                                                                <div
-                                                                    className="h-2 rounded-full bg-gradient-to-r from-purple-400 to-indigo-400"
-                                                                    style={{ width: `${(player.skills[index]?.value / 10) * 100}%` }}
-                                                                ></div>
-                                                            </div>
+                                                            <div
+                                                                className="h-2 rounded-full w-[5rem] bg-gradient-to-r from-purple-400 to-indigo-400"
+                                                            ></div> */}
                                                         </div>
                                                     ) : (
                                                         <span className="px-2 py-1 text-xs rounded-full bg-indigo-800/50 border border-indigo-700/50">
-                                                            {player.skills[index]?.category_type}
+                                                            <span className="text-purple-200/80 text-sm mr-2">{skill.name}:</span> {player.skills[index]?.category_type}
                                                         </span>
                                                     )}
                                                 </div>
@@ -397,10 +536,16 @@ export const PlayersTable = ({
                         </AnimatePresence>
                     </div>
 
+                    {displayedPlayers.length === 0 && (
+                        <div className="text-center my-8 p-6 bg-indigo-900/20 rounded-lg border border-indigo-800/30">
+                            <p className="text-purple-200">No players match the current sorting criteria.</p>
+                        </div>
+                    )}
+
                     {canDelete && players.length > 0 && !selectionMode && (
                         <div className="text-center mt-6 text-purple-200/60 text-sm">
-                            {type === "active" 
-                                ? "Click on a player card to view details or use 'Select Players' to manage multiple players" 
+                            {type === "active"
+                                ? "Click on a player card to view details or use 'Select Players' to manage multiple players"
                                 : "Click on a waitlisted player to view details or select players to move them to the active list"}
                         </div>
                     )}
