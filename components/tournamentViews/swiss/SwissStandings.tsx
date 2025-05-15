@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSearch, faSort, faSortUp, faSortDown, faTrophy } from '@fortawesome/free-solid-svg-icons';
-import { motion } from 'framer-motion';
 
 type PlayerStanding = {
   player: {

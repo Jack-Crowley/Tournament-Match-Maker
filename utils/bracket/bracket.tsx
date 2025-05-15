@@ -304,6 +304,7 @@ export const fetchBracket = async (tournamentID: number): Promise<{ bracket: Bra
                     id: -1,
                     players: [tempPlayer, tempPlayer],
                     round: round,
+                    is_tie:false
                 };
                 matchesByRound[round].push(placeholderMatch);
             }

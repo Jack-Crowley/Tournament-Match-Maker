@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BracketViewType, MovingPlayer, OnMovePlayer } from '../single/bracketView';
-import { Bracket, BracketPlayer, Matchup, Round } from '@/types/bracketTypes';
+import { Bracket, BracketPlayer, Matchup } from '@/types/bracketTypes';
 import { Tournament } from '@/types/tournamentTypes';
 import { createClient } from '@/utils/supabase/client';
 import { User } from '@/types/userType';
@@ -10,9 +10,6 @@ import { ConfirmModal, ConfirmModalInformation } from "../../modals/confirmation
 import { motion, AnimatePresence } from 'framer-motion';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
-    faChevronLeft,
-    faChevronRight,
-    faCircle,
     faListUl,
     faSitemap,
     faSearch,
@@ -535,7 +532,7 @@ export const SwissTournament = ({
     const startNextRoundIntermediate = () => {
         if (!tournamentID) return;
 
-        let counter = getUnfinishedMatches();
+        const counter = getUnfinishedMatches();
 
         if (counter > 0) {
             const confirmModal: ConfirmModalInformation = {
@@ -544,7 +541,7 @@ export const SwissTournament = ({
                 onCancel: () => setConfirmModalInfo(null),
                 onSuccess: async () => {
                     for (let i = 0; i < bracket.rounds[selectedRound-1].matches.length; i++) {
-                        var match = bracket.rounds[selectedRound-1].matches[i];
+                        const match = bracket.rounds[selectedRound-1].matches[i];
                         const supabase = createClient()
 
                         if (match.winner || match.is_tie) continue;

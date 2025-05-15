@@ -85,7 +85,7 @@ export const MatchupModal = ({ isOpen, setOpen, matchup, user, tournament_type }
         setRemovedPlayersList([]);
         setAddPlayersIndex(-1);
         LookupNextMatch();
-    }, [matchup, supabase, isOpen]);
+    }, [matchup, supabase, isOpen, tournament_type]);
 
     useEffect(() => {
         // Retrieve the rows of player1 and player2 if they exist. 
@@ -284,8 +284,9 @@ export const MatchupModal = ({ isOpen, setOpen, matchup, user, tournament_type }
 
     const toggleTie = () => {
         const isTie = !editedMatchup.is_tie;
-        const newWinner = isTie ? null : editedMatchup.winner;
         const { winner, ...rest } = editedMatchup;
+
+        if (winner) {}
 
         const updated = {
             ...rest,

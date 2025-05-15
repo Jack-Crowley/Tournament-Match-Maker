@@ -10,7 +10,6 @@ import {
     faExclamationTriangle,
     faPlus,
     faUser,
-    faUserShield,
     faHistory,
     faTrophy,
     faHandshake,
@@ -56,11 +55,6 @@ export function ScoreReports({ tournamentID, bracket, user, tournament }: {
         winner_id: "",
         opponent_id: "",
         is_tie: false
-    });
-
-    const [autoAcceptSetting, setAutoAcceptSetting] = useState({
-        enabled: false,
-        requireBothReports: true
     });
 
     useEffect(() => {
@@ -131,6 +125,8 @@ export function ScoreReports({ tournamentID, bracket, user, tournament }: {
         return () => {
             subscription.unsubscribe();
         };
+
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [bracket.rounds, tournamentID, user.permission_level, user.uuid]);
 
     const getOpponentForReport = (report: any) => {
@@ -177,7 +173,7 @@ export function ScoreReports({ tournamentID, bracket, user, tournament }: {
     };
 
     const submitScoreReport = async () => {
-        var scoreReport: any = {
+        let scoreReport: any = {
             match_id: reportFormData.match_id,
             tournament_id: tournamentID,
             is_tie: reportFormData.is_tie,
@@ -213,22 +209,22 @@ export function ScoreReports({ tournamentID, bracket, user, tournament }: {
     };
 
     const acceptScoreReport = async (reportId: string) => {
-        var report = scoreReports.find(re => re.id == reportId)
+        const report = scoreReports.find(re => re.id == reportId)
 
         if (!report || report == undefined) {
             triggerMessage("Could not find report", "red")
             return;
         }
 
-        const { data: originalMatch, error: originalError } = await supabaseClient.current.from("tournament_matches").select("*").eq("id", report.match_id).single()
+        const { data: originalMatch } = await supabaseClient.current.from("tournament_matches").select("*").eq("id", report.match_id).single()
 
-        var finalMatch: any = {}
+        const finalMatch: any = {}
 
         if (report.winner) {
             finalMatch["winner"] = report.winner
         }
 
-        var players = originalMatch.players;
+        const players = originalMatch.players;
 
         const updatedPlayers = players.map((player: any) => ({
             ...player,
@@ -239,7 +235,7 @@ export function ScoreReports({ tournamentID, bracket, user, tournament }: {
 
         await supabaseClient.current.from("tournament_matches").update(finalMatch).eq("id", report.match_id).single()
 
-        const { data, error } = await supabaseClient.current.from("score_reports").update({ status: "accepted" }).eq("id", reportId).single()
+        const { error } = await supabaseClient.current.from("score_reports").update({ status: "accepted" }).eq("id", reportId).single()
 
         if (error) {
             triggerMessage(error.message, "red")
@@ -419,7 +415,7 @@ export function ScoreReports({ tournamentID, bracket, user, tournament }: {
     };
 
     const changeMatch = (id: string) => {
-        var opponent = matches.find((match) => match.id.toString() == id)?.players.find(player => player.uuid !== user.uuid)?.uuid
+        const opponent = matches.find((match) => match.id.toString() == id)?.players.find(player => player.uuid !== user.uuid)?.uuid
 
         if (!opponent) return;
         setReportFormData({ ...reportFormData, match_id: id, opponent_id: opponent })
@@ -501,7 +497,7 @@ export function ScoreReports({ tournamentID, bracket, user, tournament }: {
                                         </div>
 
                                         <div>
-                                            <label className="block mb-2 text-purple-200">Opponent's Score</label>
+                                            <label className="block mb-2 text-purple-200">Opponent&apos;s Score</label>
                                             <input
                                                 type="number"
                                                 min="0"
@@ -773,7 +769,7 @@ export function ScoreReports({ tournamentID, bracket, user, tournament }: {
                                                                             />
                                                                         </div>
                                                                         <div>
-                                                                            <label className="block mb-1 text-xs text-purple-300">Opponent's Score</label>
+                                                                            <label className="block mb-1 text-xs text-purple-300">Opponent&apos;s Score</label>
                                                                             <input
                                                                                 type="number"
                                                                                 min="0"

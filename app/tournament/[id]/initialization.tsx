@@ -30,7 +30,7 @@ import { PlayersTable } from "@/components/playersTable";
 import { ConfirmModal, ConfirmModalInformation } from "@/components/modals/confirmationModal";
 import { User } from "@/types/userType";
 import { ConfigureRoundRobin } from "@/matching/robin";
-import { SingleSettings, RobinSettings, SwissSettings } from '@/types/tournamentTypes';
+import { SingleSettings, SwissSettings } from '@/types/tournamentTypes';
 import { ConfigureSwissStyleTournament } from "@/matching/swiss";
 
 export default function Initialization({ refreshTournament, user }: { user: User, refreshTournament: () => void }) {
@@ -290,14 +290,14 @@ export default function Initialization({ refreshTournament, user }: { user: User
                     setTournament({ ...tournament, status: "started" });
 
                     if (tournament.tournament_type == "single") {
-                        var single = tournament.style_specific_settings as SingleSettings
+                        const single = tournament.style_specific_settings as SingleSettings
                         setupBracket(single.sorting_algo, single.sorting_value);
                     }
                     else if (tournament.tournament_type == "robin") {
                         ConfigureRoundRobin(tournament, refreshTournament, triggerMessage)
                     }
                     else if (tournament.tournament_type == "swiss") {
-                        var swiss = tournament.style_specific_settings as SwissSettings
+                        const swiss = tournament.style_specific_settings as SwissSettings
                         ConfigureSwissStyleTournament(tournament, refreshTournament, triggerMessage, swiss.sorting_algo, swiss.sorting_value);
                     }
                 }

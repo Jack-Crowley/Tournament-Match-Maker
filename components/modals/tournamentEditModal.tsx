@@ -20,7 +20,9 @@ interface SingleSettings {
     sorting_value: number;
 }
 
-interface RobinSettings { }
+interface RobinSettings {
+    value: number
+}
 
 export const TournamentModal = ({
     isOpen,
@@ -63,7 +65,7 @@ export const TournamentModal = ({
         sorting_value: 4
     });
     
-    const [robinSettings, setRobinSettings] = useState<RobinSettings>({});
+    const [robinSettings, setRobinSettings] = useState<RobinSettings>({value:0});
 
     useEffect(() => {
         const fetchOrganizers = async (tournamentId: string) => {
@@ -119,7 +121,7 @@ export const TournamentModal = ({
             if (tournament.tournament_type === 'robin' && tournament.style_specific_settings) {
                 setRobinSettings(tournament.style_specific_settings as RobinSettings);
             } else if (tournament.tournament_type === 'robin') {
-                setRobinSettings({});
+                setRobinSettings({value:0});
             }
 
             fetchOrganizers(tournament.id).then((organizers) => {

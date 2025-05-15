@@ -109,6 +109,7 @@ export const ConfigureRoundRobin = async (tournament: Tournament, refreshTournam
                     players: [p1, p2],
                     tournament_id: Number(tournament.id),
                     id: -1,
+                    is_tie:false
                 });
             }
     
