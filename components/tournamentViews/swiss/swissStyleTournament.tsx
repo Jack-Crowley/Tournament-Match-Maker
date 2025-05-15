@@ -549,11 +549,13 @@ export const SwissTournament = ({
 
                         if (match.winner || match.is_tie) continue;
                         bracket.rounds[selectedRound-1].matches[i].is_tie=true;
-                        supabase.from("tournament_matches")
+                        const {data, error} = await supabase.from("tournament_matches")
                             .update({is_tie:true})
                             .eq("tournament_id", match.tournament_id)
                             .eq("match_number", match.match_number)
-                            .eq("round", match.round)
+                            .eq("round", match.round).select()
+                        
+                            console.log(data, error)
                     }
 
                     startNextRound()

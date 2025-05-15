@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faTrash, faPlus, faCrown, faTimes } from "@fortawesome/free-solid-svg-icons";
+import { faTrash, faPlus, faCrown, faTimes, faHandshake } from "@fortawesome/free-solid-svg-icons";
 import { BracketPlayer, Matchup } from "@/types/bracketTypes";
 import { createClient } from "@/utils/supabase/client";
 import { motion, AnimatePresence } from "framer-motion";
@@ -135,8 +135,8 @@ export const MatchupModal = ({ isOpen, setOpen, matchup, user, tournament_type }
     const updateMatch = async () => {
         setIsLoading(true);
         const winnerUUID = editedMatchup.winner;
+        const isTie = editedMatchup.is_tie;
         try {
-
             // Losers becoming inactive. First lets check if the players exist still:
             if (editedMatchup.players.find(player => player.uuid === player1?.member_uuid)) {
                 // update the database
@@ -161,7 +161,8 @@ export const MatchupModal = ({ isOpen, setOpen, matchup, user, tournament_type }
             const { error } = await supabase
                 .from("tournament_matches")
                 .update({
-                    winner: winnerUUID || null,
+                    winner: isTie ? null : winnerUUID,
+                    is_tie: isTie,
                     players: editedMatchup.players,
                 })
                 .eq("id", String(matchup.id));
@@ -205,8 +206,8 @@ export const MatchupModal = ({ isOpen, setOpen, matchup, user, tournament_type }
             if (error) {
                 console.error("Error updating matchup:", error);
             } else {
-                if (winnerUUID) await propagatePlayer(winnerUUID);
-                setEditedMatchup((prev) => ({ ...prev, winnerUUID: winnerUUID }));
+                if (winnerUUID && !isTie) await propagatePlayer(winnerUUID);
+                setEditedMatchup((prev) => ({ ...prev, winnerUUID: winnerUUID, is_tie: isTie }));
                 setOpen(false);
             }
         } catch (err) {
@@ -247,6 +248,11 @@ export const MatchupModal = ({ isOpen, setOpen, matchup, user, tournament_type }
 
 
     const changeWinner = (playerUUID: string) => {
+        const isTie = editedMatchup.is_tie;
+        if (isTie) {
+            setEditedMatchup((prev) => ({ ...prev, is_tie: false }));
+        }
+
         const winner = editedMatchup.players.find((player) => player.uuid === playerUUID);
         if (!winner) {
             console.error("Player not found");
@@ -274,12 +280,37 @@ export const MatchupModal = ({ isOpen, setOpen, matchup, user, tournament_type }
                 }
             }
         });
-
     };
 
+    const toggleTie = () => {
+        const isTie = !editedMatchup.is_tie;
+        const newWinner = isTie ? null : editedMatchup.winner;
+        const { winner, ...rest } = editedMatchup;
+
+        const updated = {
+            ...rest,
+            is_tie: isTie,
+        };
+
+        setEditedMatchup(updated);
+
+        // If setting as tie, set both players aswwwwww active
+        if (isTie) {
+            setPlayer1((prev) => {
+                if (prev) {
+                    return { ...prev, type: "active" };
+                }
+            });
+            setPlayer2((prev) => {
+                if (prev) {
+                    return { ...prev, type: "active" };
+                }
+            });
+        }
+    };
 
     const propagatePlayer = async (playerUuid: string) => {
-        if (tournament_type == "robin") return;
+        if (tournament_type != "single") return;
 
         const player = editedMatchup.players.find((player) => player.uuid === playerUuid);
         if (!player) {
@@ -436,11 +467,13 @@ export const MatchupModal = ({ isOpen, setOpen, matchup, user, tournament_type }
                 }
             }
         });
-
     };
 
 
     if (!isOpen) return null;
+
+    // Check if we have both players for the tie button
+    const canToggleTie = editedMatchup.players.filter(p => p.uuid).length === 2;
 
     return (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
@@ -464,6 +497,28 @@ export const MatchupModal = ({ isOpen, setOpen, matchup, user, tournament_type }
                     </button>
                 </div>
 
+                {canToggleTie && !locked && (
+                    <div className="mb-6">
+                        <motion.button
+                            className={`flex items-center justify-center w-full py-3 px-4 rounded-lg border-2 transition-all ${editedMatchup.is_tie
+                                    ? "bg-blue-500/20 border-blue-500 text-blue-200"
+                                    : "bg-[#2A2A2A] border-[#3A3A3A] text-gray-300 hover:bg-[#343434]"
+                                }`}
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                            onClick={toggleTie}
+                        >
+                            <FontAwesomeIcon
+                                icon={faHandshake}
+                                className={`mr-2 ${editedMatchup.is_tie ? "text-blue-300" : "text-gray-400"}`}
+                            />
+                            <span className="font-medium">
+                                {editedMatchup.is_tie ? "Match is a Tie" : "Mark as Tie"}
+                            </span>
+                        </motion.button>
+                    </div>
+                )}
+
                 <div className="space-y-4">
                     {editedMatchup.players.map((player, index) => (
                         <div key={index} className="mb-4">
@@ -479,14 +534,14 @@ export const MatchupModal = ({ isOpen, setOpen, matchup, user, tournament_type }
                                             className={`relative p-2 rounded-full ${player.uuid === editedMatchup.winner ? 'bg-yellow-500/20' : ''}`}
                                             whileHover={{ scale: 1.1 }}
                                             whileTap={{ scale: 0.95 }}
-                                            disabled={locked}
-                                            onClick={() => !locked && changeWinner(player.uuid)}
+                                            disabled={locked || editedMatchup.is_tie}
+                                            onClick={() => !locked && !editedMatchup.is_tie && changeWinner(player.uuid)}
                                         >
                                             <FontAwesomeIcon
                                                 icon={faCrown}
                                                 className={player.uuid === editedMatchup.winner
                                                     ? "text-yellow-400"
-                                                    : "text-gray-500 hover:text-yellow-400"}
+                                                    : `${editedMatchup.is_tie ? "text-gray-600" : "text-gray-500 hover:text-yellow-400"}`}
                                                 size="lg"
                                             />
                                         </motion.button>
@@ -516,16 +571,6 @@ export const MatchupModal = ({ isOpen, setOpen, matchup, user, tournament_type }
                                                 : 'bg-[#3A3A3A] hover:bg-[#444444]'
                                                 } border-b-2 border-[#7458DA] text-white rounded-lg focus:outline-none focus:border-[#604BAC] transition-colors`}
                                         />
-
-                                        {/* {player.account_type === "logged_in" && (
-                                            <motion.button
-                                                className="p-2 bg-[#604BAC] rounded-lg text-white hover:bg-[#7458DA] transition-colors"
-                                                whileHover={{ scale: 1.05 }}
-                                                whileTap={{ scale: 0.95 }}
-                                            >
-                                                <FontAwesomeIcon icon={faEnvelope} />
-                                            </motion.button>
-                                        )} */}
 
                                         <motion.button
                                             className={`p-2 ${!locked
@@ -580,6 +625,15 @@ export const MatchupModal = ({ isOpen, setOpen, matchup, user, tournament_type }
                         </div>
                     ))}
                 </div>
+
+                {editedMatchup.is_tie && !locked && (
+                    <div className="mt-4 bg-blue-500/10 border border-blue-500/30 rounded-lg p-3">
+                        <p className="text-blue-200 text-sm flex items-center">
+                            <FontAwesomeIcon icon={faHandshake} className="mr-2" />
+                            This match is marked as a tie.
+                        </p>
+                    </div>
+                )}
 
                 {locked ? (
                     <div className="text-center w-full mt-6">

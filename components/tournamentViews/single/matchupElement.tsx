@@ -9,7 +9,7 @@ import { Tournament } from "@/types/tournamentTypes";
 import { useMessage } from "@/context/messageContext";
 import { User } from "@/types/userType";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faArrowRight, faArrowsAlt, faExchangeAlt, faTrophy } from "@fortawesome/free-solid-svg-icons";
+import { faArrowRight, faArrowsAlt, faExchangeAlt, faHandshake, faTrophy } from "@fortawesome/free-solid-svg-icons";
 
 import { AddPlayerButton, BracketViewType, MovingPlayer, OnMovePlayer } from "./bracketView";
 
@@ -116,8 +116,8 @@ export const MatchupElement = ({
 
         setContextMenu({
             visible: true,
-            x: e.pageX,
-            y: e.pageY - 20,
+            x: e.clientX,
+            y: e.clientY - 20,
             player,
             index,
         });
@@ -195,6 +195,7 @@ export const MatchupElement = ({
 
     const renderPlayerContent = (player: BracketPlayer, index: number) => {
         const isWinner = match.winner && player.uuid === match.winner;
+        const isTie = match.is_tie;
         
         switch (viewType) {
             case BracketViewType.Normal:
@@ -215,17 +216,20 @@ export const MatchupElement = ({
                     <>
                         <span className="truncate mr-2">
                             {isWinner && <FontAwesomeIcon icon={faTrophy} className="text-yellow-500 mr-2" />} 
+                            {isTie && <FontAwesomeIcon icon={faHandshake} className="text-blue-500 mr-2" />}
                             {player.name}
                         </span>
                        
                         <div
                             className={`w-6 h-6 flex items-center justify-center flex-shrink-0
-                            ${match.winner
-                                    ? player.uuid === match.winner
-                                        ? "bg-[#7458DA]"
-                                        : "bg-[#1e153e9b]"
-                                    : "bg-soft"
-                                } 
+                            ${isTie 
+                                ? "bg-blue-500" 
+                                : match.winner
+                                ? player.uuid === match.winner
+                                    ? "bg-[#9e8ce0]"
+                                    : "bg-[#1e153e9b]"
+                                : "bg-soft"
+                            } 
                             text-white rounded-full text-sm font-bold`}
                         >
                             {player.score ?? 0}
@@ -277,17 +281,21 @@ export const MatchupElement = ({
                 {match.players.map((player, index) => (
                     <div
                         key={index}
-                        className={`relative ${match.winner && (player.uuid === match.winner ? "bg-[#98979b20]" : "bg-[#120b2950]")}`}
+                        className={`relative ${match.is_tie 
+                            ? "bg-[#053f5f69]" 
+                            : match.winner && (player.uuid === match.winner ? "bg-[#98979b20]" : "bg-[#120b2950]")}`}
                         onContextMenu={(e) => handleContextMenu(e, player, index)}
                     >
                         {(player.name && viewType == BracketViewType.Normal || viewType == BracketViewType.AddPlayer) ? (
                             <div
                                 className={`p-4 flex justify-between font-bold border-l-8 
-                ${match.winner
-                                        ? player.uuid === match.winner
-                                            ? "border-winner_text text-winner_text"
-                                            : "border-loser_text text-loser_text"
-                                        : "border-soft text-player_text"
+                ${match.is_tie
+                                        ? "border-blue-500 text-blue-200"
+                                        : match.winner
+                                            ? player.uuid === match.winner
+                                                ? "border-winner_text text-winner_text"
+                                                : "border-loser_text text-loser_text"
+                                            : "border-soft text-player_text"
                                     } 
                 bg-opacity-90 hover:bg-opacity-100 transition-all duration-200`}
                             >
@@ -339,7 +347,7 @@ export const MovePlayerButton = ({
                 ? 'bg-purple-700 cursor-not-allowed'
                 : existingPlayer.name
                     ? 'bg-[#FFA559] hover:bg-[#FF9248]'
-                    : 'bg-blue-500 hover:bg-blue-600'
+                    : 'bg-blue-700 hover:bg-blue-600'
                 }`}
             onClick={isSamePlayer ? undefined : onMovePlayer}
             style={{
