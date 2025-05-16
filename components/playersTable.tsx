@@ -368,7 +368,7 @@ export const PlayersTable = ({
                                         <h3 className="text-lg font-semibold text-white mb-2">
                                             {player.player_name}
                                         </h3>
-                                        {Array.isArray(tournament?.skill_fields) &&
+                                        {Array.isArray(tournament?.skill_fields) && player.skills.length > 0 &&
                                             tournament.skill_fields.map((skill, index) => (
                                                 <div key={index} className="mb-2 flex items-start">
                                                     <span className="text-purple-200/80 text-sm mr-2">{skill.name}:</span>
@@ -380,7 +380,7 @@ export const PlayersTable = ({
                                                             <div className="w-24 bg-indigo-900/30 rounded-full h-2">
                                                                 <div
                                                                     className="h-2 rounded-full bg-gradient-to-r from-purple-400 to-indigo-400"
-                                                                    style={{ width: `${(player.skills[index]?.value / 10) * 100}%` }}
+                                                                    style={{ width: `${10}%` }}
                                                                 ></div>
                                                             </div>
                                                         </div>

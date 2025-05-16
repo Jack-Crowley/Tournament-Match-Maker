@@ -209,6 +209,7 @@ export default function Initialization({ refreshTournament, user }: { user: User
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
             if (modalRef.current && !modalRef.current.contains(event.target as Node)) {
+                console.log("Clicked outside modal");                                        
                 if (isTournamentEditModalOpen) setIsTournamentEditModalOpen(false);
                 if (isPlayerModalOpen) setPlayerModalOpen(false);
             }

@@ -16,4 +16,10 @@ LIMIT Text for
 	- skill fields
 	- max players
 
-Fix API route bulkswitch.tsx where moving waitlist things dont work
+BUGS: 
+
+- Start screen tournament buttons take you to "unathorized" spamming in the login page when logged out
+- Fix API route bulkswitch.tsx where moving waitlist things dont work
+- tournament settings modal. go to organizers, then click cancel. it pretends as if you havent exited the modal
+
+

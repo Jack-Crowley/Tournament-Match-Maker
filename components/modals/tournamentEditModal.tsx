@@ -44,7 +44,7 @@ export const TournamentModal = ({
 
                 if (!response.ok) {
                     const errorData = await response.json();
-                    console.error('Error fetching organizers:', errorData.error);
+                    // console.error('Error fetching organizers:', errorData.error);
                     return [];
                 }
 
@@ -336,7 +336,6 @@ export const TournamentModal = ({
                                 <div className="bg-[#252525] p-4 rounded-lg border border-[#3A3A3A]">
                                     <h3 className="text-white font-medium mb-3 flex items-center">
                                         <FontAwesomeIcon icon={faTrophy} className="mr-2 text-[#7458da]" />
-                                        Rules
                                     </h3>
 
                                     <div className="space-y-4">

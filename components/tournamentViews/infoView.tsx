@@ -149,30 +149,31 @@ export const TournamentInfoView = ({
                         <div className="bg-[#2a1a66] rounded-xl p-8 shadow-md mt-10">
                             <h2 className="text-[#7458da] font-bold text-3xl mb-6">Join Tournament</h2>
 
-                            <div className="flex items-center justify-between mb-6 p-4 bg-[#22154F] rounded-lg">
-                                <div className="flex items-center">
-                                    <FontAwesomeIcon icon={faUsers} className="text-[#7458da] mr-3" />
-                                    <span className="text-white">Allow Players to Join</span>
-                                </div>
+                            {["owner", "admin"].includes(user.permission_level.toLowerCase()) && (
+                                <div className="flex items-center justify-between mb-6 p-4 bg-[#22154F] rounded-lg">
+                                    <div className="flex items-center">
+                                        <FontAwesomeIcon icon={faUsers} className="text-[#7458da] mr-3" />
+                                        <span className="text-white">Allow Players to Join</span>
+                                    </div>
 
-                                <motion.div
-                                    className={`w-12 h-6 rounded-full flex items-center p-1 cursor-pointer ${tournament.allow_join ? "justify-end" : "justify-start"}`}
-                                    onClick={handleAllowJoinToggle}
-                                    initial={false}
-                                    animate={{
-                                        background: tournament.allow_join
-                                            ? "linear-gradient(45deg, #7458da, #8F78E6)"
-                                            : "linear-gradient(45deg, #3A3A3A, #5C5C5C)",
-                                    }}
-                                    transition={{ duration: 0.3 }}
-                                >
                                     <motion.div
-                                        className="w-4 h-4 bg-white rounded-full shadow-md"
-                                        layout
-                                        transition={{ type: "spring", stiffness: 200, damping: 30 }}
-                                    />
-                                </motion.div>
-                            </div>
+                                        className={`w-12 h-6 rounded-full flex items-center p-1 cursor-pointer ${tournament.allow_join ? "justify-end" : "justify-start"}`}
+                                        onClick={handleAllowJoinToggle}
+                                        initial={false}
+                                        animate={{
+                                            background: tournament.allow_join
+                                                ? "linear-gradient(45deg, #7458da, #8F78E6)"
+                                                : "linear-gradient(45deg, #3A3A3A, #5C5C5C)",
+                                        }}
+                                        transition={{ duration: 0.3 }}
+                                    >
+                                        <motion.div
+                                            className="w-4 h-4 bg-white rounded-full shadow-md"
+                                            layout
+                                            transition={{ type: "spring", stiffness: 200, damping: 30 }}
+                                        />
+                                    </motion.div>
+                                </div>)}
 
                             {/* Join Code */}
                             <div className="mb-6">
