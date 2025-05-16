@@ -6,6 +6,7 @@ import { createClient } from '@/utils/supabase/client';
 import { ModalList, SkillField } from './modalList';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEdit, faMapPin, faCalendar, faUsers, faTimes, faPlus, faTrashAlt, faCheck } from '@fortawesome/free-solid-svg-icons';
+import { faTrophy } from '@fortawesome/free-solid-svg-icons';
 
 export const TournamentModal = ({
     isOpen,
@@ -40,7 +41,7 @@ export const TournamentModal = ({
         const fetchOrganizers = async (tournamentId: string) => {
             try {
                 const response = await fetch(`/api/tournament/organizers?tournamentID=${tournamentId}`);
-                
+
                 if (!response.ok) {
                     const errorData = await response.json();
                     console.error('Error fetching organizers:', errorData.error);
@@ -66,7 +67,7 @@ export const TournamentModal = ({
             setRules(tournament.rules || []);
 
             const autoWinRule = tournament.rules.find(
-              rule => typeof rule === "object" && rule.type === 'autoWinScore' && typeof rule.value === "number"
+                rule => typeof rule === "object" && rule.type === 'autoWinScore' && typeof rule.value === "number"
             );
             setMinAutoWinScore(autoWinRule ? autoWinRule.value : 0)
 
@@ -330,6 +331,35 @@ export const TournamentModal = ({
                                         <p className="text-sm text-red-400 mt-1">Tournament has already started. Cannot change max players.</p>
                                     )}
                                 </div>
+
+
+                                <div className="bg-[#252525] p-4 rounded-lg border border-[#3A3A3A]">
+                                    <h3 className="text-white font-medium mb-3 flex items-center">
+                                        <FontAwesomeIcon icon={faTrophy} className="mr-2 text-[#7458da]" />
+                                        Rules
+                                    </h3>
+
+                                    <div className="space-y-4">
+                                        <div>
+                                            <label className="text-white block text-sm mb-2 font-medium">
+                                                Minimum Score to Auto-Declare Winner
+                                            </label>
+                                            <input
+                                                type="number"
+                                                value={minAutoWinScore}
+                                                onChange={(e) => setMinAutoWinScore(Number(e.target.value))}
+                                                placeholder="Enter minimum score (0 to disable)"
+                                                min="0"
+                                                className="w-full p-3 bg-[#2D2D2D] rounded-lg border-2 border-[#3A3A3A] text-white focus:outline-none focus:border-[#7458da] transition-colors"
+                                            />
+                                            <p className="text-xs text-gray-400 mt-1">
+                                                Set to 0 to disable auto-winning. When a player reaches this score, they'll be automatically declared the winner.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+
 
                                 <ModalList name="Skill Fields" list={skillFields} setList={setSkillFields} />
 

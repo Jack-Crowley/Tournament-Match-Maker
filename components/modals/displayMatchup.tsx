@@ -9,6 +9,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { PlayerManagementTabs } from "../playerManagementTabs";
 import { TournamentPlayer } from "@/types/playerTypes";
 import { User } from "@/types/userType";
+import { Rules } from "@/types/tournamentTypes";
 
 interface MatchupModalProps {
     isOpen: boolean;
@@ -16,9 +17,10 @@ interface MatchupModalProps {
     matchup: Matchup;
     user: User;
     tournament_type:string;
+    tournament_rules: Rules;
 }
 
-export const MatchupModal = ({ isOpen, setOpen, matchup, user, tournament_type }: MatchupModalProps) => {
+export const MatchupModal = ({ isOpen, setOpen, matchup, user, tournament_type, tournament_rules }: MatchupModalProps) => {
     // TODO Handle duplicate names
     const [editedMatchup, setEditedMatchup] = useState<Matchup>(matchup);
     const [player1, setPlayer1] = useState<TournamentPlayer | null>();
@@ -489,6 +491,11 @@ export const MatchupModal = ({ isOpen, setOpen, matchup, user, tournament_type }
                                             readOnly={locked}
                                             onChange={(e) => {
                                                 const newScore = parseInt(e.target.value) || 0;
+                                                const autoWinRule = tournament_rules.find(
+                                                    rule => typeof rule === "object" && rule.type === 'autoWinScore' && typeof rule.value === "number"
+                                                );
+                                                // do this here
+                                                //TODO
                                                 setEditedMatchup(prev => ({
                                                     ...prev,
                                                     players: prev.players.map(p =>
