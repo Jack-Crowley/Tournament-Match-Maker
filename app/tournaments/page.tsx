@@ -230,8 +230,8 @@ function TournamentsPage() {
         const [deleteView, setDeleteView] = useState<boolean>(false);
         const [deleteManyModal, setDeleteManyModal] = useState<boolean>(false);
         const [deleteIndexes, setDeleteIndexes] = useState<string[]>([]);
-        const [sortField, setSortField] = useState<'name' | 'created_at' | 'tournament_type'>('name');
-        const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+        const [sortField, setSortField] = useState<'name' | 'created_at' | 'tournament_type'>('created_at');
+        const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
         const [localSearchTerm, setLocalSearchTerm] = useState<string>(searchTerm);
         const [showSortMenu, setShowSortMenu] = useState<boolean>(false);
 
@@ -524,26 +524,23 @@ function TournamentsPage() {
                             <div className="hidden md:flex items-center px-4 py-2 text-sm text-purple-200/70 border-b border-white/5">
                                 <div className="flex-grow">
                                     <button
-                                        onClick={() => handleSortChange('name')}
                                         className="flex items-center hover:text-white transition-colors"
                                     >
-                                        Tournament Name {getSortIcon('name')}
+                                        Tournament Name
                                     </button>
                                 </div>
                                 <div className="w-32 text-center">
                                     <button
-                                        onClick={() => handleSortChange('tournament_type')}
                                         className="flex items-center hover:text-white transition-colors"
                                     >
-                                        Type {getSortIcon('tournament_type')}
+                                        Type
                                     </button>
                                 </div>
                                 <div className="w-32 text-center">
                                     <button
-                                        onClick={() => handleSortChange('created_at')}
                                         className="flex items-center hover:text-white transition-colors"
                                     >
-                                        Created {getSortIcon('created_at')}
+                                        Created 
                                     </button>
                                 </div>
                                 <div className="w-32"></div>
@@ -554,7 +551,7 @@ function TournamentsPage() {
                             <div
                                 key={tournament.id}
                                 className={`flex items-center justify-between p-4 py-6 bg-white/5 hover:bg-white/10 rounded-xl transition duration-200 cursor-pointer border ${deleteIndexes.includes(tournament.id)
-                                    ? 'border-red-500/50 bg-red-900/20'
+                                    ? 'border-red-500/50 border-2 bg-red-900/40 hover:bg-red-700/40'
                                     : 'border-white/5'
                                     }`}
                             >

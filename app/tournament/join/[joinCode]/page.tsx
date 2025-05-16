@@ -163,7 +163,7 @@ export default function JoinTournament() {
 
         let type = "active";
 
-        if (allTournamentPlayers && maxNumber) {
+        if (allTournamentPlayers && maxNumber && maxNumber != 0) {
             if (allTournamentPlayers.length > maxNumber) {
                 type = "waitlist";
             }

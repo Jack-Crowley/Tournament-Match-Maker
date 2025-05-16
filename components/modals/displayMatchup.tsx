@@ -498,7 +498,7 @@ export const MatchupModal = ({ isOpen, setOpen, matchup, user, tournament_type }
                     </button>
                 </div>
 
-                {canToggleTie && !locked && (
+                {canToggleTie && !locked && tournament_type != "single" && (
                     <div className="mb-6">
                         <motion.button
                             className={`flex items-center justify-center w-full py-3 px-4 rounded-lg border-2 transition-all ${editedMatchup.is_tie

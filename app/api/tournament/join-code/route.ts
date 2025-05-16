@@ -41,7 +41,7 @@ export async function GET(request: Request) {
         .eq('left_match', false)
 
     // Check if tournament is full
-    if (count && tournament.max_players && count >= tournament.max_players) {
+    if (count && tournament.max_players && tournament.max_players != 0 && count >= tournament.max_players) {
         return NextResponse.json(
             { error: 'Tournament is full' },
             { status: 400 }
@@ -53,6 +53,7 @@ export async function GET(request: Request) {
             id: tournament.id,
             name: tournament.name,
             description: tournament.description,
+            status: tournament.status,
             skill_fields: tournament.skill_fields,
             max_players: tournament.max_players,
             current_players: count || 0

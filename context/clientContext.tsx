@@ -33,7 +33,7 @@ export function ClientProvider({ children }: { children: ReactNode }) {
                 const { data: { session } } = await client.auth.getSession();
                 setSession(session);
 
-                if (!session && pathname !== "/login" && pathname !== "/auth/callback" && pathname !== "/") {
+                if (!session && pathname !== "/login" && pathname !== "/auth/callback" && pathname !== "/" && pathname !== "/how-it-works") {
                     localStorage.setItem("previousPath", pathname);
                     router.push("/login");
                 }

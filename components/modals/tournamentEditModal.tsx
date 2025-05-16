@@ -73,8 +73,6 @@ export const TournamentModal = ({
                 const response = await fetch(`/api/tournament/organizers?tournamentID=${tournamentId}`);
                 
                 if (!response.ok) {
-                    const errorData = await response.json();
-                    console.error('Error fetching organizers:', errorData.error);
                     return [];
                 }
 
