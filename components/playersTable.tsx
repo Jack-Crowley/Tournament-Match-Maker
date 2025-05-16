@@ -504,7 +504,7 @@ export const PlayersTable = ({
                                         <h3 className="text-lg font-semibold text-white mb-2">
                                             {player.player_name}
                                         </h3>
-                                        {Array.isArray(tournament?.skill_fields) &&
+                                        {Array.isArray(tournament?.skill_fields) && player.skills.length > 0 &&
                                             tournament.skill_fields.map((skill, index) => (
                                                 <div
                                                     key={index}

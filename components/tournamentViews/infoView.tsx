@@ -149,6 +149,7 @@ export const TournamentInfoView = ({
                         <div className="bg-[#2a1a66] rounded-xl p-8 shadow-md mt-10">
                             <h2 className="text-[#7458da] font-bold text-3xl mb-6">Join Tournament</h2>
 
+                            {["owner", "admin"].includes(user.permission_level.toLowerCase()) && (
                             <div className="flex items-center justify-between mb-6 p-4 bg-[#22154F] rounded-lg">
                                 <div className="flex items-center">
                                     <FontAwesomeIcon icon={faUsers} className="text-[#7458da] mr-3" />
@@ -172,7 +173,7 @@ export const TournamentInfoView = ({
                                         transition={{ type: "spring", stiffness: 200, damping: 30 }}
                                     />
                                 </motion.div>
-                            </div>
+                            </div>)}
 
                             {/* Join Code */}
                             <div className="mb-6">
