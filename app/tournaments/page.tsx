@@ -657,7 +657,7 @@ function TournamentsPage() {
             </div>
         );
     };
-
+ 
     return (
         <div className="relative min-h-screen bg-gradient-to-b from-[#160A3A] to-[#2A1A5E] text-white">
             {loading ? (
