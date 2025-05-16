@@ -16,8 +16,9 @@ export interface Tournament {
     owner: string;
     status: string;
     skill_fields: SkillField[];
+    min_score_to_win: number;
     tournament_type: string;
-    rules: string[];
+    rules: Rules;
     style_specific_settings: SwissSettings | SingleSettings | RobinSettings;
 }
 
@@ -34,3 +35,8 @@ export interface SingleSettings {
 }
 
 export interface RobinSettings { }
+
+export type Rules = Array<{
+    type: string,
+    value: any,
+}>;

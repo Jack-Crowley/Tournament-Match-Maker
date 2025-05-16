@@ -1,11 +1,11 @@
 import { useState, useEffect, ChangeEvent } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useMessage } from '@/context/messageContext';
-import { Tournament } from '@/types/tournamentTypes';
+import { Rules, Tournament } from '@/types/tournamentTypes';
 import { createClient } from '@/utils/supabase/client';
 import { ModalList, SkillField } from './modalList';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faEdit, faMapPin, faCalendar, faUsers, faTimes, faPlus, faTrashAlt, faCheck, faChessBoard, faStar } from '@fortawesome/free-solid-svg-icons';
+import { faEdit, faMapPin, faCalendar, faUsers, faTimes, faPlus, faTrashAlt, faCheck, faChessBoard, faStar, faTrophy } from '@fortawesome/free-solid-svg-icons';
 
 // Updated interfaces to match createTournament.tsx
 interface SwissSettings {
@@ -45,7 +45,8 @@ export const TournamentModal = ({
     const [endTime, setEndTime] = useState<string>(tournament.end_time || '');
     const [maxPlayers, setMaxPlayers] = useState<number>(tournament.max_players || 0);
     const [skillFields, setSkillFields] = useState<SkillField[]>(tournament.skill_fields || []);
-    const [rules, setRules] = useState<string[]>(tournament.rules || []);
+    const [rules, setRules] = useState<Rules>(tournament.rules || []);
+    const [minAutoWinScore, setMinAutoWinScore] = useState<number>(0);
     const [activeTab, setActiveTab] = useState<'info' | 'organizers'>('info');
     const [organizers, setOrganizers] = useState<{ email: string; permission: 'Admin' | 'Scorekeeper' | 'Viewer' }[]>([]);
     const [newOrganizerEmail, setNewOrganizerEmail] = useState<string>('');
@@ -391,6 +392,33 @@ export const TournamentModal = ({
                                         <p className="text-sm text-red-400 mt-1">Tournament has already started. Cannot change max players.</p>
                                     )}
                                 </div>
+                                
+                                <div className="bg-[#252525] p-4 rounded-lg border border-[#3A3A3A]">
+                                    <h3 className="text-white font-medium mb-3 flex items-center">
+                                        <FontAwesomeIcon icon={faTrophy} className="mr-2 text-[#7458da]" />
+                                    </h3>
+
+                                    <div className="space-y-4">
+                                        <div>
+                                            <label className="text-white block text-sm mb-2 font-medium">
+                                                Minimum Score to Auto-Declare Winner
+                                            </label>
+                                            <input
+                                                type="number"
+                                                value={minAutoWinScore}
+                                                onChange={(e) => setMinAutoWinScore(Number(e.target.value))}
+                                                placeholder="Enter minimum score (0 to disable)"
+                                                min="0"
+                                                className="w-full p-3 bg-[#2D2D2D] rounded-lg border-2 border-[#3A3A3A] text-white focus:outline-none focus:border-[#7458da] transition-colors"
+                                            />
+                                            <p className="text-xs text-gray-400 mt-1">
+                                                Set to 0 to disable auto-winning. When a player reaches this score, they'll be automatically declared the winner.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+
 
                                 {/* Single Elimination Tournament Settings */}
                                 {tournament?.tournament_type === 'single' && (

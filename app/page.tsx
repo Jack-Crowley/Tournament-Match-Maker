@@ -17,7 +17,7 @@ export default function Homepage() {
   useEffect(() => {
     const checkUser = async () => {
       const { data } = await supabase.auth.getSession();
-      setIsLoggedIn(!data.session?.user?.is_anonymous);
+      setIsLoggedIn(!data.session?.user?.is_anonymous && !!data.session?.user?.id);
     };
 
     checkUser();
