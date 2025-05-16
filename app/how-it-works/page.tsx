@@ -151,7 +151,7 @@ export default function HowItWorks() {
             </p>
             <div className="flex justify-center gap-4">
               <Link
-                href="/join"
+                href="/login"
                 className="bg-[#7458da] hover:bg-[#604BAC] text-white px-6 py-3 rounded-lg transition-colors font-medium"
               >
                 Explore Tournaments
