@@ -3,21 +3,14 @@ settings:
 	certain score auto sets winner
 	auto-declare winner (true, false)
 
-
 [big things]
-- matching pairs
 - settings * (starting) 
+- export data
 
-
-more matching pairs 
-
-LIMIT Text for
-	- player names
-	- skill fields
-	- max players
 
 BUGS: 
 
-- Start screen tournament buttons take you to "unathorized" spamming in the login page when logged out
-- Fix API route bulkswitch.tsx where moving waitlist things dont work
-- tournament settings modal. go to organizers, then click cancel. it pretends as if you havent exited the modal
+- [] Start screen tournament buttons take you to "unathorized" spamming in the login page when logged out
+- [DONE] Fix API route bulkswitch.tsx where moving waitlist things dont work
+- [] tournament settings modal. go to organizers, then click cancel. it pretends as if you havent exited the modal
+- [] dont start tournament with 0 players
