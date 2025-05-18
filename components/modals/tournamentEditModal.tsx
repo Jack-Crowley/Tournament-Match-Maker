@@ -412,7 +412,7 @@ export const TournamentModal = ({
                                                 className="w-full p-3 bg-[#2D2D2D] rounded-lg border-2 border-[#3A3A3A] text-white focus:outline-none focus:border-[#7458da] transition-colors"
                                             />
                                             <p className="text-xs text-gray-400 mt-1">
-                                                Set to 0 to disable auto-winning. When a player reaches this score, they'll be automatically declared the winner.
+                                                Set to 0 to disable auto-winning. When a player reaches this score, they&apos;ll be automatically declared the winner.
                                             </p>
                                         </div>
                                     </div>

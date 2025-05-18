@@ -7,8 +7,6 @@ import { createClient } from "@/utils/supabase/client";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChangeEvent, useState } from "react";
 import { v4 as uuidv4 } from 'uuid';
-import { SkillField } from "./modalList";
-import { PlayerSkill } from "@/types/bracketTypes";
 
 export const AddPlaceholderPlayersModal = ({ isOpen, setOpen, tournament, addActivePlayers, addWaitlistPlayers }:
     {
@@ -78,29 +76,29 @@ export const AddPlaceholderPlayersModal = ({ isOpen, setOpen, tournament, addAct
             }
 
             existingPlayerNames.add(playerName);
-            function generateRandomSkills(skillFields: SkillField[]): PlayerSkill[] {
-                const skills: PlayerSkill[] = [];
+            // function generateRandomSkills(skillFields: SkillField[]): PlayerSkill[] {
+            //     const skills: PlayerSkill[] = [];
                 
-                for (const field of skillFields) {
-                    const newSkill: PlayerSkill = {
-                        name: field.name,
-                        type: field.type,
-                        value: 0,
-                    }
-                    if (field.type === "numeric") {
-                        // Generate random number between 1-100 for numeric skills
-                        newSkill.value = Math.floor(Math.random() * 100) + 1;
-                    } else if (field.type === "categorical" && field.categories) {
-                        // Randomly select a category for categorical skills
-                        const randomIndex = Math.floor(Math.random() * field.categories.length);
-                        newSkill.category_type = field.categories[randomIndex];
-                        newSkill.value = randomIndex;
-                    }
-                    skills.push(newSkill);
-                }
+            //     for (const field of skillFields) {
+            //         const newSkill: PlayerSkill = {
+            //             name: field.name,
+            //             type: field.type,
+            //             value: 0,
+            //         }
+            //         if (field.type === "numeric") {
+            //             // Generate random number between 1-100 for numeric skills
+            //             newSkill.value = Math.floor(Math.random() * 100) + 1;
+            //         } else if (field.type === "categorical" && field.categories) {
+            //             // Randomly select a category for categorical skills
+            //             const randomIndex = Math.floor(Math.random() * field.categories.length);
+            //             newSkill.category_type = field.categories[randomIndex];
+            //             newSkill.value = randomIndex;
+            //         }
+            //         skills.push(newSkill);
+            //     }
                 
-                return skills;
-            }
+            //     return skills;
+            // }
             playersToInsert.push({
                 tournament_id: Number(tournament.id),
                 member_uuid: uuidv4(),
