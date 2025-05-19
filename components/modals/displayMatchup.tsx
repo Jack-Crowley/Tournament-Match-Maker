@@ -9,6 +9,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { PlayerManagementTabs } from "../playerManagementTabs";
 import { TournamentPlayer } from "@/types/playerTypes";
 import { User } from "@/types/userType";
+import { Tournament } from "@/types/tournamentTypes";
 
 interface MatchupModalProps {
     isOpen: boolean;
@@ -16,9 +17,10 @@ interface MatchupModalProps {
     matchup: Matchup;
     user: User;
     tournament_type: string;
+    tournament: Tournament;
 }
 
-export const MatchupModal = ({ isOpen, setOpen, matchup, user, tournament_type }: MatchupModalProps) => {
+export const MatchupModal = ({ isOpen, setOpen, matchup, user, tournament_type, tournament }: MatchupModalProps) => {
     // TODO Handle duplicate names
     const [editedMatchup, setEditedMatchup] = useState<Matchup>(matchup);
     const [player1, setPlayer1] = useState<TournamentPlayer | null>();
@@ -134,8 +136,34 @@ export const MatchupModal = ({ isOpen, setOpen, matchup, user, tournament_type }
 
     const updateMatch = async () => {
         setIsLoading(true);
-        const winnerUUID = editedMatchup.winner;
+        let winnerUUID = editedMatchup.winner;
         const isTie = editedMatchup.is_tie;
+
+        // Check for auto-win based on minAutoWinScore
+        const minAutoWinRule = tournament.rules?.find(rule => {
+            const parsedRule = typeof rule === 'string' ? JSON.parse(rule) : rule;
+            return parsedRule.type === 'minAutoWinScore';
+        });
+
+        if (minAutoWinRule && minAutoWinRule.value !== 0) {
+            const parsedRule = typeof minAutoWinRule === 'string' ? JSON.parse(minAutoWinRule) : minAutoWinRule;
+            const minAutoWinScore = parsedRule.value;
+
+            // Get scores for both players
+            const player1Score = editedMatchup.players[0].score || 0;
+            const player2Score = editedMatchup.players[1].score || 0;
+
+            // Check if either player has reached the minimum score
+            if (player1Score >= minAutoWinScore || player2Score >= minAutoWinScore) {
+                if (player1Score > player2Score) {
+                    winnerUUID = editedMatchup.players[0].uuid;
+                } else if (player2Score > player1Score) {
+                    winnerUUID = editedMatchup.players[1].uuid;
+                }
+                // If scores are equal, don't change the winner or tie status
+            }
+        }
+
         try {
             // Losers becoming inactive. First lets check if the players exist still:
             if (editedMatchup.players.find(player => player.uuid === player1?.member_uuid)) {
@@ -378,9 +406,11 @@ export const MatchupModal = ({ isOpen, setOpen, matchup, user, tournament_type }
                 }
 
                 // If the player has not previously been added to the matchup, add them
-
                 if (!currentMatchupPlayers.find(p => p.uuid === playerUuid)) {
-                    currentMatchupPlayers[playerIndex] = player;
+                    currentMatchupPlayers[playerIndex] = {
+                        ...player,
+                        score: 0  // Reset score to 0
+                    };
                 }
                 // Otherwise, nothing needs to change
                 else {
@@ -403,10 +433,14 @@ export const MatchupModal = ({ isOpen, setOpen, matchup, user, tournament_type }
                     account_type: "placeholder",
                 };
 
-                player.score = 0;
+                const propagatedPlayer = {
+                    ...player,
+                    score: 0  // Reset score to 0
+                };
+
                 const players = editedMatchup.match_number % 2 === 0
-                    ? [placeholderPlayer, player]
-                    : [player, placeholderPlayer];
+                    ? [placeholderPlayer, propagatedPlayer]
+                    : [propagatedPlayer, placeholderPlayer];
 
                 const newMatchup = {
                     tournament_id: matchup.tournament_id,

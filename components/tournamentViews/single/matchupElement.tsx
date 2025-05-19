@@ -310,7 +310,7 @@ export const MatchupElement = ({
                 ))}
             </motion.div>
             {viewType === BracketViewType.Normal && tournament && (
-                <MatchupModal matchup={match} isOpen={isMatchupModalOpen} setOpen={setIsMatchupModalOpen} user={user} tournament_type={tournament?.tournament_type}/>
+                <MatchupModal matchup={match} isOpen={isMatchupModalOpen} setOpen={setIsMatchupModalOpen} user={user} tournament_type={tournament?.tournament_type} tournament={tournament}/>
             )}
 
             {contextMenu && contextMenu.visible && (
