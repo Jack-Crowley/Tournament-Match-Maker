@@ -145,22 +145,27 @@ export const MatchupModal = ({ isOpen, setOpen, matchup, user, tournament_type, 
             return parsedRule.type === 'minAutoWinScore';
         });
 
-        if (minAutoWinRule && minAutoWinRule.value !== 0) {
+        // * MIN AUTO WIN RULE
+        if (minAutoWinRule) {
             const parsedRule = typeof minAutoWinRule === 'string' ? JSON.parse(minAutoWinRule) : minAutoWinRule;
             const minAutoWinScore = parsedRule.value;
 
-            // Get scores for both players
-            const player1Score = editedMatchup.players[0].score || 0;
-            const player2Score = editedMatchup.players[1].score || 0;
+            console.log("minAutoWinSCore: ", minAutoWinScore);
 
-            // Check if either player has reached the minimum score
-            if (player1Score >= minAutoWinScore || player2Score >= minAutoWinScore) {
-                if (player1Score > player2Score) {
-                    winnerUUID = editedMatchup.players[0].uuid;
-                } else if (player2Score > player1Score) {
-                    winnerUUID = editedMatchup.players[1].uuid;
+            if (minAutoWinScore !== 0) {
+                // Get scores for both players
+                const player1Score = editedMatchup.players[0].score || 0;
+                const player2Score = editedMatchup.players[1].score || 0;
+
+                // Check if either player has reached the minimum score
+                if (player1Score >= minAutoWinScore || player2Score >= minAutoWinScore) {
+                    if (player1Score > player2Score) {
+                        winnerUUID = editedMatchup.players[0].uuid;
+                    } else if (player2Score > player1Score) {
+                        winnerUUID = editedMatchup.players[1].uuid;
+                    }
+                    // If scores are equal, don't change the winner or tie status
                 }
-                // If scores are equal, don't change the winner or tie status
             }
         }
 
@@ -314,7 +319,7 @@ export const MatchupModal = ({ isOpen, setOpen, matchup, user, tournament_type, 
         const isTie = !editedMatchup.is_tie;
         const { winner, ...rest } = editedMatchup;
 
-        if (winner) {}
+        if (winner) { }
 
         const updated = {
             ...rest,
@@ -536,8 +541,8 @@ export const MatchupModal = ({ isOpen, setOpen, matchup, user, tournament_type, 
                     <div className="mb-6">
                         <motion.button
                             className={`flex items-center justify-center w-full py-3 px-4 rounded-lg border-2 transition-all ${editedMatchup.is_tie
-                                    ? "bg-blue-500/20 border-blue-500 text-blue-200"
-                                    : "bg-[#2A2A2A] border-[#3A3A3A] text-gray-300 hover:bg-[#343434]"
+                                ? "bg-blue-500/20 border-blue-500 text-blue-200"
+                                : "bg-[#2A2A2A] border-[#3A3A3A] text-gray-300 hover:bg-[#343434]"
                                 }`}
                             whileHover={{ scale: 1.02 }}
                             whileTap={{ scale: 0.98 }}
