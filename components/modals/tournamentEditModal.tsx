@@ -95,6 +95,19 @@ export const TournamentModal = ({
             setSkillFields(tournament.skill_fields || []);
             setRules(tournament.rules || []);
             
+            // Set minAutoWinScore from rules
+            const minAutoWinRule = tournament.rules?.find(rule => {
+                const parsedRule = typeof rule === 'string' ? JSON.parse(rule) : rule;
+                return parsedRule.type === 'minAutoWinScore';
+            });
+            
+            if (minAutoWinRule) {
+                const parsedRule = typeof minAutoWinRule === 'string' ? JSON.parse(minAutoWinRule) : minAutoWinRule;
+                setMinAutoWinScore(parsedRule.value);
+            } else {
+                setMinAutoWinScore(0);
+            }
+            
             // Extract style_specific_settings based on tournament type
             if (tournament.tournament_type === 'swiss' && tournament.style_specific_settings) {
                 setSwissSettings((tournament.style_specific_settings as any) as SwissSettings);
@@ -129,6 +142,24 @@ export const TournamentModal = ({
         }
     }, [tournament]);
 
+    const updateRule = (rules: Rules, type: string, value: any): Rules => {
+        // Convert rules to array of objects if they're strings
+        const parsedRules = rules.map(rule => 
+            typeof rule === 'string' ? JSON.parse(rule) : rule
+        );
+
+
+        const ruleExists = parsedRules.some(rule => rule.type === type);
+
+        if (ruleExists) {
+            return parsedRules.map(rule => 
+                rule.type === type ? { type, value } : rule
+            );
+        }
+
+        return [...parsedRules, { type, value }];
+    };
+
     const handleSave = async () => {
         if (!tournament) return;
         setIsLoading(true);
@@ -140,7 +171,7 @@ export const TournamentModal = ({
                 description,
                 location,
                 skill_fields: skillFields,
-                rules,
+                rules: updateRule(rules, 'minAutoWinScore', minAutoWinScore),
             };
 
             // Include style-specific settings based on tournament type
