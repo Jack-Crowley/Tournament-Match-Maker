@@ -53,7 +53,7 @@ const Navbar = () => {
             ) : (
               <div className="flex items-center space-x-4">
                 <Link
-                  href="/join"
+                  href="/tournament/join"
                   className="text-white border border-[#7458da] hover:bg-[#7458da] px-4 py-2 rounded-lg transition-colors"
                 >
                   Join
@@ -117,7 +117,7 @@ const Navbar = () => {
                   Account
                 </Link>
                 <Link
-                  href="/join"
+                  href="/tournament/join"
                   className="block bg-[#7458da] hover:bg-[#604BAC] text-white px-4 py-2 rounded-lg transition-colors text-center"
                   onClick={toggleMenu}
                 >
@@ -134,7 +134,7 @@ const Navbar = () => {
             ) : (
               <div className="flex flex-col space-y-2">
                 <Link
-                  href="/join"
+                  href="/tournament/join"
                   className="block text-white border border-[#7458da] hover:bg-[#7458da] px-4 py-2 rounded-lg transition-colors text-center"
                   onClick={toggleMenu}
                 >
