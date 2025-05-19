@@ -243,6 +243,12 @@ export default function Initialization({ refreshTournament, user }: { user: User
 
         if (!tournament) return;
 
+        if (activePlayers.length === 0) {
+            triggerMessage("Cannot start tournament with no players", "red");
+            setStarting(false);
+            return;
+        }
+
         if (tournament.max_players && activePlayers.length > tournament.max_players) {
             const waitlistSwitchConfirm: ConfirmModalInformation = {
                 title: "Maximum Player Limit Exceeded",

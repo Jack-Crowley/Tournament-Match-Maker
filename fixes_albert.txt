@@ -13,4 +13,4 @@ BUGS:
 - [DONE] Start screen tournament buttons take you to "unathorized" spamming in the login page when logged out
 - [DONE] Fix API route bulkswitch.tsx where moving waitlist things dont work
 - [DONE] tournament settings modal. go to organizers, then click cancel. it pretends as if you havent exited the modal
-- [] dont start tournament with 0 players
+- [DONE] dont start tournament with 0 players
