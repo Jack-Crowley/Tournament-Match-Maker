@@ -714,6 +714,7 @@ export default function Initialization({ refreshTournament, user }: { user: User
             </div>
 
             <TournamentModal
+                key={`tournament-modal-${isTournamentEditModalOpen}`}
                 isOpen={isTournamentEditModalOpen}
                 onClose={() => setIsTournamentEditModalOpen(false)}
                 tournament={tournament}
