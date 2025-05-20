@@ -566,6 +566,7 @@ export const RoundRobinTournament = ({
           setOpen={setIsMatchupModalOpen}
           user={user}
           tournament_type={tournament?.tournament_type}
+          tournament={tournament}
         />
       )}
     </div>

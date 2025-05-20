@@ -39,13 +39,13 @@ const Navbar = () => {
                 </Link>
                 <Link
                   href="/tournament/join"
-                  className="bg-[#7458da] hover:bg-[#604BAC] text-white px-4 py-2 rounded-lg transition-colors"
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg transition-all duration-200 shadow-lg hover:shadow-indigo-700/30"
                 >
                   Join
                 </Link>
                 <Link
                   href="/tournaments"
-                  className="bg-[#7458da] hover:bg-[#604BAC] text-white px-6 py-2 rounded-lg transition-colors"
+                  className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white px-6 py-2 rounded-lg transition-all duration-200 shadow-lg hover:shadow-indigo-700/30"
                 >
                   Tournaments
                 </Link>
@@ -54,13 +54,13 @@ const Navbar = () => {
               <div className="flex items-center space-x-4">
                 <Link
                   href="/tournament/join"
-                  className="text-white border border-[#7458da] hover:bg-[#7458da] px-4 py-2 rounded-lg transition-colors"
+                  className="text-white border border-[#7458da] hover:bg-gradient-to-r hover:from-indigo-600 hover:to-purple-600 px-4 py-2 rounded-lg transition-all duration-200 shadow-lg hover:shadow-indigo-700/30 hover:translate-y-[-2px]"
                 >
                   Join
                 </Link>
                 <Link
                   href="/login"
-                  className="bg-[#7458da] hover:bg-[#604BAC] text-white px-6 py-2 rounded-lg transition-colors"
+                  className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white px-6 py-2 rounded-lg transition-all duration-200 shadow-lg hover:shadow-indigo-700/30 hover:translate-y-[-2px]"
                 >
                   Login
                 </Link>
@@ -118,14 +118,14 @@ const Navbar = () => {
                 </Link>
                 <Link
                   href="/tournament/join"
-                  className="block bg-[#7458da] hover:bg-[#604BAC] text-white px-4 py-2 rounded-lg transition-colors text-center"
+                  className="block bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white px-4 py-2 rounded-lg transition-all duration-200 shadow-lg hover:shadow-indigo-700/30 hover:translate-y-[-2px] text-center"
                   onClick={toggleMenu}
                 >
                   Join
                 </Link>
                 <Link
                   href="/tournaments"
-                  className="block bg-[#7458da] hover:bg-[#604BAC] text-white px-4 py-2 rounded-lg transition-colors text-center"
+                  className="block bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white px-4 py-2 rounded-lg transition-all duration-200 shadow-lg hover:shadow-indigo-700/30 hover:translate-y-[-2px] text-center"
                   onClick={toggleMenu}
                 >
                   Tournaments
@@ -135,14 +135,14 @@ const Navbar = () => {
               <div className="flex flex-col space-y-2">
                 <Link
                   href="/tournament/join"
-                  className="block text-white border border-[#7458da] hover:bg-[#7458da] px-4 py-2 rounded-lg transition-colors text-center"
+                  className="block text-white border border-[#7458da] hover:bg-gradient-to-r hover:from-indigo-600 hover:to-purple-600 px-4 py-2 rounded-lg transition-all duration-200 shadow-lg hover:shadow-indigo-700/30 hover:translate-y-[-2px] text-center"
                   onClick={toggleMenu}
                 >
                   Join
                 </Link>
                 <Link
                   href="/login"
-                  className="block bg-[#7458da] hover:bg-[#604BAC] text-white px-4 py-2 rounded-lg transition-colors text-center"
+                  className="block bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white px-4 py-2 rounded-lg transition-all duration-200 shadow-lg hover:shadow-indigo-700/30 hover:translate-y-[-2px] text-center"
                   onClick={toggleMenu}
                 >
                   Login
