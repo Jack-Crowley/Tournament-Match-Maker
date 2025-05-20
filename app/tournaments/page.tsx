@@ -52,7 +52,6 @@ function TournamentsPage() {
     const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
     const [anonymous, setAnonymous] = useState<boolean>(false)
 
-    const router = useRouter();
     const searchParams = useSearchParams();
     const initialTab = searchParams.get("tab") || "organizing";
     const [activeTab, setActiveTabState] = useState(initialTab);

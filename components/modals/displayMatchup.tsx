@@ -57,30 +57,55 @@ export const MatchupModal = ({ isOpen, setOpen, matchup, user, tournament_type, 
         async function LookupNextMatch() {
             if (!isOpen) return;
 
-            if (tournament_type == "single") {
-                const { data } = await supabase
-                    .from("tournament_matches")
-                    .select("*")
-                    .eq("tournament_id", matchup.tournament_id)
-                    .eq("match_number", Math.ceil(matchup.match_number / 2))
-                    .eq("round", matchup.round + 1)
-                    .single();
+            try {
+                if (tournament_type == "single") {
+                    const { data, error } = await supabase
+                        .from("tournament_matches")
+                        .select("*")
+                        .eq("tournament_id", matchup.tournament_id)
+                        .eq("match_number", Math.ceil(matchup.match_number / 2))
+                        .eq("round", matchup.round + 1)
+                        .single();
 
-                setLocked(data && data.winner);
+                    if (error) {
+                        console.error("we have supposedly caught this error?");
+                        // If error is PGRST116 (no rows returned), that's expected - don't lock
+                        if (error.code === 'PGRST116') {
+                            setLocked(false);
+                        } else {
+                            setLocked(false);
+                        }
+                        return;
+                    }
+
+                    // Only lock if we found a match and it has a winner
+                    setLocked(data && data.winner);
+                }
+                else if (tournament_type == "swiss") {
+                    const { data, error } = await supabase
+                        .from("tournament_matches")
+                        .select("*")
+                        .eq("tournament_id", matchup.tournament_id)
+                        .eq("round", matchup.round + 1)
+                        .limit(1)
+                        .single();
+
+                    if (error) {
+                        // If error is PGRST116 (no rows returned), that's expected - don't lock
+                        if (error.code === 'PGRST116') {
+                            setLocked(false);
+                        } else {
+                            setLocked(false);
+                        }
+                        return;
+                    }
+
+                    // Only lock if we found a match
+                    setLocked(data);
+                }
+            } catch (error) {
+                setLocked(false);
             }
-            else if (tournament_type == "swiss") {
-                const { data } = await supabase
-                    .from("tournament_matches")
-                    .select("*")
-                    .eq("tournament_id", matchup.tournament_id)
-                    .eq("round", matchup.round + 1)
-                    .limit(1)
-                    .single();
-
-                setLocked(data);
-            }
-
-
         }
 
         setEditedMatchup(matchup);
