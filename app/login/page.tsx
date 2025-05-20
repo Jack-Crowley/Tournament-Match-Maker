@@ -5,6 +5,7 @@ import { createClient } from '@/utils/supabase/client';
 import ReCAPTCHA from 'react-google-recaptcha';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { SpinningLoader } from '@/components/loading';
+import Link from 'next/link';
 
 const LoginPageContent = () => {
   const supabase = createClient();
@@ -44,6 +45,12 @@ const LoginPageContent = () => {
   }; 
 
   return (
+    <div>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4">
+        <Link href="/" className="flex items-center">
+          <span className="text-white font-bold text-2xl">TMM</span>
+        </Link>
+      </div>
     <div className="w-full min-h-screen flex justify-center items-center bg-gradient-to-b from-[#160A3A] to-[#2A1A5E] p-4">
       {wind ? (
         <div className="w-full max-w-md">
@@ -155,6 +162,7 @@ const LoginPageContent = () => {
           color: white;
         }
       `}</style>
+    </div>
     </div>
   );
 };

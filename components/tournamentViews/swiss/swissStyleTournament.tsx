@@ -749,6 +749,7 @@ export const SwissTournament = ({
                     setOpen={setIsMatchupModalOpen}
                     user={user}
                     tournament_type={tournament?.tournament_type}
+                    tournament={tournament}
                 />
             )}
         </div>

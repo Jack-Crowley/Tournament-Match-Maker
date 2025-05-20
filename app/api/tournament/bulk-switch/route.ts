@@ -10,6 +10,8 @@ export async function PATCH(req: NextRequest) {
         error: userError,
     } = await supabase.auth.getUser()
 
+    console.log('user', user)
+
     if (userError || !user) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
@@ -44,19 +46,6 @@ export async function PATCH(req: NextRequest) {
 
     const newType = type === 'active' ? 'waitlist' : 'active'
 
-    if (
-        newType === 'active' &&
-        maxPlayers &&
-        playerIDs.length + otherPlayersCount > maxPlayers
-    ) {
-        return NextResponse.json(
-            {
-                warning:
-                    'Switching would violate the max players constraint. Confirmation required.',
-            },
-            { status: 409 }
-        )
-    }
 
     const { error } = await supabase
         .from('tournament_players')

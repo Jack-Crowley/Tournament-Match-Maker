@@ -117,7 +117,7 @@ export default function Homepage() {
 
           <div className="text-center mt-12">
             <Link
-              href={isLoggedIn ? "/tournaments" : "/join"}
+              href={isLoggedIn ? "/tournaments" : "/login"}
               className="bg-[#7458da] hover:bg-[#604BAC] text-white px-8 py-3 rounded-lg transition-colors font-medium inline-block mx-2"
             >
               {isLoggedIn ? "Tournaments" : "Sign Up"}
@@ -211,7 +211,7 @@ export default function Homepage() {
                 </p>
                 <div className="flex flex-wrap gap-4">
                   <Link
-                    href={isLoggedIn ? "/tournaments" : "/join"}
+                    href={isLoggedIn ? "/tournaments" : "/login"}
                     className="bg-[#7458da] hover:bg-[#604BAC] text-white px-8 py-3 rounded-lg transition-colors font-medium inline-block mx-2"
                   >
                     {isLoggedIn ? "Tournaments" : "Sign Up"}
