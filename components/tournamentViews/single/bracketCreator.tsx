@@ -5,10 +5,8 @@ import { Bracket, BracketPlayer } from "@/types/bracketTypes";
 import { Tournament } from "@/types/tournamentTypes";
 import { User } from "@/types/userType";
 
-import {MovingPlayer, OnMovePlayer, BracketViewType} from "./bracketView";
+import { MovingPlayer, OnMovePlayer, BracketViewType } from "./bracketView";
 import { MatchupElement } from "./matchupElement";
-
-
 
 export const BracketCreator = ({
     roundIndex,
@@ -37,7 +35,6 @@ export const BracketCreator = ({
     const [box, setBox] = useState<DOMRect | null>(null);
     const heightOffset = (bracket.rounds.length - roundIndex - 1) * (viewType === BracketViewType.Normal ? 8 : 7);
     const connectionColor = "bg-primary";
-    const connectionThickness = "2px";
     const connectionSpacing = "3rem";
 
     useEffect(() => {
@@ -54,7 +51,6 @@ export const BracketCreator = ({
             resizeObserver.observe(elementRef.current);
         }
     }, []);
-
 
     if (roundIndex === 0) {
         return (
@@ -105,7 +101,7 @@ export const BracketCreator = ({
                 {box && (
                     <div>
                         <div
-                            className={`absolute ${connectionColor} w-[${connectionThickness}]`}
+                            className={`absolute ${connectionColor}`}
                             style={{
                                 top: `${box.height / 4 - heightOffset}px`,
                                 left: `${box.width + 48}px`,
@@ -115,7 +111,7 @@ export const BracketCreator = ({
                         />
 
                         <div
-                            className={`absolute ${connectionColor} h-[${connectionThickness}]`}
+                            className={`absolute ${connectionColor}`}
                             style={{
                                 top: `${box.height / 4 - 1 - heightOffset}px`,
                                 left: `${box.width}px`,
@@ -125,7 +121,7 @@ export const BracketCreator = ({
                         />
 
                         <div
-                            className={`absolute ${connectionColor} h-[${connectionThickness}]`}
+                            className={`absolute ${connectionColor}`}
                             style={{
                                 top: `${box.height / 4 * 3 - heightOffset}px`,
                                 left: `${box.width}px`,
@@ -135,7 +131,7 @@ export const BracketCreator = ({
                         />
 
                         <div
-                            className={`absolute ${connectionColor} h-[${connectionThickness}]`}
+                            className={`absolute ${connectionColor}`}
                             style={{
                                 top: `${box.height / 2 + 5}px`,
                                 left: `${box.width + 48}px`,

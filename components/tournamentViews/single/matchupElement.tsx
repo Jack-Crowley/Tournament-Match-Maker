@@ -1,5 +1,6 @@
 "use client";
 
+import React from 'react';
 import { useState, useRef, useEffect } from "react";
 import { Bracket, BracketPlayer, Matchup } from "@/types/bracketTypes";
 import { MatchupModal } from "@/components/modals/displayMatchup";
@@ -9,7 +10,7 @@ import { Tournament } from "@/types/tournamentTypes";
 import { useMessage } from "@/context/messageContext";
 import { User } from "@/types/userType";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faArrowRight, faArrowsAlt, faCrown, faExchangeAlt } from "@fortawesome/free-solid-svg-icons";
+import { faArrowRight, faArrowsAlt, faExchangeAlt, faHandshake, faTrophy } from "@fortawesome/free-solid-svg-icons";
 
 import { AddPlayerButton, BracketViewType, MovingPlayer, OnMovePlayer } from "./bracketView";
 
@@ -43,7 +44,7 @@ const ContextMenu = ({ x, y, player, round, matchNumber, index, onMovePlayer, on
     return (
         <div
             ref={menuRef}
-            className="fixed bg-deep rounded-md shadow-lg z-4 overflow-hidden"
+            className="fixed bg-deep rounded-md shadow-lg z-50 overflow-hidden"
             style={{
                 left: `${x}px`,
                 top: `${y}px`,
@@ -96,11 +97,7 @@ export const MatchupElement = ({
         index: number;
     } | null>(null);
     const { triggerMessage } = useMessage?.() || { triggerMessage: () => { } };
-
-    if (bracket) {
-
-    }
-
+    if (bracket) {}
     function openModal() {
         if (viewType === BracketViewType.Normal && tournament?.status !== "completed") {
             if (["owner", "admin", "scorekeeper"].includes(user.permission_level.toLowerCase())) {
@@ -120,18 +117,16 @@ export const MatchupElement = ({
 
         setContextMenu({
             visible: true,
-            x: e.pageX,
-            y: e.pageY - 20,
+            x: e.clientX,
+            y: e.clientY - 20,
             player,
             index,
         });
     };
     const handleCancelMove = () => {
         onMovePlayer(null);
-        // viewType = BracketViewType.Single;
         triggerMessage("Move operation canceled", "yellow");
     };
-
 
     useEffect(() => {
         const handleClickOutside = () => {
@@ -178,7 +173,6 @@ export const MatchupElement = ({
         else {
             triggerMessage(`Failed to move/swap player. Error code: ${errorCode}`, "red");
         }
-        // setIsMatchupModalOpen(false);
     };
  
     const addPlayerFromWaitlist = async (index: number) => {
@@ -202,6 +196,7 @@ export const MatchupElement = ({
 
     const renderPlayerContent = (player: BracketPlayer, index: number) => {
         const isWinner = match.winner && player.uuid === match.winner;
+        const isTie = match.is_tie;
         
         switch (viewType) {
             case BracketViewType.Normal:
@@ -220,16 +215,22 @@ export const MatchupElement = ({
                 }
                 return (
                     <>
-                        <span className="truncate mr-2">  {isWinner && <FontAwesomeIcon icon={faCrown} className="text-yellow-500 mr-2" />} {player.name}</span>
+                        <span className="truncate mr-2">
+                            {isWinner && <FontAwesomeIcon icon={faTrophy} className="text-yellow-500 mr-2" />} 
+                            {isTie && <FontAwesomeIcon icon={faHandshake} className="text-blue-500 mr-2" />}
+                            {player.name}
+                        </span>
                        
                         <div
                             className={`w-6 h-6 flex items-center justify-center flex-shrink-0
-                            ${match.winner
-                                    ? player.uuid === match.winner
-                                        ? "bg-[#baa6f6a2]"
-                                        : "bg-[#1e153e9b]"
-                                    : "bg-soft"
-                                } 
+                            ${isTie 
+                                ? "bg-blue-500" 
+                                : match.winner
+                                ? player.uuid === match.winner
+                                    ? "bg-[#9e8ce0]"
+                                    : "bg-[#1e153e9b]"
+                                : "bg-soft"
+                            } 
                             text-white rounded-full text-sm font-bold`}
                         >
                             {player.score ?? 0}
@@ -241,7 +242,6 @@ export const MatchupElement = ({
                 return player.name ?
                     <span className="truncate mr-2">{player.name}</span>
                     : <AddPlayerButton onAddPlayer={() => addPlayerFromWaitlist(index)} />;
-    
             case BracketViewType.MovePlayer:
                 if (movingPlayer) {
                     return (
@@ -282,17 +282,21 @@ export const MatchupElement = ({
                 {match.players.map((player, index) => (
                     <div
                         key={index}
-                        className={`relative ${match.winner && (player.uuid === match.winner ? "bg-[#98979b20]" : "bg-[#120b2950]")}`}
+                        className={`relative ${match.is_tie 
+                            ? "bg-[#053f5f69]" 
+                            : match.winner && (player.uuid === match.winner ? "bg-[#98979b20]" : "bg-[#120b2950]")}`}
                         onContextMenu={(e) => handleContextMenu(e, player, index)}
                     >
                         {(player.name && viewType == BracketViewType.Normal || viewType == BracketViewType.AddPlayer) ? (
                             <div
                                 className={`p-4 flex justify-between font-bold border-l-8 
-                ${match.winner
-                                        ? player.uuid === match.winner
-                                            ? "border-winner_text text-winner_text"
-                                            : "border-loser_text text-loser_text"
-                                        : "border-soft text-player_text"
+                ${match.is_tie
+                                        ? "border-blue-500 text-blue-200"
+                                        : match.winner
+                                            ? player.uuid === match.winner
+                                                ? "border-winner_text text-winner_text"
+                                                : "border-loser_text text-loser_text"
+                                            : "border-soft text-player_text"
                                     } 
                 bg-opacity-90 hover:bg-opacity-100 transition-all duration-200`}
                             >
@@ -307,7 +311,7 @@ export const MatchupElement = ({
                 ))}
             </motion.div>
             {viewType === BracketViewType.Normal && tournament && (
-                <MatchupModal matchup={match} isOpen={isMatchupModalOpen} setOpen={setIsMatchupModalOpen} user={user} tournament_type={tournament?.tournament_type}/>
+                <MatchupModal matchup={match} isOpen={isMatchupModalOpen} setOpen={setIsMatchupModalOpen} user={user} tournament_type={tournament?.tournament_type} tournament={tournament}/>
             )}
 
             {contextMenu && contextMenu.visible && (
@@ -344,7 +348,7 @@ export const MovePlayerButton = ({
                 ? 'bg-purple-700 cursor-not-allowed'
                 : existingPlayer.name
                     ? 'bg-[#FFA559] hover:bg-[#FF9248]'
-                    : 'bg-blue-500 hover:bg-blue-600'
+                    : 'bg-blue-700 hover:bg-blue-600'
                 }`}
             onClick={isSamePlayer ? undefined : onMovePlayer}
             style={{

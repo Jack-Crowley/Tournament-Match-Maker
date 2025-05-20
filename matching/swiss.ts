@@ -1,9 +1,16 @@
-import { useMessage } from "@/context/messageContext";
 import { BracketPlayer, Matchup, PlayerSkill } from "@/types/bracketTypes";
 import { Tournament } from "@/types/tournamentTypes";
 import { createClient } from "@/utils/supabase/client";
 
-export const ConfigureRoundRobin = async (tournament: Tournament, refreshTournament: any, triggerMessage : any) => {
+// sorting_algo: "ranked" | "random" | "seeded"
+// sorting_value: number (used only for "seeded")
+export const ConfigureSwissStyleTournament = async (
+    tournament: Tournament,
+    refreshTournament: any,
+    triggerMessage: any,
+    sorting_algo: "ranked" | "random" | "seeded" = "ranked",
+    sorting_value: number = 2
+) => {
     const supabase = createClient();
 
     if (!tournament) return;
@@ -14,7 +21,7 @@ export const ConfigureRoundRobin = async (tournament: Tournament, refreshTournam
         .eq('tournament_id', tournament.id)
         .eq("type", "active");
 
-    if (playerError) {
+    if (playerError || !tournamentPlayers?.length) {
         triggerMessage("Error! You have no players in the database!!!", "red");
         return;
     }
@@ -27,11 +34,10 @@ export const ConfigureRoundRobin = async (tournament: Tournament, refreshTournam
                 let skillValue: number = 0;
 
                 if (Array.isArray(player.skills)) {
-                    const playerSkill: PlayerSkill = player.skills.find((s: { name: string; }) => s.name === skill.name);
+                    const playerSkill = player.skills.find((s: { name: string }) => s.name === skill.name);
                     if (playerSkill) {
                         skillValue = playerSkill.value;
                     }
-
                 }
 
                 formattedSkills.push({ name: skill.name, type: skill.type, value: skillValue });
@@ -48,79 +54,71 @@ export const ConfigureRoundRobin = async (tournament: Tournament, refreshTournam
         };
     });
 
-
-    function seedPlayers(playersToSeed: BracketPlayer[]) {
-        return [...playersToSeed].sort((a, b) => {
-            // go in order of the skills arra
+    const seedPlayers = (players: BracketPlayer[]) => {
+        return [...players].sort((a : any, b : any) => {
             for (let i = 0; i < Math.min(a.skills?.length || 0, b.skills?.length || 0); i++) {
-                // get their respective skill values
-                const aSkillValue = a.skills?.[i].value || 0;
-                const bSkillValue = b.skills?.[i].value || 0;
-
-                // but if they're the same, lets move on to the next skill value to determine who's better
-                if (aSkillValue !== bSkillValue) {
-                    return bSkillValue - aSkillValue;
-                }
+                const aVal = a.skills[i]?.value || 0;
+                const bVal = b.skills[i]?.value || 0;
+                if (aVal !== bVal) return bVal - aVal;
             }
             return 0;
         });
-    }
+    };
 
-    function generateMatchups(players: BracketPlayer[]) {
-        if (!tournament) return [];
-    
-        const seededPlayers = seedPlayers(players);
-        const totalPlayers = seededPlayers.length;
-    
-        const hasBye = totalPlayers % 2 !== 0;
-        const workingPlayers = [...seededPlayers];
-        if (hasBye) {
-            workingPlayers.push({
+    const shuffleArray = <T>(arr: T[]): T[] => {
+        return [...arr].sort(() => Math.random() - 0.5);
+    };
+
+    const sortPlayers = (players: BracketPlayer[]): BracketPlayer[] => {
+        if (sorting_algo === "random") {
+            return shuffleArray(players);
+        } else if (sorting_algo === "seeded") {
+            const sorted = seedPlayers(players);
+            const grouped: BracketPlayer[] = [];
+
+            for (let i = 0; i < sorted.length; i += sorting_value) {
+                const group = sorted.slice(i, i + sorting_value);
+                grouped.push(...shuffleArray(group));
+            }
+
+            return grouped;
+        } else {
+            // "ranked"
+            return seedPlayers(players);
+        }
+    };
+
+    const generateMatchups = (players: BracketPlayer[]): Matchup[] => {
+        const sortedPlayers = sortPlayers(players);
+        const matchups: Matchup[] = [];
+        const totalPlayers = sortedPlayers.length;
+
+        for (let i = 0; i < totalPlayers; i += 2) {
+            const player1 = sortedPlayers[i];
+            const player2 = sortedPlayers[i + 1] || {
                 uuid: "",
                 name: "BYE",
                 account_type: "placeholder",
+                placeholder_player: true,
+                email: "",
                 score: 0,
-                email:"",
                 skills: [],
+            };
+
+            matchups.push({
+                match_number: i / 2 + 1,
+                round: 1,
+                players: [player1, player2],
+                tournament_id: Number(tournament.id),
+                id: -1,
+                is_tie:false,
             });
-        }
-    
-        const numPlayers = workingPlayers.length;
-        const numRounds = numPlayers - 1;
-        const half = numPlayers / 2;
-    
-        const matchups: Matchup[] = [];
-        let matchId = 1;
-    
-        const fixed = workingPlayers[0];
-        const rotating = workingPlayers.slice(1);
-    
-        for (let round = 1; round <= numRounds; round++) {
-            const roundPlayers = [fixed, ...rotating];
-            for (let i = 0; i < half; i++) {
-                const p1 = roundPlayers[i];
-                const p2 = roundPlayers[numPlayers - 1 - i];
-    
-                if (!p1.uuid || !p2.uuid) continue;
-    
-                matchups.push({
-                    match_number: matchId++,
-                    round,
-                    players: [p1, p2],
-                    tournament_id: Number(tournament.id),
-                    id: -1,
-                    is_tie:false
-                });
-            }
-    
-            rotating.unshift(rotating.pop()!);
         }
 
         return matchups;
-    }
-    
+    };
 
-    const saveMatchupsToDatabase = async (matchups: any[]) => {
+    const saveMatchupsToDatabase = async (matchups: Matchup[]) => {
         try {
             const { error } = await supabase
                 .from("tournament_matches")

@@ -19,6 +19,8 @@ import { MessagingSystem } from "../messanging";
 import { TournamentInfoView } from "./infoView";
 import { RoundRobinTournament } from "./robin/roundRobinTournament";
 import { useRouter, useSearchParams } from 'next/navigation';
+import { ScoreReports } from "./scoreReports";
+import { SwissTournament } from "./swiss/swissStyleTournament";
 
 export const SideNavbar = ({ tab, setTab, user }: {
     tab: string,
@@ -214,8 +216,16 @@ export const ViewTournament = ({ tournamentID, user }: { tournamentID: number, u
                             <RoundRobinTournament bracket={bracket} bracketViewType={BracketViewType.Normal} tournamentID={tournamentID} user={user} />
                         )}
 
+                        {activeTab === "Bracket" && (tournament?.tournament_type == "swiss") && (
+                            <SwissTournament bracket={bracket} bracketViewType={BracketViewType.Normal} tournamentID={tournamentID} user={user} />
+                        )}
+
                         {activeTab == "Players" && (
                             <PlayersView tournamentID={tournamentID} bracket={bracket} user={user} setActiveTab={setActiveTab} />
+                        )}
+
+                        {activeTab == "Score Report" && tournament && (
+                            <ScoreReports tournamentID={tournamentID} tournament={tournament} bracket={bracket} user={user}/>
                         )}
 
                         {activeTab === "Announcements" && (

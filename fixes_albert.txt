@@ -1,0 +1,30 @@
+high priority to make things nice!
+settings:
+	auto-declare winner (true, false)
+
+[big things]
+- settings * (starting) 
+- export data
+
+
+Nice things:
+ [] update announcements UI 
+ [] update message UI
+
+BUGS/FIXES: 
+
+- [ ] when deleting a palyer from a match, propagate player is run 
+- [] score report select match should not query matches that have winners
+- [TESTING] score report does not propagate player
+- [] admin has no access to initilization page 
+- [] cannot delete tournament if theres a score report.
+- [DONE] cannot TIE in single elinmination score reports
+- [DONE] ties are not marked by score reports
+- [] MAJOR move player from waitlist into a matchup DOES NOT WORK
+
+DONE:
+- [DONE] Start screen tournament buttons take you to "unathorized" spamming in the login page when logged out
+- [DONE] Fix API route bulkswitch.tsx where moving waitlist things dont work
+- [DONE] tournament settings modal. go to organizers, then click cancel. it pretends as if you havent exited the modal
+- [DONE] dont start tournament with 0 players
+certain score auto sets winner

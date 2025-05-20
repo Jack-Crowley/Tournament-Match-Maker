@@ -10,12 +10,14 @@ export async function PATCH(req: NextRequest) {
         error: userError,
     } = await supabase.auth.getUser()
 
+    console.log('user', user)
+
     if (userError || !user) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const uuid = user.id
-    const { tournamentID, playerIDs, type, maxPlayers, otherPlayersCount } = body
+    const { tournamentID, playerIDs, type } = body
 
     if (!tournamentID || !Array.isArray(playerIDs) || !type) {
         return NextResponse.json({ error: 'Invalid input' }, { status: 400 })
@@ -35,6 +37,7 @@ export async function PATCH(req: NextRequest) {
         .eq('tournament_id', tournamentID)
         .eq('member_uuid', uuid)
         .eq('accepted', true)
+        .eq("permission_level", "Admin")
         .single()
 
     if (!isOwner && !organizer) {
@@ -43,19 +46,6 @@ export async function PATCH(req: NextRequest) {
 
     const newType = type === 'active' ? 'waitlist' : 'active'
 
-    if (
-        newType === 'active' &&
-        maxPlayers &&
-        playerIDs.length + otherPlayersCount > maxPlayers
-    ) {
-        return NextResponse.json(
-            {
-                warning:
-                    'Switching would violate the max players constraint. Confirmation required.',
-            },
-            { status: 409 }
-        )
-    }
 
     const { error } = await supabase
         .from('tournament_players')

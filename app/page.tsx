@@ -17,12 +17,12 @@ export default function Homepage() {
   useEffect(() => {
     const checkUser = async () => {
       const { data } = await supabase.auth.getSession();
-      setIsLoggedIn(!data.session?.user?.is_anonymous);
+      setIsLoggedIn(!data.session?.user?.is_anonymous && !!data.session?.user?.id);
     };
 
     checkUser();
   }, [supabase.auth]);
-  
+
 
   return (
     <div className="min-h-screen bg-[#160A3A]">
@@ -59,7 +59,7 @@ export default function Homepage() {
                 height={400}
                 className="object-cover"
                 priority
-              /> 
+              />
 
             </div>
           </div>
@@ -88,9 +88,6 @@ export default function Homepage() {
               <p className="text-gray-300">
                 Launch your tournaments in minutes with our intuitive interface.
               </p>
-              <Link href="/features" className="mt-4 inline-block text-[#7458da] hover:text-[#604BAC]">
-                Learn More
-              </Link>
             </div>
 
             <div className="bg-[#2a1a66] p-6 rounded-lg">
@@ -98,14 +95,11 @@ export default function Homepage() {
                 <FontAwesomeIcon icon={faUsers} className="h-8 w-8" />
               </div>
               <h3 className="text-xl font-bold text-white mb-2">
-                Manage Teams with Ease
+                Manage Participants with Ease
               </h3>
               <p className="text-gray-300">
                 Keep track of team rosters and performance effortlessly.
               </p>
-              <Link href="/features" className="mt-4 inline-block text-[#7458da] hover:text-[#604BAC]">
-                Learn More
-              </Link>
             </div>
 
             <div className="bg-[#2a1a66] p-6 rounded-lg">
@@ -118,26 +112,23 @@ export default function Homepage() {
               <p className="text-gray-300">
                 Stay updated with live event and match statistics updates.
               </p>
-              <Link href="/features" className="mt-4 inline-block text-[#7458da] hover:text-[#604BAC]">
-                Learn More
-              </Link>
             </div>
           </div>
 
           <div className="text-center mt-12">
             <Link
-              href={isLoggedIn ? "/tournaments" : "/join"}
+              href={isLoggedIn ? "/tournaments" : "/login"}
               className="bg-[#7458da] hover:bg-[#604BAC] text-white px-8 py-3 rounded-lg transition-colors font-medium inline-block mx-2"
             >
               {isLoggedIn ? "Tournaments" : "Sign Up"}
             </Link>
+
             <Link
-              href="/features"
-              className="border border-[#7458da] text-white hover:bg-[#2a1a66] px-8 py-3 rounded-lg transition-colors font-medium inline-block mx-2"
+              href="/how-it-works"
+              className="border border-[#7458da] text-white hover:bg-[#2a1a66] px-6 py-3 rounded-lg transition-colors font-medium"
             >
               Learn More
-            </Link>
-          </div>
+            </Link>          </div>
         </div>
       </section>
 
@@ -154,11 +145,14 @@ export default function Homepage() {
 
           <div className="grid md:grid-cols-3 gap-8">
             <div className="bg-[#2a1a66] p-6 rounded-lg">
-              <div className="bg-gray-200 rounded-lg w-full aspect-video mb-4 flex items-center justify-center">
-                <svg className="w-16 h-16 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
-                </svg>
-              </div>
+              <Image
+                src={"/login.png"}
+                alt={`logo`}
+                width={400}
+                height={400}
+                className="object-cover"
+                priority
+              />
               <h3 className="text-xl font-bold text-white mb-2">
                 Step 1: Sign Up for an Account
               </h3>
@@ -168,11 +162,14 @@ export default function Homepage() {
             </div>
 
             <div className="bg-[#2a1a66] p-6 rounded-lg">
-              <div className="bg-gray-200 rounded-lg w-full aspect-video mb-4 flex items-center justify-center">
-                <svg className="w-16 h-16 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
-                </svg>
-              </div>
+              <Image
+                src={"/create.png"}
+                alt={`logo`}
+                width={400}
+                height={400}
+                className="object-cover"
+                priority
+              />
               <h3 className="text-xl font-bold text-white mb-2">
                 Step 2: Create Your Tournament
               </h3>
@@ -182,13 +179,16 @@ export default function Homepage() {
             </div>
 
             <div className="bg-[#2a1a66] p-6 rounded-lg">
-              <div className="bg-gray-200 rounded-lg w-full aspect-video mb-4 flex items-center justify-center">
-                <svg className="w-16 h-16 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z" />
-                </svg>
-              </div>
+              <Image
+                src={"/play.png"}
+                alt={`logo`}
+                width={400}
+                height={400}
+                className="object-cover"
+                priority
+              />
               <h3 className="text-xl font-bold text-white mb-2">
-                Step 3: Invite Participants and Manage
+                Step 3: Play!
               </h3>
               <p className="text-gray-300">
                 Invite players and keep track of their progress.
@@ -211,7 +211,7 @@ export default function Homepage() {
                 </p>
                 <div className="flex flex-wrap gap-4">
                   <Link
-                    href={isLoggedIn ? "/tournaments" : "/join"}
+                    href={isLoggedIn ? "/tournaments" : "/login"}
                     className="bg-[#7458da] hover:bg-[#604BAC] text-white px-8 py-3 rounded-lg transition-colors font-medium inline-block mx-2"
                   >
                     {isLoggedIn ? "Tournaments" : "Sign Up"}
@@ -225,11 +225,14 @@ export default function Homepage() {
                 </div>
               </div>
               <div className="md:w-1/3">
-                <div className="bg-gray-200 rounded-lg w-full aspect-square flex items-center justify-center">
-                  <svg className="w-24 h-24 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
-                  </svg>
-                </div>
+                <Image
+                  src={"/tournament.avif"}
+                  alt={`logo`}
+                  width={400}
+                  height={400}
+                  className="object-cover"
+                  priority
+                />
               </div>
             </div>
           </div>

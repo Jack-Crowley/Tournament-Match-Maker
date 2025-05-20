@@ -3,7 +3,14 @@
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTrophy, faUsers, faChartLine, faCheckCircle, faListAlt, faCogs } from '@fortawesome/free-solid-svg-icons';
+import {
+  faTrophy,
+  faChartLine,
+  faCheckCircle,
+  faListAlt,
+  faCogs,
+  faRandom,
+} from '@fortawesome/free-solid-svg-icons';
 import { Footer } from "@/components/footer";
 
 export default function HowItWorks() {
@@ -22,7 +29,7 @@ export default function HowItWorks() {
               How It Works
             </h1>
             <p className="text-gray-300 text-lg mb-8 max-w-2xl mx-auto">
-              Discover how TMM Tournaments simplifies tournament management with powerful tools like the Single Bracket System, waitlist functionality, and real-time updates.
+              Discover how TMM Tournaments simplifies tournament management with powerful tools like flexible bracket systems, waitlist functionality, and real-time updates.
             </p>
           </motion.div>
         </div>
@@ -41,32 +48,26 @@ export default function HowItWorks() {
               Our Key Features
             </h2>
             <p className="text-gray-300 max-w-3xl mx-auto">
-              From creating tournaments to managing participants, our platform offers everything you need to run seamless events.
+              From creating tournaments to delivering real-time updates, our platform is built for organizers who want complete control and simplicity.
             </p>
           </motion.div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {/* Single Bracket System */}
-            <motion.div
-              whileHover={{ scale: 1.05 }}
-              className="bg-[#2a1a66] p-6 rounded-lg"
-            >
+            {/* Flexible Bracket Systems */}
+            <motion.div whileHover={{ scale: 1.05 }} className="bg-[#2a1a66] p-6 rounded-lg">
               <div className="text-[#7458da] mb-4">
                 <FontAwesomeIcon icon={faListAlt} className="h-8 w-8" />
               </div>
               <h3 className="text-xl font-bold text-white mb-2">
-                Single Bracket System
+                Flexible Bracket Systems
               </h3>
               <p className="text-gray-300">
-                Effortlessly manage brackets with our integrated system. Move teams, handle waitlists, and track progress in real-time.
+                Support for Single Elimination, Round Robin, and Swiss formats—designed for flexibility at any scale.
               </p>
             </motion.div>
 
             {/* Waitlist Functionality */}
-            <motion.div
-              whileHover={{ scale: 1.05 }}
-              className="bg-[#2a1a66] p-6 rounded-lg"
-            >
+            <motion.div whileHover={{ scale: 1.05 }} className="bg-[#2a1a66] p-6 rounded-lg">
               <div className="text-[#7458da] mb-4">
                 <FontAwesomeIcon icon={faCheckCircle} className="h-8 w-8" />
               </div>
@@ -79,10 +80,7 @@ export default function HowItWorks() {
             </motion.div>
 
             {/* Real-Time Updates */}
-            <motion.div
-              whileHover={{ scale: 1.05 }}
-              className="bg-[#2a1a66] p-6 rounded-lg"
-            >
+            <motion.div whileHover={{ scale: 1.05 }} className="bg-[#2a1a66] p-6 rounded-lg">
               <div className="text-[#7458da] mb-4">
                 <FontAwesomeIcon icon={faChartLine} className="h-8 w-8" />
               </div>
@@ -95,10 +93,7 @@ export default function HowItWorks() {
             </motion.div>
 
             {/* Easy Tournament Creation */}
-            <motion.div
-              whileHover={{ scale: 1.05 }}
-              className="bg-[#2a1a66] p-6 rounded-lg"
-            >
+            <motion.div whileHover={{ scale: 1.05 }} className="bg-[#2a1a66] p-6 rounded-lg">
               <div className="text-[#7458da] mb-4">
                 <FontAwesomeIcon icon={faTrophy} className="h-8 w-8" />
               </div>
@@ -110,27 +105,21 @@ export default function HowItWorks() {
               </p>
             </motion.div>
 
-            {/* Team Management */}
-            <motion.div
-              whileHover={{ scale: 1.05 }}
-              className="bg-[#2a1a66] p-6 rounded-lg"
-            >
+            {/* Custom Matchmaking */}
+            <motion.div whileHover={{ scale: 1.05 }} className="bg-[#2a1a66] p-6 rounded-lg">
               <div className="text-[#7458da] mb-4">
-                <FontAwesomeIcon icon={faUsers} className="h-8 w-8" />
+                <FontAwesomeIcon icon={faRandom} className="h-8 w-8" />
               </div>
               <h3 className="text-xl font-bold text-white mb-2">
-                Team Management
+                Custom Matchmaking
               </h3>
               <p className="text-gray-300">
-                Manage team rosters, track performance, and communicate with participants seamlessly.
+                Pair teams based on skill, rank, or custom logic to create balanced and exciting matchups.
               </p>
             </motion.div>
 
-            {/* Advanced Settings */}
-            <motion.div
-              whileHover={{ scale: 1.05 }}
-              className="bg-[#2a1a66] p-6 rounded-lg"
-            >
+            {/* Dynamic Tournament Settings */}
+            <motion.div whileHover={{ scale: 1.05 }} className="bg-[#2a1a66] p-6 rounded-lg">
               <div className="text-[#7458da] mb-4">
                 <FontAwesomeIcon icon={faCogs} className="h-8 w-8" />
               </div>
@@ -138,7 +127,7 @@ export default function HowItWorks() {
                 Advanced Settings
               </h3>
               <p className="text-gray-300">
-                Customize tournament rules, scoring systems, and more to fit your needs.
+                Customize tournament rules, seeding methods, scoring systems, and more to fit your competitive needs.
               </p>
             </motion.div>
           </div>
@@ -162,7 +151,7 @@ export default function HowItWorks() {
             </p>
             <div className="flex justify-center gap-4">
               <Link
-                href="/join"
+                href="/login"
                 className="bg-[#7458da] hover:bg-[#604BAC] text-white px-6 py-3 rounded-lg transition-colors font-medium"
               >
                 Explore Tournaments

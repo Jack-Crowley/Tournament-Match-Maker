@@ -27,11 +27,13 @@ export function RankRoundRobinPlayers(bracket: Bracket) {
                 if (match.winner) {
                     if (match.winner === player.uuid) {
                         playersMap.get(player.uuid)?.wins.push(...match.players.filter(pl => pl.uuid !== player.uuid));
-                    } else if (match.winner.startsWith("(tied)") && match.winner.includes(player.uuid)) {
-                        playersMap.get(player.uuid)?.ties.push(...match.players.filter(pl => pl.uuid !== player.uuid));
                     } else {
                         playersMap.get(player.uuid)?.losses.push(...match.players.filter(pl => pl.uuid !== player.uuid));
                     }
+                }
+                else if (match.is_tie) {
+                    playersMap.get(player.uuid)?.ties.push(...match.players.filter(pl => pl.uuid !== player.uuid));
+
                 }
             });
         });
@@ -41,7 +43,7 @@ export function RankRoundRobinPlayers(bracket: Bracket) {
 
     const scoreMap: Map<string, number> = new Map();
     allPlayers.forEach(p => {
-        const score = p.wins.length * 3 + p.ties.length; 
+        const score = p.wins.length * 3 + p.ties.length;
         scoreMap.set(p.player.uuid, score);
     });
 
