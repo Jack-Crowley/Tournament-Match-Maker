@@ -188,14 +188,16 @@ export function ScoreReports({ tournamentID, bracket, user, tournament }: {
                     score: reportFormData.opponent_score
                 }
             ],
-            status: "pending"
+            status: "pending",
+            winner: reportFormData.is_tie ? "tie" : reportFormData.winner_id
         }
 
-        if (reportFormData.winner_id) {
-            scoreReport = { ...scoreReport, winner: reportFormData.winner_id }
-        }
+        const { error } = await supabaseClient.current.from("score_reports").insert(scoreReport)
 
-        await supabaseClient.current.from("score_reports").insert(scoreReport)
+        if (error) {
+            triggerMessage("Error submitting score report: " + error.message, "red");
+            return;
+        }
 
         setShowNewReportForm(false);
         setReportFormData({
@@ -220,8 +222,13 @@ export function ScoreReports({ tournamentID, bracket, user, tournament }: {
 
         const finalMatch: any = {}
 
-        if (report.winner) {
-            finalMatch["winner"] = report.winner
+        // Handle winner or tie
+        if (report.is_tie) {
+            finalMatch["is_tie"] = true;
+            finalMatch["winner"] = null;
+        } else if (report.winner) {
+            finalMatch["winner"] = report.winner;
+            finalMatch["is_tie"] = false;
         }
 
         const players = originalMatch.players;
@@ -236,7 +243,7 @@ export function ScoreReports({ tournamentID, bracket, user, tournament }: {
         await supabaseClient.current.from("tournament_matches").update(finalMatch).eq("id", report.match_id).single()
 
         // Handle single elimination tournament winner propagation
-        if (tournament.tournament_type === "single" && report.winner) {
+        if (tournament.tournament_type === "single" && report.winner && !report.is_tie) {
             console.log("Starting single elimination propagation");
             console.log("Tournament type:", tournament.tournament_type);
             console.log("Winner:", report.winner);
@@ -627,7 +634,7 @@ export function ScoreReports({ tournamentID, bracket, user, tournament }: {
                                 {/* Winner Selection */}
                                 <div className="mb-6">
                                     <label className="block mb-3 text-purple-200">Select Winner</label>
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div className={`grid ${tournament.tournament_type === "single" ? "grid-cols-2" : "grid-cols-3"} gap-4`}>
                                         <button
                                             onClick={() => setWinner(user.uuid)}
                                             className={`p-4 rounded-lg border ${reportFormData.winner_id === user.uuid && !reportFormData.is_tie
@@ -639,16 +646,18 @@ export function ScoreReports({ tournamentID, bracket, user, tournament }: {
                                             <span className="font-medium">You Won</span>
                                         </button>
 
-                                        <button
-                                            onClick={setTie}
-                                            className={`p-4 rounded-lg border ${reportFormData.is_tie
-                                                ? 'bg-blue-800/30 border-blue-600'
-                                                : 'bg-[#2a1b5f]/50 border-[#3d2a80] hover:bg-[#3d2a80]/50'
-                                                } flex items-center justify-center transition-colors`}
-                                        >
-                                            <FontAwesomeIcon icon={faHandshake} className="mr-2 text-blue-400" />
-                                            <span className="font-medium">Tie Game</span>
-                                        </button>
+                                        {tournament.tournament_type !== "single" && (
+                                            <button
+                                                onClick={setTie}
+                                                className={`p-4 rounded-lg border ${reportFormData.is_tie
+                                                    ? 'bg-blue-800/30 border-blue-600'
+                                                    : 'bg-[#2a1b5f]/50 border-[#3d2a80] hover:bg-[#3d2a80]/50'
+                                                    } flex items-center justify-center transition-colors`}
+                                            >
+                                                <FontAwesomeIcon icon={faHandshake} className="mr-2 text-blue-400" />
+                                                <span className="font-medium">Tie Game</span>
+                                            </button>
+                                        )}
 
                                         <button
                                             onClick={() => opponent && setWinner(opponent.uuid)}
@@ -897,7 +906,7 @@ export function ScoreReports({ tournamentID, bracket, user, tournament }: {
 
                                                                     <div className="mb-4">
                                                                         <label className="block mb-2 text-xs text-purple-300">Select Winner</label>
-                                                                        <div className="grid grid-cols-3 gap-2">
+                                                                        <div className={`grid ${tournament.tournament_type === "single" ? "grid-cols-2" : "grid-cols-3"} gap-2`}>
                                                                             <button
                                                                                 onClick={() => setEditFormData({ ...editFormData, winner_id: user.uuid, is_tie: false })}
                                                                                 className={`p-2 rounded border ${editFormData.winner_id === user.uuid && !editFormData.is_tie
@@ -909,16 +918,18 @@ export function ScoreReports({ tournamentID, bracket, user, tournament }: {
                                                                                 <span>You Won</span>
                                                                             </button>
 
-                                                                            <button
-                                                                                onClick={() => setEditFormData({ ...editFormData, is_tie: true, winner_id: "" })}
-                                                                                className={`p-2 rounded border ${editFormData.is_tie
-                                                                                    ? 'bg-blue-800/30 border-blue-600'
-                                                                                    : 'bg-[#2a1b5f]/50 border-[#3d2a80] hover:bg-[#3d2a80]/50'
-                                                                                    } flex items-center justify-center transition-colors text-sm`}
-                                                                            >
-                                                                                <FontAwesomeIcon icon={faHandshake} className="mr-1 text-blue-400" />
-                                                                                <span>Tie Game</span>
-                                                                            </button>
+                                                                            {tournament.tournament_type !== "single" && (
+                                                                                <button
+                                                                                    onClick={() => setEditFormData({ ...editFormData, is_tie: true, winner_id: "" })}
+                                                                                    className={`p-2 rounded border ${editFormData.is_tie
+                                                                                        ? 'bg-blue-800/30 border-blue-600'
+                                                                                        : 'bg-[#2a1b5f]/50 border-[#3d2a80] hover:bg-[#3d2a80]/50'
+                                                                                        } flex items-center justify-center transition-colors text-sm`}
+                                                                                >
+                                                                                    <FontAwesomeIcon icon={faHandshake} className="mr-1 text-blue-400" />
+                                                                                    <span>Tie Game</span>
+                                                                                </button>
+                                                                            )}
 
                                                                             <button
                                                                                 onClick={() => {

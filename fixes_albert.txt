@@ -18,7 +18,8 @@ BUGS/FIXES:
 - [TESTING] score report does not propagate player
 - [] admin has no access to initilization page 
 - [] cannot delete tournament if theres a score report.
-- [] cannot TIE in single elinmination score reports
+- [DONE] cannot TIE in single elinmination score reports
+- [DONE] ties are not marked by score reports
 - [] MAJOR move player from waitlist into a matchup DOES NOT WORK
 
 DONE:
