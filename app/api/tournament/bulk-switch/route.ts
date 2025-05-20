@@ -17,7 +17,7 @@ export async function PATCH(req: NextRequest) {
     }
 
     const uuid = user.id
-    const { tournamentID, playerIDs, type, maxPlayers, otherPlayersCount } = body
+    const { tournamentID, playerIDs, type } = body
 
     if (!tournamentID || !Array.isArray(playerIDs) || !type) {
         return NextResponse.json({ error: 'Invalid input' }, { status: 400 })

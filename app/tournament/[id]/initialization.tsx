@@ -1,16 +1,9 @@
 "use client";
 
-import { motion } from "framer-motion";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
-    faCopy,
     faGear,
-    faQrcode,
-    faUsers,
-    faCalendarAlt,
-    faMapMarkerAlt,
     faInfoCircle,
-    faDownload,
     faPlay,
     faUserPlus,
     faTrophy
@@ -18,7 +11,6 @@ import {
 import { useState, useRef, useEffect } from 'react';
 import { useMessage } from '@/context/messageContext';
 import { createClient } from "@/utils/supabase/client";
-import QRCode from "react-qr-code";
 import { useParams } from 'next/navigation';
 import { SpinningLoader } from "@/components/loading";
 import { Tournament } from "@/types/tournamentTypes";
@@ -40,7 +32,6 @@ export default function Initialization({ refreshTournament, user }: { user: User
     const [tournament, setTournament] = useState<Tournament | null>(null);
     const [loading, setLoading] = useState<boolean>(true);
     const [joinLink, setJoinLink] = useState<null | string>(null);
-    const [showQRCode, setShowQRCode] = useState<boolean>(false);
     const [starting, setStarting] = useState<boolean>(false);
 
     const [confirmModalInfo, setConfirmModalInfo] = useState<ConfirmModalInformation | null>(null);
@@ -55,57 +46,6 @@ export default function Initialization({ refreshTournament, user }: { user: User
     const { triggerMessage } = useMessage();
     const params = useParams();
     const tournament_id = params.id;
-    const qrRef = useRef<HTMLDivElement>(null);
-
-    const downloadQRCode = () => {
-        if (!qrRef.current || !tournament) return;
-
-        const svg = qrRef.current.querySelector('svg');
-
-        if (svg) {
-            const svgClone = svg.cloneNode(true);
-
-            const svgData = new XMLSerializer().serializeToString(svgClone);
-
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
-
-            const img = new Image();
-
-            const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
-            const url = URL.createObjectURL(svgBlob);
-
-            if (!ctx) {
-                return;
-            }
-
-            img.onload = () => {
-                // Set canvas size to match SVG
-                canvas.width = img.width;
-                canvas.height = img.height;
-
-                ctx.fillStyle = 'white';
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-                ctx.drawImage(img, 0, 0);
-
-                const pngUrl = canvas.toDataURL('image/png');
-
-                const downloadLink = document.createElement('a');
-                downloadLink.href = pngUrl;
-                downloadLink.download = `tournament-qr-code.png`;
-
-                document.body.appendChild(downloadLink);
-                downloadLink.click();
-                document.body.removeChild(downloadLink);
-
-                URL.revokeObjectURL(url);
-            };
-
-            img.src = url;
-        }
-    };
-
 
     useEffect(() => {
         const fetchData = async () => {
@@ -223,20 +163,6 @@ export default function Initialization({ refreshTournament, user }: { user: User
             document.removeEventListener("mousedown", handleClickOutside);
         };
     }, [isTournamentEditModalOpen, isPlayerModalOpen]);
-
-    const formatDateTime = (date: string) => {
-        const d = new Date(date);
-        d.setMinutes(d.getMinutes() - new Date().getTimezoneOffset());
-        return d.toLocaleString('en-US', {
-            weekday: 'short',
-            month: 'short',
-            day: 'numeric',
-            year: 'numeric',
-            hour: 'numeric',
-            minute: '2-digit',
-            hour12: true
-        });
-    };
 
     const handleStartTournament = async () => {
         if (starting) return;
