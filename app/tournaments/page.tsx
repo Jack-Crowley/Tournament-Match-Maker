@@ -29,7 +29,7 @@ import { CreateTournament } from "@/components/modals/createTournament";
 import { DeleteManyModal, DeleteModal } from "@/components/modals/delete";
 import { Checkbox } from "@/components/checkbox";
 import { Footer } from "@/components/footer";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import React from 'react';
 
 export default function Home() {
@@ -52,7 +52,6 @@ function TournamentsPage() {
     const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
     const [anonymous, setAnonymous] = useState<boolean>(false)
 
-    const router = useRouter();
     const searchParams = useSearchParams();
     const initialTab = searchParams.get("tab") || "organizing";
     const [activeTab, setActiveTabState] = useState(initialTab);
