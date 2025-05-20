@@ -5,7 +5,11 @@ import {
     faGear,
     faInfoCircle,
     faTrophy,
-    faUserPlus,
+    faEdit,
+    faTrash,
+    faUser,
+    faCalendar,
+    faUsers
 } from "@fortawesome/free-solid-svg-icons";
 import { Tournament } from "@/types/tournamentTypes";
 import { useMessage } from "@/context/messageContext";

@@ -1,5 +1,6 @@
 "use client";
 
+import React from 'react';
 import { useState, useRef, useEffect } from "react";
 import { Bracket, BracketPlayer, Matchup } from "@/types/bracketTypes";
 import { MatchupModal } from "@/components/modals/displayMatchup";
