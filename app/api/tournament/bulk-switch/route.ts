@@ -28,7 +28,7 @@ export async function PATCH(req: NextRequest) {
         .single()
 
     const isOwner = tournament?.owner === uuid
-
+ 
     const { data: organizer } = await supabase
         .from('tournament_organizers')
         .select('id')
