@@ -1,27 +1,15 @@
 "use client";
 
-import { useState } from "react";
-import { motion } from "framer-motion";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
     faGear,
-    faCalendarAlt,
-    faMapMarkerAlt,
     faInfoCircle,
-    faUsers,
-    faCopy,
-    faQrcode,
     faTrophy,
-    faUserPlus,
-    faPlay,
 } from "@fortawesome/free-solid-svg-icons";
-import QRCode from "react-qr-code";
 import { Tournament } from "@/types/tournamentTypes";
-import { SpinningLoader } from "../loading";
 import { useMessage } from "@/context/messageContext";
 import { User } from "@/types/userType";
 import { createClient } from "@/utils/supabase/client";
-import Initialization from "@/app/tournament/[id]/initialization";
 import { TournamentInfo } from "../tournament/TournamentInfo";
 import { TournamentJoining } from "../tournament/TournamentJoining";
 
@@ -34,7 +22,6 @@ export const TournamentInfoView = ({
     setActiveTab: (state: string) => void;
     user: User;
 }) => {
-    const [showQRCode, setShowQRCode] = useState<boolean>(false);
     const { triggerMessage } = useMessage();
     const joinLink = tournament ? `${window.location.origin}/tournament/join/${tournament.join_code}` : null;
     const supabase = createClient()
@@ -43,20 +30,6 @@ export const TournamentInfoView = ({
         if (!joinLink) return;
         navigator.clipboard.writeText(joinLink);
         triggerMessage("Join URL copied to clipboard!", "green");
-    };
-
-    const formatDateTime = (date: string) => {
-        const d = new Date(date);
-        d.setMinutes(d.getMinutes() - new Date().getTimezoneOffset());
-        return d.toLocaleString("en-US", {
-            weekday: "long",
-            month: "long",
-            day: "numeric",
-            year: "numeric",
-            hour: "numeric",
-            minute: "2-digit",
-            hour12: true,
-        });
     };
 
     const handleAllowJoinToggle = async () => {

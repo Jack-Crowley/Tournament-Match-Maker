@@ -4,7 +4,6 @@ import { faCopy, faQrcode, faUserPlus, faPlay, faDownload } from '@fortawesome/f
 import { useState, useRef } from 'react';
 import QRCode from "react-qr-code";
 import { Tournament } from "@/types/tournamentTypes";
-import { useMessage } from '@/context/messageContext';
 
 interface TournamentJoiningProps {
     tournament: Tournament;
