@@ -5,23 +5,14 @@ import { motion } from "framer-motion";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
     faGear,
-    faCalendarAlt,
-    faMapMarkerAlt,
     faInfoCircle,
-    faUsers,
-    faCopy,
-    faQrcode,
     faTrophy,
     faUserPlus,
-    faPlay,
 } from "@fortawesome/free-solid-svg-icons";
-import QRCode from "react-qr-code";
 import { Tournament } from "@/types/tournamentTypes";
-import { SpinningLoader } from "../loading";
 import { useMessage } from "@/context/messageContext";
 import { User } from "@/types/userType";
 import { createClient } from "@/utils/supabase/client";
-import Initialization from "@/app/tournament/[id]/initialization";
 import { TournamentInfo } from "../tournament/TournamentInfo";
 import { TournamentJoining } from "../tournament/TournamentJoining";
 

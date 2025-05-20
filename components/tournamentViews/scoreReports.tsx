@@ -235,6 +235,121 @@ export function ScoreReports({ tournamentID, bracket, user, tournament }: {
 
         await supabaseClient.current.from("tournament_matches").update(finalMatch).eq("id", report.match_id).single()
 
+        // Handle single elimination tournament winner propagation
+        if (tournament.tournament_type === "single" && report.winner) {
+            console.log("Starting single elimination propagation");
+            console.log("Tournament type:", tournament.tournament_type);
+            console.log("Winner:", report.winner);
+            
+            const winnerPlayer = updatedPlayers.find((p: { uuid: string }) => p.uuid === report.winner);
+            console.log("Winner player found:", winnerPlayer);
+            
+            if (winnerPlayer) {
+                console.log("Current match:", originalMatch);
+                console.log("Looking for next match in round:", originalMatch.round + 1);
+                console.log("Looking for match number:", Math.ceil(originalMatch.match_number / 2));
+                
+                const { data: nextMatch, error: nextMatchError } = await supabaseClient.current
+                    .from("tournament_matches")
+                    .select("*")
+                    .eq("tournament_id", tournamentID)
+                    .eq("round", originalMatch.round + 1)
+                    .eq("match_number", Math.ceil(originalMatch.match_number / 2))
+                    .single();
+
+                if (nextMatchError && nextMatchError.code !== "PGRST116") {
+                    console.error("Error finding next match:", nextMatchError);
+                }
+                
+                console.log("Next match found:", nextMatch);
+                
+                if (nextMatch) {
+                    const currentMatchupPlayers = nextMatch.players || [];
+                    const playerIndex = 1 - originalMatch.match_number % 2;
+                    console.log("Player index for next match:", playerIndex);
+                    console.log("Current players in next match:", currentMatchupPlayers);
+
+                    // Add placeholder players if needed
+                    while (currentMatchupPlayers.length < 2) {
+                        currentMatchupPlayers.push({
+                            uuid: "",
+                            name: "",
+                            email: "",
+                            account_type: "placeholder",
+                        });
+                    }
+
+                    // Update the player in the next match
+                    currentMatchupPlayers[playerIndex] = {
+                        ...winnerPlayer,
+                        score: 0  // Reset score to 0
+                    };
+                    console.log("Updated players array:", currentMatchupPlayers);
+
+                    const { error: updateError } = await supabaseClient.current
+                        .from("tournament_matches")
+                        .update({ players: currentMatchupPlayers })
+                        .eq("id", nextMatch.id);
+
+                    if (updateError) {
+                        console.error("Error updating next match:", updateError);
+                    } else {
+                        console.log("Successfully updated next match");
+                    }
+                } else {
+                    console.log("No next match found - checking if last round");
+                    
+                    // Check if this is the last round
+                    if (tournament.max_rounds && originalMatch.round >= tournament.max_rounds) {
+                        console.log("This is the final match - no propagation needed");
+                        return;
+                    }
+
+                    console.log("Creating new match for next round");
+                    
+                    // Create placeholder player
+                    const placeholderPlayer = {
+                        uuid: "",
+                        name: "",
+                        email: "",
+                        account_type: "placeholder",
+                    };
+
+                    // Create propagated player with reset score
+                    const propagatedPlayer = {
+                        ...winnerPlayer,
+                        score: 0
+                    };
+
+                    // Set up players array based on match number
+                    const players = originalMatch.match_number % 2 === 0
+                        ? [placeholderPlayer, propagatedPlayer]
+                        : [propagatedPlayer, placeholderPlayer];
+
+                    // Create new match
+                    const newMatch = {
+                        tournament_id: tournamentID,
+                        match_number: Math.ceil(originalMatch.match_number / 2),
+                        players,
+                        round: originalMatch.round + 1,
+                        is_tie: false
+                    };
+
+                    console.log("Creating new match:", newMatch);
+
+                    const { error: insertError } = await supabaseClient.current
+                        .from("tournament_matches")
+                        .insert(newMatch);
+
+                    if (insertError) {
+                        console.error("Error creating new match:", insertError);
+                    } else {
+                        console.log("Successfully created new match");
+                    }
+                }
+            }
+        }
+
         const { error } = await supabaseClient.current.from("score_reports").update({ status: "accepted" }).eq("id", reportId).single()
 
         if (error) {
