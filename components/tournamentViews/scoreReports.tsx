@@ -173,7 +173,7 @@ export function ScoreReports({ tournamentID, bracket, user, tournament }: {
     };
 
     const submitScoreReport = async () => {
-        let scoreReport: any = {
+        const scoreReport: any = {
             match_id: reportFormData.match_id,
             tournament_id: tournamentID,
             is_tie: reportFormData.is_tie,

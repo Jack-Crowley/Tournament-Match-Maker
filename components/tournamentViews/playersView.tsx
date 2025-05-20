@@ -238,10 +238,6 @@ export const PlayersView = ({ tournamentID, bracket, user, setActiveTab }: { set
             }`;
     };
 
-    const handleSomeAction = () => {
-        // Implement the action or remove if not needed
-    };
-
     return (
         <div>
             {isAdding && tournament ? (

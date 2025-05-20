@@ -29,7 +29,7 @@ import { CreateTournament } from "@/components/modals/createTournament";
 import { DeleteManyModal, DeleteModal } from "@/components/modals/delete";
 import { Checkbox } from "@/components/checkbox";
 import { Footer } from "@/components/footer";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import React from 'react';
 
 export default function Home() {
