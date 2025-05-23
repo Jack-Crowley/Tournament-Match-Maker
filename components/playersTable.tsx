@@ -102,7 +102,7 @@ export const PlayersTable = ({
     }, [players, sortConfig]);
 
     useEffect(() => {
-        setCanDelete(permission_level === "admin" || permission_level === "owner");
+        setCanDelete(permission_level.toLowerCase() === "admin" || permission_level.toLowerCase() === "owner");
     }, [permission_level]);
 
     // Reset selection mode when no players are selected

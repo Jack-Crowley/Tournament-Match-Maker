@@ -68,7 +68,7 @@ export const MatchupModal = ({ isOpen, setOpen, matchup, user, tournament_type, 
                         .single();
 
                     if (error) {
-                        // console.error("we have supposedly caught this error?");
+                        console.error("we have supposedly caught this error?");
                         // If error is PGRST116 (no rows returned), that's expected - don't lock
                         if (error.code === 'PGRST116') {
                             setLocked(false);

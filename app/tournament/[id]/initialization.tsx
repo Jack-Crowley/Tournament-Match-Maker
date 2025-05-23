@@ -409,7 +409,7 @@ export default function Initialization({ refreshTournament, user }: { user: User
                             {tournament.name}
                         </h1>
 
-                        {(user.permission_level === "owner" || user.permission_level === "admin") && (
+                        {(user.permission_level.toLowerCase() === "owner" || user.permission_level.toLowerCase() === "admin") && (
                             <button
                                 onClick={() => setIsTournamentEditModalOpen(true)}
                                 className="bg-white/10 hover:bg-white/15 transition-colors p-2 rounded-lg flex items-center justify-center gap-2 px-4 text-purple-200 border border-white/10 shadow-md"
@@ -434,7 +434,7 @@ export default function Initialization({ refreshTournament, user }: { user: User
                 <TournamentInfo tournament={tournament} />
 
                 {/* Registration Section */}
-                {(user.permission_level === "owner" || user.permission_level === "admin") && (
+                {(user.permission_level.toLowerCase() === "owner" || user.permission_level.toLowerCase() === "admin") && (
                     <TournamentJoining
                         tournament={tournament}
                         joinLink={joinLink}
