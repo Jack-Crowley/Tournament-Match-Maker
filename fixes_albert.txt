@@ -16,10 +16,10 @@ BUGS/FIXES:
 - [] admin has no access to initilization page 
 - [] cannot delete tournament if theres a score report.
 - [] MAJOR move player from waitlist into a matchup not the first round DOES NOT WORK
-- [] Error updating match when its the same match??
 
 DONE:
 - [DONE] Start screen tournament buttons take you to "unathorized" spamming in the login page when logged out
+- [DONE] Error updating match when its the same match (swap players in the same match)
 - [DONE] Fix API route bulkswitch.tsx where moving waitlist things dont work
 - [DONE] tournament settings modal. go to organizers, then click cancel. it pretends as if you havent exited the modal
 - [DONE] dont start tournament with 0 players
