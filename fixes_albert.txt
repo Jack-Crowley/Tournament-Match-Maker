@@ -5,6 +5,8 @@ BIG THINGS:
 
 
 Nice things:
+ [] MOVE TO WAITLIST BUTTON
+
  [] update announcements UI 
  [] update message UI
 
@@ -12,6 +14,7 @@ BUGS/FIXES:
 
 - [] cannot delete tournament if theres a score report.
 - [] MAJOR move player from waitlist into a matchup not the first round DOES NOT WORK
+- [] MAJOR FIX MOVE TO ROSTER
 
 NEEDS TESTING TO VERIFY: 
 - [] when deleting a palyer from a match, propagate player is run 
@@ -24,6 +27,7 @@ DONE:
 - [DONE] dont start tournament with 0 players
 
 FIXED: 
+- [FIXED] fixed duplicate tournaments appearning in /account
 - [FIXED] cannot TIE in single elinmination score reports
 - [FIXED] ties are not marked by score reports
 - [FIXED] Start screen tournament buttons take you to "unathorized" spamming in the login page when logged out

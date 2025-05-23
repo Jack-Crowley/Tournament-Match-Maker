@@ -161,6 +161,7 @@ export const MatchupModal = ({ isOpen, setOpen, matchup, user, tournament_type, 
 
     const updateMatch = async () => {
         console.log("updating match");
+        console.log("editedMatchup: ", editedMatchup);  
         setIsLoading(true);
         let winnerUUID = editedMatchup.winner;
         const isTie = editedMatchup.is_tie;
@@ -199,25 +200,34 @@ export const MatchupModal = ({ isOpen, setOpen, matchup, user, tournament_type, 
             // Losers becoming inactive. First lets check if the players exist still:
             if (editedMatchup.players.find(player => player.uuid === player1?.member_uuid)) {
                 // update the database
-                await supabase
+                const { error: player1Error } = await supabase
                     .from("tournament_players")
                     .update({
                         type: player1?.type,
                     })
                     .eq("member_uuid", player1?.member_uuid);
 
+                if (player1Error) {
+                    console.error("Error updating player 1 status:", player1Error);
+                    throw new Error("Failed to update player 1 status");
+                }
             }
+
             if (editedMatchup.players.find(player => player.uuid === player2?.member_uuid)) {
-                await supabase
+                const { error: player2Error } = await supabase
                     .from("tournament_players")
                     .update({
                         type: player2?.type,
                     })
                     .eq("member_uuid", player2?.member_uuid);
+
+                if (player2Error) {
+                    console.error("Error updating player 2 status:", player2Error);
+                    throw new Error("Failed to update player 2 status");
+                }
             }
 
-
-            const { error } = await supabase
+            const { error: matchUpdateError } = await supabase
                 .from("tournament_matches")
                 .update({
                     winner: isTie ? null : winnerUUID,
@@ -226,51 +236,71 @@ export const MatchupModal = ({ isOpen, setOpen, matchup, user, tournament_type, 
                 })
                 .eq("id", String(matchup.id));
 
-            for (const playerIndex of removedPlayersList) {
+            if (matchUpdateError) {
+                console.error("Error updating matchup:", matchUpdateError);
+                throw new Error("Failed to update matchup");
+            }
 
+            for (const playerIndex of removedPlayersList) {
                 // Losers becoming inactive. First lets check if the players exist still:
                 if (playerIndex[0] === player1?.member_uuid) {
-                    // update the database
-                    await supabase
+                    const { error: removedPlayer1Error } = await supabase
                         .from("tournament_players")
                         .update({
                             type: player1?.type,
                         })
                         .eq("member_uuid", player1?.member_uuid);
+
+                    if (removedPlayer1Error) {
+                        console.error("Error updating removed player 1 status:", removedPlayer1Error);
+                        throw new Error("Failed to update removed player 1 status");
+                    }
                 }
+
                 if (playerIndex[0] === player2?.member_uuid) {
-                    await supabase
+                    const { error: removedPlayer2Error } = await supabase
                         .from("tournament_players")
                         .update({
                             type: player2?.type,
                         })
                         .eq("member_uuid", player2?.member_uuid);
+
+                    if (removedPlayer2Error) {
+                        console.error("Error updating removed player 2 status:", removedPlayer2Error);
+                        throw new Error("Failed to update removed player 2 status");
+                    }
                 }
 
-
                 if (matchup.round > 1) {
-                    const { error } = await supabase
+                    const { error: previousMatchError } = await supabase
                         .from("tournament_matches")
                         .update({ winner: null })
                         .eq("match_number", matchup.match_number * 2 - (playerIndex[1] % 2) + 1)
                         .eq("round", matchup.round - 1)
                         .eq("tournament_id", matchup.tournament_id);
 
-                    if (error) {
-                        console.error("Error updating previous match:", error);
+                    if (previousMatchError) {
+                        console.error("Error updating previous match:", previousMatchError);
+                        throw new Error("Failed to update previous match");
                     }
                 }
             }
 
-            if (error) {
-                console.error("Error updating matchup:", error);
-            } else {
-                if (winnerUUID && !isTie) await propagatePlayer(winnerUUID);
-                setEditedMatchup((prev) => ({ ...prev, winnerUUID: winnerUUID, is_tie: isTie }));
-                setOpen(false);
+            if (winnerUUID && !isTie) {
+                try {
+                    await propagatePlayer(winnerUUID);
+                } catch (propagateError) {
+                    console.error("Error propagating player:", propagateError);
+                    throw new Error("Failed to propagate player to next round");
+                }
             }
+
+            setEditedMatchup((prev) => ({ ...prev, winnerUUID: winnerUUID, is_tie: isTie }));
+            setOpen(false);
         } catch (err) {
             console.error("Unexpected error:", err);
+            // You might want to show an error message to the user here
+            alert("An error occurred while updating the match. Please try again.");
         } finally {
             setIsLoading(false);
         }

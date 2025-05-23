@@ -61,19 +61,18 @@ export default function AccountPage() {
       const owningIds = organizingTournamentsOwner?.map(record => record.id) || [];
       setOrganizingTournaments(organizingTournamentsOwner || []);
 
-      const { data: playingData } = await supabase
-        .from('tournament_players')
-        .select('tournament_id')
-        .eq('member_uuid', id);
-
       const { data: organizingTournaments } = await supabase
         .from('tournament_organizers')
         .select('*')
         .eq('member_uuid', id);
 
+      console.log("organizingTournaments: ", organizingTournaments);
+
       const nonOwnerTournamentIds = organizingTournaments
         ?.map(record => record.tournament_id)
         .filter(tournament_id => !owningIds.includes(tournament_id));
+      
+      console.log("nonOwnerTournamentIds: ", nonOwnerTournamentIds);
 
       if (nonOwnerTournamentIds?.length) {
         const { data: nonOwnerTournaments } = await supabase
@@ -82,12 +81,18 @@ export default function AccountPage() {
           .in('id', nonOwnerTournamentIds);
 
         if (nonOwnerTournaments) {
-          setOrganizingTournaments(prev => [
-            ...prev,
-            ...nonOwnerTournaments
-          ]);
+          setOrganizingTournaments(prev => {
+            const existingIds = new Set(prev.map(t => t.id));
+            const newTournaments = nonOwnerTournaments.filter(t => !existingIds.has(t.id));
+            return [...prev, ...newTournaments];
+          });
         }
       }
+
+      const { data: playingData } = await supabase
+        .from('tournament_players')
+        .select('tournament_id')
+        .eq('member_uuid', id);
 
       const tournamentIds = [...new Set((playingData as any).map((record: any) => record.tournament_id))];
       const tournamentDetails = [];
