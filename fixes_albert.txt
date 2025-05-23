@@ -10,11 +10,14 @@ Nice things:
 
 BUGS/FIXES: 
 
-- [ ] when deleting a palyer from a match, propagate player is run 
-- [] score report select match should not query matches that have winners
-- [TESTING] score report does not propagate player
 - [] cannot delete tournament if theres a score report.
 - [] MAJOR move player from waitlist into a matchup not the first round DOES NOT WORK
+
+NEEDS TESTING TO VERIFY: 
+- [] when deleting a palyer from a match, propagate player is run 
+- [] score report select match should not query matches that have winners
+- [TESTING SOLUTION] score report does not propagate player
+
 
 DONE:
 - [DONE] tournament settings modal. go to organizers, then click cancel. it pretends as if you havent exited the modal

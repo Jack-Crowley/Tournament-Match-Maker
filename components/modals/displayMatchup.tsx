@@ -68,7 +68,7 @@ export const MatchupModal = ({ isOpen, setOpen, matchup, user, tournament_type, 
                         .single();
 
                     if (error) {
-                        console.error("we have supposedly caught this error?");
+                        // console.error("we have supposedly caught this error?");
                         // If error is PGRST116 (no rows returned), that's expected - don't lock
                         if (error.code === 'PGRST116') {
                             setLocked(false);
@@ -160,6 +160,7 @@ export const MatchupModal = ({ isOpen, setOpen, matchup, user, tournament_type, 
     };
 
     const updateMatch = async () => {
+        console.log("updating match");
         setIsLoading(true);
         let winnerUUID = editedMatchup.winner;
         const isTie = editedMatchup.is_tie;
