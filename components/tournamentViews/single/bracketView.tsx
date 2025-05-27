@@ -338,7 +338,7 @@ const TournamentBracket = ({
       <motion.div 
         initial={{ y: 50, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        className="fixed top-6 left-1/2 transform -translate-x-1/2 bg-[#1e153e] text-white px-6 py-3 rounded-lg shadow-xl 
+        className="fixed top-20 left-1/2 transform -translate-x-1/2 bg-[#1e153e] text-white px-6 py-3 rounded-lg shadow-xl 
                   border border-[#947ed7]/40 z-20 flex items-center gap-4"
       >
         <div>
