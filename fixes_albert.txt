@@ -13,8 +13,6 @@ Nice things:
 BUGS/FIXES: 
 
 - [] cannot delete tournament if theres a score report.
-- [] MAJOR move player from waitlist into a matchup not the first round DOES NOT WORK
-- [] MAJOR FIX MOVE TO ROSTER
 
 NEEDS TESTING TO VERIFY: 
 - [] when deleting a palyer from a match, propagate player is run 
@@ -27,6 +25,8 @@ DONE:
 - [DONE] dont start tournament with 0 players
 
 FIXED: 
+- [FIXED] MAJOR move player from waitlist into a matchup not the first round DOES NOT WORK
+- [FIXED] MAJOR FIX MOVE TO ROSTER
 - [FIXED] fixed duplicate tournaments appearning in /account
 - [FIXED] cannot TIE in single elinmination score reports
 - [FIXED] ties are not marked by score reports

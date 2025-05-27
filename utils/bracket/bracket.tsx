@@ -188,19 +188,34 @@ export const addPlayerToMatchupFromWaitlist = async (
         account_type: (player as any).type,
     };
 
-    const { error: upsertError } = await supabase
-        .from("tournament_matches")
-        .upsert({
-            tournament_id: tournament.id,
-            round: roundNumber,
-            match_number: matchNumber,
-            players: players,
-            id: existingMatch?.id || undefined,
-        });
+    if (existingMatch) {
+        // Update existing match
+        const { error: updateError } = await supabase
+            .from("tournament_matches")
+            .update({
+                players: players,
+            })
+            .eq("id", existingMatch.id);
 
-    if (upsertError) {
-        console.error("Error upserting match:", upsertError);
-        return { success: false, errorCode: 500 };
+        if (updateError) {
+            console.error("Error updating match:", updateError);
+            return { success: false, errorCode: 500 };
+        }
+    } else {
+        // Insert new match
+        const { error: insertError } = await supabase
+            .from("tournament_matches")
+            .insert({
+                tournament_id: tournament.id,
+                round: roundNumber,
+                match_number: matchNumber,
+                players: players,
+            });
+
+        if (insertError) {
+            console.error("Error inserting match:", insertError);
+            return { success: false, errorCode: 500 };
+        }
     }
 
     const { error: updateError } = await supabase

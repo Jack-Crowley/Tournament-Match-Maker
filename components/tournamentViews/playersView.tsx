@@ -21,7 +21,7 @@ export const PlayersView = ({ tournamentID, bracket, user, setActiveTab }: { set
     const [players, setPlayers] = useState<Player[]>([]);
     const [tournament, setTournament] = useState<Tournament | null>(null);
     const [isLoading, setIsLoading] = useState(true);
-    const [isAdding, setIsAdding] = useState<boolean>(false);
+    const [addingPlayer, setAddingPlayer] = useState<Player | null>(null);
     const [isMessaging, setIsMessaging] = useState<boolean>(false);
     const [messageText, setMessageText] = useState<string>("");
     const [currentFilter, setCurrentFilter] = useState<string>("all");
@@ -42,21 +42,114 @@ export const PlayersView = ({ tournamentID, bracket, user, setActiveTab }: { set
     const { triggerMessage } = useMessage();
     const supabase = createClient();
 
+    // Debug effect for activePlayer changes
+    useEffect(() => {
+        console.log('Active Player Changed:', {
+            id: activePlayer?.id,
+            name: activePlayer?.player_name,
+            type: (activePlayer as any)?.type,
+            isAdding: !!addingPlayer,
+            isMessaging
+        });
+    }, [activePlayer, addingPlayer, isMessaging]);
+
+    // Debug effect for context menu changes
+    useEffect(() => {
+        console.log('Context Menu State:', {
+            isOpen: !!contextMenu,
+            activeContextPlayer: activeContextPlayer?.player_name,
+            position: contextMenu ? { x: contextMenu.x, y: contextMenu.y } : null
+        });
+    }, [contextMenu, activeContextPlayer]);
+
+    // Debug effect for addingPlayer changes
+    useEffect(() => {
+        console.log('[DEBUG] addingPlayer state changed:', {
+            addingPlayer: addingPlayer ? {
+                id: addingPlayer.id,
+                name: addingPlayer.player_name
+            } : null
+        });
+    }, [addingPlayer]);
+
     const addPlayerSuccess = () => {
-        if (!activePlayer) return;
-        setPlayers(players.map(player =>
-            player.id === activePlayer.id
-                ? { ...player, type: "active" }
-                : player
-        ));
-        setActivePlayer(null);
-        setIsAdding(false);
-        triggerMessage("Player successfully moved to roster", "green");
+        if (!addingPlayer) {
+            console.log('[DEBUG] addPlayerSuccess: No player to add');
+            return;
+        }
+        
+        console.log('[DEBUG] addPlayerSuccess: Starting player movement', {
+            playerId: addingPlayer.id,
+            playerName: addingPlayer.player_name,
+            currentType: (addingPlayer as any).type
+        });
+        
+        // Update the player's type in the database
+        const updatePlayerType = async () => {
+            console.log('[DEBUG] updatePlayerType: Attempting database update', {
+                playerId: addingPlayer.id,
+                newType: 'active'
+            });
+
+            const { error } = await supabase
+                .from("tournament_players")
+                .update({ type: "active" })
+                .eq("id", addingPlayer.id);
+
+            if (error) {
+                console.error('[DEBUG] updatePlayerType: Database update failed', {
+                    error,
+                    playerId: addingPlayer.id
+                });
+                triggerMessage("Failed to move player to roster", "red");
+                return;
+            }
+
+            console.log('[DEBUG] updatePlayerType: Database update successful', {
+                playerId: addingPlayer.id
+            });
+
+            // Update the local state
+            setPlayers(players.map(player =>
+                player.id === addingPlayer.id
+                    ? { ...player, type: "active" }
+                    : player
+            ));
+            
+            // Close the active player details and reset adding player state
+            setActivePlayer(null);
+            setAddingPlayer(null);
+            triggerMessage("Player successfully moved to roster", "green");
+        };
+
+        updatePlayerType();
     }
 
-    const handleClickOutside = () => {
-        setContextMenu(null)
-        setActivePlayer(null)
+    const handleClickOutside = (e: MouseEvent) => {
+        // Check if click is inside the detailed popup
+        const popup = document.querySelector('.player-details-popup');
+        if (popup && popup.contains(e.target as Node)) {
+            return;
+        }
+
+        console.log('[DEBUG] handleClickOutside: Click outside detected', {
+            addingPlayer: addingPlayer ? {
+                id: addingPlayer.id,
+                name: addingPlayer.player_name
+            } : null,
+            hasActivePlayer: !!activePlayer,
+            hasContextMenu: !!contextMenu
+        });
+
+        // Don't clear states if we're in the process of adding a player
+        if (addingPlayer) {
+            console.log('[DEBUG] handleClickOutside: Ignoring click outside while adding player');
+            return;
+        }
+
+        console.log('[DEBUG] handleClickOutside: Clearing states');
+        setContextMenu(null);
+        setActivePlayer(null);
     };
 
     useEffect(() => {
@@ -157,7 +250,18 @@ export const PlayersView = ({ tournamentID, bracket, user, setActiveTab }: { set
     }, [tournamentID, supabase]);
 
     const handlePlayerClick = (player: Player) => {
-        if (user.permission_level === "player" || user.permission_level === "viewer") return;
+        if (user.permission_level === "player" || user.permission_level === "viewer") {
+            console.log('[DEBUG] handlePlayerClick: Insufficient permissions', {
+                permissionLevel: user.permission_level
+            });
+            return;
+        }
+
+        console.log('[DEBUG] handlePlayerClick:', {
+            clickedPlayer: player.player_name,
+            currentActive: activePlayer?.player_name,
+            willSetActive: activePlayer?.id !== player.id
+        });
 
         if (activePlayer?.id === player.id) {
             setActivePlayer(null);
@@ -188,8 +292,6 @@ export const PlayersView = ({ tournamentID, bracket, user, setActiveTab }: { set
                 return rankA - rankB;
             });
         }
-
-        console.log(filtered)
 
         return filtered;
     };
@@ -237,16 +339,26 @@ export const PlayersView = ({ tournamentID, bracket, user, setActiveTab }: { set
             }`;
     };
 
+    
+
     return (
         <div>
-            {isAdding && tournament ? (
+            {addingPlayer && tournament ? (
                 <TournamentBracket
                     user={user}
                     bracketViewType={BracketViewType.AddPlayer}
                     tournamentID={Number(tournament.id)}
                     bracket={bracket}
-                    newPlayer={activePlayer as unknown as BracketPlayer}
-                    onClose={addPlayerSuccess}
+                    newPlayer={addingPlayer as unknown as BracketPlayer}
+                    onClose={() => {
+                        console.log('[DEBUG] TournamentBracket onClose called', {
+                            addingPlayer: addingPlayer ? {
+                                id: addingPlayer.id,
+                                name: addingPlayer.player_name
+                            } : null
+                        });
+                        setAddingPlayer(null);
+                    }}
                 />
             ) : (
                 <motion.div
@@ -469,7 +581,7 @@ export const PlayersView = ({ tournamentID, bracket, user, setActiveTab }: { set
                                                                 <motion.tr>
                                                                     <td colSpan={tournament?.skill_fields?.length ? tournament.skill_fields.length + 3 : 3} className="p-0">
                                                                         <motion.div
-                                                                            className="bg-[#2a1a66] rounded-lg shadow-xl overflow-hidden"
+                                                                            className="bg-[#2a1a66] player-details-popup rounded-lg shadow-xl overflow-hidden"
                                                                             initial={{ opacity: 0, height: 0 }}
                                                                             animate={{ opacity: 1, height: 'auto' }}
                                                                             exit={{ opacity: 0, height: 0 }}
@@ -543,7 +655,15 @@ export const PlayersView = ({ tournamentID, bracket, user, setActiveTab }: { set
                                                                                     {(['waitlist', 'inactive'].includes((activePlayer as any).type) && (user.permission_level === "admin" || user.permission_level === "owner")) && (
                                                                                         <motion.button
                                                                                             className="px-4 py-2 bg-gradient-to-r from-[#7458da] to-[#634bc1] hover:from-[#634bc1] hover:to-[#523aad] text-white rounded-md transition-all flex items-center shadow-md"
-                                                                                            onClick={() => setIsAdding(true)}
+                                                                                            onClick={() => {
+                                                                                                console.log('[DEBUG] Move to Roster button clicked', {
+                                                                                                    activePlayer: activePlayer ? {
+                                                                                                        id: activePlayer.id,
+                                                                                                        name: activePlayer.player_name
+                                                                                                    } : null
+                                                                                                });
+                                                                                                setAddingPlayer(activePlayer);
+                                                                                            }}
                                                                                             whileHover={{ scale: 1.05 }}
                                                                                             whileTap={{ scale: 0.98 }}
                                                                                         >
@@ -701,7 +821,7 @@ export const PlayersView = ({ tournamentID, bracket, user, setActiveTab }: { set
                             onClick={(e) => {
                                 e.stopPropagation();
                                 setActivePlayer(activeContextPlayer)
-                                setIsAdding(true)
+                                setAddingPlayer(activeContextPlayer)
                             }}
                             className="w-full text-left px-4 py-2 text-white hover:bg-[#3a2b7d] flex items-center"
                         >
