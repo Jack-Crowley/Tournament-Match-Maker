@@ -74,7 +74,7 @@ export const TournamentInfoView = ({
                 {/* Header */}
                 <div className="mb-8">
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                        <h1 className="text-4xl font-bold text-center md:text-left bg-clip-text text-transparent bg-gradient-to-r from-purple-200 to-indigo-300">
+                        <h1 className="text-4xl font-bold text-center md:text-left bg-clip-text text-transparent bg-gradient-to-r from-purple-200 to-indigo-300 leading-tight pb-1">
                             {tournament.name}
                         </h1>
 

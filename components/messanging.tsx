@@ -452,7 +452,7 @@ export const MessagingSystem = ({ tournamentID, user }: { tournamentID: number, 
         <div className="relative min-h-screen py-10 px-4 md:px-8">
             <div className="max-w-6xl mx-auto bg-[#201644] rounded-2xl shadow-2xl overflow-hidden">
                 <div className="relative px-6 pt-8 pb-4 md:px-10 flex justify-between items-center">
-                    <h1 className="bg-gradient-to-r from-purple-200 to-indigo-300 bg-clip-text text-transparent font-bold text-3xl md:text-4xl">
+                    <h1 className="bg-gradient-to-r from-purple-200 to-indigo-300 bg-clip-text text-transparent font-bold text-3xl md:text-4xl leading-tight pb-1">
                         Messages
                     </h1>
                 </div>

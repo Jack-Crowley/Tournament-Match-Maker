@@ -273,7 +273,7 @@ export const AnnouncementSystem = ({ tournamentID, user }: { tournamentID: numbe
             <div className="max-w-6xl mx-auto bg-[#201644] rounded-2xl shadow-2xl overflow-hidden">
                 <div className="relative px-6 pt-8 md:px-10">
                     <div className="flex items-center justify-center mb-6">
-                        <h1 className="bg-gradient-to-r from-purple-200 to-indigo-300 bg-clip-text text-transparent font-bold text-3xl md:text-4xl text-center">
+                        <h1 className="bg-gradient-to-r from-purple-200 to-indigo-300 bg-clip-text text-transparent font-bold text-3xl md:text-4xl text-center pb-1">
                             <FontAwesomeIcon icon={faBullhorn} className="mr-3 text-purple-200" />
                             Announcements
                         </h1>
