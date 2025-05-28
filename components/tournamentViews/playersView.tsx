@@ -376,9 +376,11 @@ export const PlayersView = ({ tournamentID, bracket, user, setActiveTab }: { set
                         <div className="flex flex-col items-center justify-center">
                             <div className="relative px-6 pt-8 md:px-10">
                                 <div className="flex items-center justify-center mb-4">
-                                    <h1 className="text-[#7458da] font-bold text-3xl md:text-4xl text-center group">
-                                        <FontAwesomeIcon icon={faUserClock} className="mr-3 transform group-hover:rotate-12 transition-transform duration-300" />
-                                        Tournament Players
+                                    <h1 className="text-center group">
+                                        <FontAwesomeIcon icon={faUserClock} className="mr-3 transform group-hover:rotate-12 transition-transform duration-300 text-[#7458da] text-3xl md:text-4xl" />
+                                        <span className="bg-gradient-to-r from-purple-200 to-indigo-300 bg-clip-text text-transparent font-bold text-3xl md:text-4xl">
+                                            Tournament Players
+                                        </span>
                                     </h1>
                                 </div>
                             </div>

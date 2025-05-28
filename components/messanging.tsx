@@ -471,7 +471,7 @@ export const MessagingSystem = ({ tournamentID, user }: { tournamentID: number, 
                                     {isAdmin && (
                                         <button
                                             onClick={() => setShowNewChatModal(true)}
-                                            className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white rounded-full p-2 transition-all duration-200 shadow-lg hover:shadow-indigo-700/30 hover:translate-y-[-2px]"
+                                            className="bg-[#7458da] hover:bg-[#634bc1] text-white rounded-full p-2 transition-all duration-200 shadow-lg hover:shadow-indigo-700/30 hover:translate-y-[-2px]"
                                             title="New Message"
                                         >
                                             <FontAwesomeIcon icon={faPlus} />
@@ -500,7 +500,7 @@ export const MessagingSystem = ({ tournamentID, user }: { tournamentID: number, 
                                                     }`}
                                             >
                                                 <div className="flex items-center">
-                                                    <div className="w-10 h-10 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 flex items-center justify-center text-white">
+                                                    <div className="w-10 h-10 rounded-full bg-[#7458da] flex items-center justify-center text-white">
                                                         <FontAwesomeIcon icon={faUserCircle} size="lg" />
                                                     </div>
 
@@ -524,7 +524,7 @@ export const MessagingSystem = ({ tournamentID, user }: { tournamentID: number, 
                                                             </p>
 
                                                             {chat.unreadCount > 0 && (
-                                                                <span className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                                                                <span className="bg-[#7458da] text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
                                                                     {chat.unreadCount}
                                                                 </span>
                                                             )}
@@ -561,7 +561,7 @@ export const MessagingSystem = ({ tournamentID, user }: { tournamentID: number, 
                                         </button>
                                     )}
                                     <div className="flex-1 flex items-center">
-                                        <div className="w-8 h-8 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 flex items-center justify-center text-white">
+                                        <div className="w-8 h-8 rounded-full bg-[#7458da] flex items-center justify-center text-white">
                                             <FontAwesomeIcon icon={faUserCircle} />
                                         </div>
                                         <div className="ml-3">
@@ -638,7 +638,7 @@ export const MessagingSystem = ({ tournamentID, user }: { tournamentID: number, 
                                             onClick={handleSendMessage}
                                             disabled={!newMessage.trim()}
                                             className={`ml-2 text-white p-2 rounded-full transition-all duration-200 ${newMessage.trim()
-                                                    ? 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 shadow-lg hover:shadow-indigo-700/30 hover:translate-y-[-2px]'
+                                                    ? 'bg-[#7458da] hover:bg-[#634bc1] shadow-lg hover:shadow-indigo-700/30 hover:translate-y-[-2px]'
                                                     : 'bg-[#3b2682] cursor-not-allowed'
                                                 }`}
                                         >
@@ -659,7 +659,7 @@ export const MessagingSystem = ({ tournamentID, user }: { tournamentID: number, 
                                 {isAdmin && (
                                     <button
                                         onClick={() => setShowNewChatModal(true)}
-                                        className="mt-6 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white px-4 py-2 rounded-lg transition-all duration-200 shadow-lg hover:shadow-indigo-700/30 hover:translate-y-[-2px]"
+                                        className="mt-6 bg-[#7458da] hover:bg-[#634bc1] text-white px-4 py-2 rounded-lg transition-all duration-200 shadow-lg hover:shadow-indigo-700/30 hover:translate-y-[-2px]"
                                     >
                                         <FontAwesomeIcon icon={faPlus} className="mr-2" />
                                         New Conversation
@@ -721,7 +721,7 @@ export const MessagingSystem = ({ tournamentID, user }: { tournamentID: number, 
                                             onClick={() => handleCreateChat(user)}
                                             className="p-3 hover:bg-[#2a1a66] rounded-lg cursor-pointer transition-colors flex items-center"
                                         >
-                                            <div className="w-10 h-10 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 flex items-center justify-center text-white">
+                                            <div className="w-10 h-10 rounded-full bg-[#7458da] flex items-center justify-center text-white">
                                                 <FontAwesomeIcon icon={faUserCircle} />
                                             </div>
                                             <div className="ml-3">

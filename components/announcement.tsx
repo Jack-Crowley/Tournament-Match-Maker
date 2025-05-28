@@ -302,7 +302,7 @@ export const AnnouncementSystem = ({ tournamentID, user }: { tournamentID: numbe
                                 <button
                                     onClick={addAnnouncement}
                                     disabled={isUpdating}
-                                    className={`w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white px-4 py-3 rounded-lg transition-all duration-200 shadow-lg hover:shadow-indigo-700/30 hover:translate-y-[-2px] flex items-center justify-center ${isUpdating ? 'opacity-70 cursor-not-allowed' : ''}`}
+                                    className={`w-full bg-[#7458da] hover:bg-[#634bc1] text-white px-4 py-3 rounded-lg transition-all duration-200 shadow-lg hover:shadow-indigo-700/30 hover:translate-y-[-2px] flex items-center justify-center ${isUpdating ? 'opacity-70 cursor-not-allowed' : ''}`}
                                 >
                                     {isUpdating ? (
                                         <span className="inline-block h-4 w-4 mr-2 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
@@ -322,7 +322,7 @@ export const AnnouncementSystem = ({ tournamentID, user }: { tournamentID: numbe
                                 <button
                                     onClick={() => handleSortChange('newest')}
                                     className={`px-4 py-2 rounded-lg flex items-center transition-all duration-200 ${sortOption === 'newest'
-                                            ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg shadow-indigo-700/30'
+                                            ? 'bg-[#7458da] text-white shadow-lg shadow-indigo-700/30'
                                             : 'bg-[#2a1a66] text-white hover:bg-[#3b2682]'
                                         }`}
                                 >
@@ -332,7 +332,7 @@ export const AnnouncementSystem = ({ tournamentID, user }: { tournamentID: numbe
                                 <button
                                     onClick={() => handleSortChange('oldest')}
                                     className={`px-4 py-2 rounded-lg flex items-center transition-all duration-200 ${sortOption === 'oldest'
-                                            ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg shadow-indigo-700/30'
+                                            ? 'bg-[#7458da] text-white shadow-lg shadow-indigo-700/30'
                                             : 'bg-[#2a1a66] text-white hover:bg-[#3b2682]'
                                         }`}
                                 >
@@ -342,7 +342,7 @@ export const AnnouncementSystem = ({ tournamentID, user }: { tournamentID: numbe
                                 <button
                                     onClick={() => handleSortChange('unread')}
                                     className={`px-4 py-2 rounded-lg flex items-center transition-all duration-200 ${sortOption === 'unread'
-                                            ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg shadow-indigo-700/30'
+                                            ? 'bg-[#7458da] text-white shadow-lg shadow-indigo-700/30'
                                             : 'bg-[#2a1a66] text-white hover:bg-[#3b2682]'
                                         }`}
                                 >
