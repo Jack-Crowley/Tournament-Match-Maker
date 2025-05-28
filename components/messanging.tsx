@@ -449,10 +449,10 @@ export const MessagingSystem = ({ tournamentID, user }: { tournamentID: number, 
     }
 
     return (
-        <div className="relative min-h-screen py-10 px-4 md:px-8" style={{ backgroundColor: "#160A3A" }}>
-            <div className="max-w-6xl mx-auto bg-[#1F1346] rounded-2xl shadow-2xl overflow-hidden">
+        <div className="relative min-h-screen py-10 px-4 md:px-8">
+            <div className="max-w-6xl mx-auto bg-[#201644] rounded-2xl shadow-2xl overflow-hidden">
                 <div className="relative px-6 pt-8 pb-4 md:px-10 flex justify-between items-center">
-                    <h1 className="text-[#7458da] font-bold text-3xl md:text-4xl">
+                    <h1 className="bg-gradient-to-r from-purple-200 to-indigo-300 bg-clip-text text-transparent font-bold text-3xl md:text-4xl">
                         Messages
                     </h1>
                 </div>
@@ -464,14 +464,14 @@ export const MessagingSystem = ({ tournamentID, user }: { tournamentID: number, 
                                 initial={isMobileView ? { x: -300, opacity: 0 } : undefined}
                                 animate={{ x: 0, opacity: 1 }}
                                 exit={isMobileView ? { x: -300, opacity: 0 } : undefined}
-                                className="w-full md:w-1/3 border-r border-[#2a1a66] bg-[#1F1346]"
+                                className="w-full md:w-1/3 border-r border-[#2a1a66] bg-[#201644]"
                             >
                                 <div className="p-4 border-b border-[#2a1a66] flex justify-between items-center">
-                                    <h2 className="text-[#7458da] font-semibold">Conversations</h2>
+                                    <h2 className="text-white font-semibold">Conversations</h2>
                                     {isAdmin && (
                                         <button
                                             onClick={() => setShowNewChatModal(true)}
-                                            className="bg-[#7458da] hover:bg-[#604BAC] text-white rounded-full p-2"
+                                            className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white rounded-full p-2 transition-all duration-200 shadow-lg hover:shadow-indigo-700/30 hover:translate-y-[-2px]"
                                             title="New Message"
                                         >
                                             <FontAwesomeIcon icon={faPlus} />
@@ -500,7 +500,7 @@ export const MessagingSystem = ({ tournamentID, user }: { tournamentID: number, 
                                                     }`}
                                             >
                                                 <div className="flex items-center">
-                                                    <div className="w-10 h-10 rounded-full bg-[#7458da] flex items-center justify-center text-white">
+                                                    <div className="w-10 h-10 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 flex items-center justify-center text-white">
                                                         <FontAwesomeIcon icon={faUserCircle} size="lg" />
                                                     </div>
 
@@ -524,7 +524,7 @@ export const MessagingSystem = ({ tournamentID, user }: { tournamentID: number, 
                                                             </p>
 
                                                             {chat.unreadCount > 0 && (
-                                                                <span className="bg-[#7458da] text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                                                                <span className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
                                                                     {chat.unreadCount}
                                                                 </span>
                                                             )}
@@ -561,7 +561,7 @@ export const MessagingSystem = ({ tournamentID, user }: { tournamentID: number, 
                                         </button>
                                     )}
                                     <div className="flex-1 flex items-center">
-                                        <div className="w-8 h-8 rounded-full bg-[#7458da] flex items-center justify-center text-white">
+                                        <div className="w-8 h-8 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 flex items-center justify-center text-white">
                                             <FontAwesomeIcon icon={faUserCircle} />
                                         </div>
                                         <div className="ml-3">
@@ -575,7 +575,7 @@ export const MessagingSystem = ({ tournamentID, user }: { tournamentID: number, 
                                 <div className="flex-1 overflow-y-auto p-4">
                                     {chats[selectedChat].messages.length === 0 ? (
                                         <div className="flex flex-col items-center justify-center h-full text-center">
-                                            <div className="w-16 h-16 rounded-full bg-[#1F1346] flex items-center justify-center text-[#7458da] mb-4">
+                                            <div className="w-16 h-16 rounded-full bg-[#201644] flex items-center justify-center text-white mb-4">
                                                 <FontAwesomeIcon icon={faPaperPlane} size="lg" />
                                             </div>
                                             <h3 className="text-white font-medium mb-2">Start a new conversation</h3>
@@ -594,7 +594,7 @@ export const MessagingSystem = ({ tournamentID, user }: { tournamentID: number, 
                                                     <div key={message.id}>
                                                         {showDate && (
                                                             <div className="text-center my-4">
-                                                                <span className="bg-[#1F1346] text-gray-400 text-xs px-3 py-1 rounded-full">
+                                                                <span className="bg-[#201644] text-gray-400 text-xs px-3 py-1 rounded-full">
                                                                     {formatDate(message.timestamp)}
                                                                 </span>
                                                             </div>
@@ -624,7 +624,7 @@ export const MessagingSystem = ({ tournamentID, user }: { tournamentID: number, 
                                 </div>
 
                                 <div className="p-4 border-t border-[#3b2682]">
-                                    <div className="flex items-center bg-[#1F1346] rounded-lg p-2">
+                                    <div className="flex items-center bg-[#201644] rounded-lg p-2">
                                         <input
                                             type="text"
                                             placeholder="Type a message..."
@@ -637,8 +637,8 @@ export const MessagingSystem = ({ tournamentID, user }: { tournamentID: number, 
                                         <button
                                             onClick={handleSendMessage}
                                             disabled={!newMessage.trim()}
-                                            className={`ml-2 text-white p-2 rounded-full ${newMessage.trim()
-                                                    ? 'bg-[#7458da] hover:bg-[#604BAC]'
+                                            className={`ml-2 text-white p-2 rounded-full transition-all duration-200 ${newMessage.trim()
+                                                    ? 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 shadow-lg hover:shadow-indigo-700/30 hover:translate-y-[-2px]'
                                                     : 'bg-[#3b2682] cursor-not-allowed'
                                                 }`}
                                         >
@@ -649,7 +649,7 @@ export const MessagingSystem = ({ tournamentID, user }: { tournamentID: number, 
                             </>
                         ) : (
                             <div className="flex flex-col items-center justify-center h-full text-center p-4">
-                                <div className="w-16 h-16 rounded-full bg-[#1F1346] flex items-center justify-center text-[#7458da] mb-4">
+                                <div className="w-16 h-16 rounded-full bg-[#201644] flex items-center justify-center text-white mb-4">
                                     <FontAwesomeIcon icon={faPaperPlane} size="lg" />
                                 </div>
                                 <h3 className="text-white font-medium mb-2">Select a conversation</h3>
@@ -659,7 +659,7 @@ export const MessagingSystem = ({ tournamentID, user }: { tournamentID: number, 
                                 {isAdmin && (
                                     <button
                                         onClick={() => setShowNewChatModal(true)}
-                                        className="mt-6 bg-[#7458da] hover:bg-[#604BAC] text-white px-4 py-2 rounded-lg"
+                                        className="mt-6 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white px-4 py-2 rounded-lg transition-all duration-200 shadow-lg hover:shadow-indigo-700/30 hover:translate-y-[-2px]"
                                     >
                                         <FontAwesomeIcon icon={faPlus} className="mr-2" />
                                         New Conversation
@@ -684,10 +684,10 @@ export const MessagingSystem = ({ tournamentID, user }: { tournamentID: number, 
                             initial={{ scale: 0.9, opacity: 0 }}
                             animate={{ scale: 1, opacity: 1 }}
                             exit={{ scale: 0.9, opacity: 0 }}
-                            className="bg-[#1F1346] rounded-xl w-full max-w-md p-6"
+                            className="bg-[#201644] rounded-xl w-full max-w-md p-6"
                         >
                             <div className="flex justify-between items-center mb-4">
-                                <h2 className="text-xl text-[#7458da] font-bold">New Conversation</h2>
+                                <h2 className="text-xl bg-gradient-to-r from-purple-200 to-indigo-300 bg-clip-text text-transparent font-bold">New Conversation</h2>
                                 <button
                                     onClick={() => {
                                         setShowNewChatModal(false);
@@ -721,7 +721,7 @@ export const MessagingSystem = ({ tournamentID, user }: { tournamentID: number, 
                                             onClick={() => handleCreateChat(user)}
                                             className="p-3 hover:bg-[#2a1a66] rounded-lg cursor-pointer transition-colors flex items-center"
                                         >
-                                            <div className="w-10 h-10 rounded-full bg-[#7458da] flex items-center justify-center text-white">
+                                            <div className="w-10 h-10 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 flex items-center justify-center text-white">
                                                 <FontAwesomeIcon icon={faUserCircle} />
                                             </div>
                                             <div className="ml-3">
