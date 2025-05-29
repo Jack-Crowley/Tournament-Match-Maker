@@ -170,6 +170,11 @@ function TournamentsPage() {
             .eq("tournament_id", id);
 
         await supabase
+            .from("score_reports")
+            .delete()
+            .eq("tournament_id", id);
+
+        await supabase
             .from("private_messages")
             .delete()
             .eq("tournament_id", id);
@@ -192,14 +197,13 @@ function TournamentsPage() {
         if (announcementsError) {
             console.error("Error fetching announcements:", announcementsError);
         } else {
-            const announcementIds = announcements.map(a => a.id);
-
+            const announcementIds = announcements.map(a => Number(a.id));
             if (announcementIds.length > 0) {
                 const { error: seenError } = await supabase
                     .from("announcements_seen")
                     .delete()
                     .in("announcement_id", announcementIds);
-
+                
                 if (seenError) {
                     console.error("Error deleting announcements_seen:", seenError);
                 }
@@ -210,7 +214,7 @@ function TournamentsPage() {
                     .in("id", announcementIds);
 
                 if (announcementsDeleteError) {
-                    console.error("Error deleting announcements:", announcementsDeleteError);
+                    console.error("Error deleting announcements:", announcementsDeleteError.message);
                 }
             }
         }
