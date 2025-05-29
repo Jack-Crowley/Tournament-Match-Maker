@@ -284,7 +284,7 @@ export const AnnouncementSystem = ({ tournamentID, user }: { tournamentID: numbe
                     {["owner", "admin"].includes(user.permission_level.toLowerCase()) && (
                         <div className="bg-[#2a1a66] rounded-xl p-6 shadow-md mb-8">
                             <h2 className="text-white font-bold text-2xl mb-4">Create New Announcement</h2>
-                            <div className="space-y-4">
+                            <div className="space-y-4"> 
                                 <input
                                     type="text"
                                     autoCorrect='false'
