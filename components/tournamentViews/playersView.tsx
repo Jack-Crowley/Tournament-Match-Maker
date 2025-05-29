@@ -6,7 +6,7 @@ import { Player } from "@/types/playerTypes";
 import { Bracket, BracketPlayer } from "@/types/bracketTypes";
 import { Tournament } from "@/types/tournamentTypes";
 import { createClient } from "@/utils/supabase/client";
-import { faUserClock, faExclamationCircle, faInfoCircle, faEnvelope, faUserPlus, faTimes, faChevronDown, faChevronUp, faEllipsisV } from "@fortawesome/free-solid-svg-icons";
+import { faUserClock, faExclamationCircle, faInfoCircle, faEnvelope, faUserPlus, faTimes, faEllipsisV } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -72,87 +72,34 @@ export const PlayersView = ({ tournamentID, bracket, user, setActiveTab }: { set
         });
     }, [addingPlayer]);
 
-    const addPlayerSuccess = () => {
-        if (!addingPlayer) {
-            console.log('[DEBUG] addPlayerSuccess: No player to add');
-            return;
-        }
-        
-        console.log('[DEBUG] addPlayerSuccess: Starting player movement', {
-            playerId: addingPlayer.id,
-            playerName: addingPlayer.player_name,
-            currentType: (addingPlayer as any).type
-        });
-        
-        // Update the player's type in the database
-        const updatePlayerType = async () => {
-            console.log('[DEBUG] updatePlayerType: Attempting database update', {
-                playerId: addingPlayer.id,
-                newType: 'active'
-            });
-
-            const { error } = await supabase
-                .from("tournament_players")
-                .update({ type: "active" })
-                .eq("id", addingPlayer.id);
-
-            if (error) {
-                console.error('[DEBUG] updatePlayerType: Database update failed', {
-                    error,
-                    playerId: addingPlayer.id
-                });
-                triggerMessage("Failed to move player to roster", "red");
+    useEffect(() => {
+        const handleClickOutside = (e: MouseEvent) => {
+            // Check if click is inside the detailed popup
+            const popup = document.querySelector('.player-details-popup');
+            if (popup && popup.contains(e.target as Node)) {
                 return;
             }
 
-            console.log('[DEBUG] updatePlayerType: Database update successful', {
-                playerId: addingPlayer.id
+            console.log('[DEBUG] handleClickOutside: Click outside detected', {
+                addingPlayer: addingPlayer ? {
+                    id: addingPlayer.id,
+                    name: addingPlayer.player_name
+                } : null,
+                hasActivePlayer: !!activePlayer,
+                hasContextMenu: !!contextMenu
             });
 
-            // Update the local state
-            setPlayers(players.map(player =>
-                player.id === addingPlayer.id
-                    ? { ...player, type: "active" }
-                    : player
-            ));
-            
-            // Close the active player details and reset adding player state
+            // Don't clear states if we're in the process of adding a player
+            if (addingPlayer) {
+                console.log('[DEBUG] handleClickOutside: Ignoring click outside while adding player');
+                return;
+            }
+
+            console.log('[DEBUG] handleClickOutside: Clearing states');
+            setContextMenu(null);
             setActivePlayer(null);
-            setAddingPlayer(null);
-            triggerMessage("Player successfully moved to roster", "green");
         };
 
-        updatePlayerType();
-    }
-
-    const handleClickOutside = (e: MouseEvent) => {
-        // Check if click is inside the detailed popup
-        const popup = document.querySelector('.player-details-popup');
-        if (popup && popup.contains(e.target as Node)) {
-            return;
-        }
-
-        console.log('[DEBUG] handleClickOutside: Click outside detected', {
-            addingPlayer: addingPlayer ? {
-                id: addingPlayer.id,
-                name: addingPlayer.player_name
-            } : null,
-            hasActivePlayer: !!activePlayer,
-            hasContextMenu: !!contextMenu
-        });
-
-        // Don't clear states if we're in the process of adding a player
-        if (addingPlayer) {
-            console.log('[DEBUG] handleClickOutside: Ignoring click outside while adding player');
-            return;
-        }
-
-        console.log('[DEBUG] handleClickOutside: Clearing states');
-        setContextMenu(null);
-        setActivePlayer(null);
-    };
-
-    useEffect(() => {
         document.addEventListener('mousedown', handleClickOutside);
 
         return () => {
@@ -249,28 +196,6 @@ export const PlayersView = ({ tournamentID, bracket, user, setActiveTab }: { set
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [tournamentID, supabase]);
 
-    const handlePlayerClick = (player: Player) => {
-        if (user.permission_level === "player" || user.permission_level === "viewer") {
-            console.log('[DEBUG] handlePlayerClick: Insufficient permissions', {
-                permissionLevel: user.permission_level
-            });
-            return;
-        }
-
-        console.log('[DEBUG] handlePlayerClick:', {
-            clickedPlayer: player.player_name,
-            currentActive: activePlayer?.player_name,
-            willSetActive: activePlayer?.id !== player.id
-        });
-
-        if (activePlayer?.id === player.id) {
-            setActivePlayer(null);
-        } else {
-            setActivePlayer(player);
-            setIsMessaging(false);
-        }
-    };
-
     const getFilteredPlayers = () => {
         let filtered = players;
 
@@ -339,7 +264,7 @@ export const PlayersView = ({ tournamentID, bracket, user, setActiveTab }: { set
             }`;
     };
 
-    
+
 
     return (
         <div>
