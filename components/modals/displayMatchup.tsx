@@ -103,7 +103,7 @@ export const MatchupModal = ({ isOpen, setOpen, matchup, user, tournament_type, 
                         setLocked(data);
                     }
                 }
-            } catch (error) {
+            } catch {
                 setLocked(false);
             }
         }
