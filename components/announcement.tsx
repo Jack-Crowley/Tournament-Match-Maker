@@ -287,6 +287,7 @@ export const AnnouncementSystem = ({ tournamentID, user }: { tournamentID: numbe
                             <div className="space-y-4">
                                 <input
                                     type="text"
+                                    autoCorrect='false'
                                     placeholder="Title"
                                     value={newAnnouncement.title}
                                     onChange={(e) => setNewAnnouncement({ ...newAnnouncement, title: e.target.value })}

@@ -78,7 +78,7 @@ export const TournamentInfoView = ({
             window.URL.revokeObjectURL(url);
             document.body.removeChild(a);
             triggerMessage("Matches downloaded successfully!", "green");
-        } catch (error) {
+        } catch {
             triggerMessage("An error occurred while downloading matches", "red");
         }
     };

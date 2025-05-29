@@ -632,6 +632,7 @@ export const MessagingSystem = ({ tournamentID, user }: { tournamentID: number, 
                                             onChange={(e) => setNewMessage(e.target.value)}
                                             onKeyDown={handleKeyDown}
                                             ref={inputRef}
+                                            autoCorrect='false'
                                             className="flex-1 bg-transparent text-white focus:outline-none px-2"
                                         />
                                         <button
@@ -707,6 +708,7 @@ export const MessagingSystem = ({ tournamentID, user }: { tournamentID: number, 
                                 <input
                                     type="text"
                                     placeholder="Search by name or email"
+                                    autoCorrect='false'
                                     value={searchQuery}
                                     onChange={(e) => handleSearchUsers(e.target.value)}
                                     className="w-full pl-10 p-3 rounded-lg bg-[#2a1a66] text-white focus:outline-none focus:ring-2 focus:ring-[#7458da]"
