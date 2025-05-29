@@ -134,7 +134,7 @@ export const TournamentInfoView = ({
                 <TournamentInfo tournament={tournament} />
 
                 {/* Registration Section */}
-                {(user.permission_level === "owner" || user.permission_level === "admin") && (
+                {(user.permission_level.toLowerCase() === "owner" || user.permission_level.toLowerCase() === "admin") && (
                     <TournamentJoining
                         tournament={tournament}
                         joinLink={joinLink}
@@ -144,7 +144,7 @@ export const TournamentInfoView = ({
                 )}
 
                 {/* Download Section */}
-                {(user.permission_level === "owner" || user.permission_level === "admin") && (
+                {(user.permission_level.toLowerCase() === "owner" || user.permission_level.toLowerCase() === "admin") && (
                     <div className="mt-8 flex justify-center">
                         <button
                             onClick={handleDownloadMatches}
