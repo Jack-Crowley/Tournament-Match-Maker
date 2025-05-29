@@ -5,6 +5,7 @@ import {
     faGear,
     faInfoCircle,
     faTrophy,
+    faDownload,
 } from "@fortawesome/free-solid-svg-icons";
 import { Tournament } from "@/types/tournamentTypes";
 import { useMessage } from "@/context/messageContext";
@@ -49,6 +50,36 @@ export const TournamentInfoView = ({
             }
         } catch {
             triggerMessage("An error occurred while updating settings", "red");
+        }
+    };
+
+    const handleDownloadMatches = async () => {
+        if (!tournament) return;
+
+        try {
+            const { data: matches, error } = await supabase
+                .from('tournament_matches')
+                .select('*')
+                .eq('tournament_id', tournament.id);
+
+            if (error) {
+                triggerMessage("Error downloading matches: " + error.message, "red");
+                return;
+            }
+
+            // Create a blob with the matches data
+            const blob = new Blob([JSON.stringify(matches, null, 2)], { type: 'application/json' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${tournament.name}_matches.json`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+            triggerMessage("Matches downloaded successfully!", "green");
+        } catch (error) {
+            triggerMessage("An error occurred while downloading matches", "red");
         }
     };
 
@@ -110,6 +141,19 @@ export const TournamentInfoView = ({
                         onAllowJoinToggle={handleAllowJoinToggle}
                         onCopyUrl={handleCopyUrl}
                     />
+                )}
+
+                {/* Download Section */}
+                {(user.permission_level === "owner" || user.permission_level === "admin") && (
+                    <div className="mt-8 flex justify-center">
+                        <button
+                            onClick={handleDownloadMatches}
+                            className="bg-white/10 hover:bg-white/15 transition-colors p-3 rounded-lg flex items-center justify-center gap-2 px-6 text-purple-200 border border-white/10 shadow-md"
+                        >
+                            <span>Download Matches</span>
+                            <FontAwesomeIcon icon={faDownload} />
+                        </button>
+                    </div>
                 )}
             </div>
 
