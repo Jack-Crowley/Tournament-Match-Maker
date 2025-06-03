@@ -5,6 +5,8 @@ import { createClient } from "../supabase/client"
 import { useMessage } from "@/context/messageContext"
 import { Tournament } from "@/types/tournamentTypes";
 import { MovingPlayer } from "@/components/tournamentViews/single/bracketView";
+import { SUBRESOURCE_INTEGRITY_MANIFEST } from "next/dist/shared/lib/constants";
+import { DESTRUCTION } from "dns/promises";
 
 export const moveOrSwapPlayerToMatchup = async (
     tournament: Tournament,
@@ -31,18 +33,20 @@ export const moveOrSwapPlayerToMatchup = async (
     }
     // What if the destination match is the same as the source match
     if (newPlayer.fromMatch === destinationMatchNumber && newPlayer.fromRound === destinationRoundNumber) {
+        console.log("same match")
         // so all we need to do is swap the order of players. 
         const { error: updateFromMatchError } = await supabase
             .from("tournament_matches")
-            .upsert({
-                id: destinationMatch.id,
-                tournament_id: tournament.id,
-                round: destinationRoundNumber,
-                match_number: destinationMatchNumber,
+            .update({
                 players: destinationMatch.players.reverse(),
-            });
+            })
+            .eq("id", destinationMatch.id)
+            .eq("tournament_id", tournament.id)
+            .eq("round", destinationRoundNumber)
+            .eq("match_number", destinationMatchNumber);
         if (updateFromMatchError) {
             console.error("Error updating match when its the same match??:", updateFromMatchError);
+            // So this should actually be fine! 
             return { success: false, errorCode: 500 };
         }
         else {
@@ -184,19 +188,34 @@ export const addPlayerToMatchupFromWaitlist = async (
         account_type: (player as any).type,
     };
 
-    const { error: upsertError } = await supabase
-        .from("tournament_matches")
-        .upsert({
-            tournament_id: tournament.id,
-            round: roundNumber,
-            match_number: matchNumber,
-            players: players,
-            id: existingMatch?.id || undefined,
-        });
+    if (existingMatch) {
+        // Update existing match
+        const { error: updateError } = await supabase
+            .from("tournament_matches")
+            .update({
+                players: players,
+            })
+            .eq("id", existingMatch.id);
 
-    if (upsertError) {
-        console.error("Error upserting match:", upsertError);
-        return { success: false, errorCode: 500 };
+        if (updateError) {
+            console.error("Error updating match:", updateError);
+            return { success: false, errorCode: 500 };
+        }
+    } else {
+        // Insert new match
+        const { error: insertError } = await supabase
+            .from("tournament_matches")
+            .insert({
+                tournament_id: tournament.id,
+                round: roundNumber,
+                match_number: matchNumber,
+                players: players,
+            });
+
+        if (insertError) {
+            console.error("Error inserting match:", insertError);
+            return { success: false, errorCode: 500 };
+        }
     }
 
     const { error: updateError } = await supabase

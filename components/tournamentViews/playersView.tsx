@@ -1,11 +1,12 @@
 "use client"
 
+import React from "react";
 import { useMessage } from "@/context/messageContext";
 import { Player } from "@/types/playerTypes";
 import { Bracket, BracketPlayer } from "@/types/bracketTypes";
 import { Tournament } from "@/types/tournamentTypes";
 import { createClient } from "@/utils/supabase/client";
-import { faUserClock, faExclamationCircle, faInfoCircle, faEnvelope, faUserPlus, faTimes, faChevronDown, faChevronUp, faEllipsisV } from "@fortawesome/free-solid-svg-icons";
+import { faUserClock, faExclamationCircle, faInfoCircle, faEnvelope, faUserPlus, faTimes, faEllipsisV } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -20,11 +21,10 @@ export const PlayersView = ({ tournamentID, bracket, user, setActiveTab }: { set
     const [players, setPlayers] = useState<Player[]>([]);
     const [tournament, setTournament] = useState<Tournament | null>(null);
     const [isLoading, setIsLoading] = useState(true);
-    const [isAdding, setIsAdding] = useState<boolean>(false);
+    const [addingPlayer, setAddingPlayer] = useState<Player | null>(null);
     const [isMessaging, setIsMessaging] = useState<boolean>(false);
     const [messageText, setMessageText] = useState<string>("");
     const [currentFilter, setCurrentFilter] = useState<string>("all");
-    const [expandedDetails, setExpandedDetails] = useState<boolean>(false);
 
     // Touranment Rankings
     const [rankingMap] = useState<Map<string, number>>(new Map());
@@ -42,24 +42,64 @@ export const PlayersView = ({ tournamentID, bracket, user, setActiveTab }: { set
     const { triggerMessage } = useMessage();
     const supabase = createClient();
 
-    const addPlayerSuccess = () => {
-        if (!activePlayer) return;
-        setPlayers(players.map(player =>
-            player.id === activePlayer.id
-                ? { ...player, type: "active" }
-                : player
-        ));
-        setActivePlayer(null);
-        setIsAdding(false);
-        triggerMessage("Player successfully moved to roster", "green");
-    }
+    // Debug effect for activePlayer changes
+    useEffect(() => {
+        console.log('Active Player Changed:', {
+            id: activePlayer?.id,
+            name: activePlayer?.player_name,
+            type: (activePlayer as any)?.type,
+            isAdding: !!addingPlayer,
+            isMessaging
+        });
+    }, [activePlayer, addingPlayer, isMessaging]);
 
-    const handleClickOutside = () => {
-        setContextMenu(null)
-        setActivePlayer(null)
-    };
+    // Debug effect for context menu changes
+    useEffect(() => {
+        console.log('Context Menu State:', {
+            isOpen: !!contextMenu,
+            activeContextPlayer: activeContextPlayer?.player_name,
+            position: contextMenu ? { x: contextMenu.x, y: contextMenu.y } : null
+        });
+    }, [contextMenu, activeContextPlayer]);
+
+    // Debug effect for addingPlayer changes
+    useEffect(() => {
+        console.log('[DEBUG] addingPlayer state changed:', {
+            addingPlayer: addingPlayer ? {
+                id: addingPlayer.id,
+                name: addingPlayer.player_name
+            } : null
+        });
+    }, [addingPlayer]);
 
     useEffect(() => {
+        const handleClickOutside = (e: MouseEvent) => {
+            // Check if click is inside the detailed popup
+            const popup = document.querySelector('.player-details-popup');
+            if (popup && popup.contains(e.target as Node)) {
+                return;
+            }
+
+            console.log('[DEBUG] handleClickOutside: Click outside detected', {
+                addingPlayer: addingPlayer ? {
+                    id: addingPlayer.id,
+                    name: addingPlayer.player_name
+                } : null,
+                hasActivePlayer: !!activePlayer,
+                hasContextMenu: !!contextMenu
+            });
+
+            // Don't clear states if we're in the process of adding a player
+            if (addingPlayer) {
+                console.log('[DEBUG] handleClickOutside: Ignoring click outside while adding player');
+                return;
+            }
+
+            console.log('[DEBUG] handleClickOutside: Clearing states');
+            setContextMenu(null);
+            setActivePlayer(null);
+        };
+
         document.addEventListener('mousedown', handleClickOutside);
 
         return () => {
@@ -156,18 +196,6 @@ export const PlayersView = ({ tournamentID, bracket, user, setActiveTab }: { set
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [tournamentID, supabase]);
 
-    const handlePlayerClick = (player: Player) => {
-        if (user.permission_level === "player" || user.permission_level === "viewer") return;
-
-        if (activePlayer?.id === player.id) {
-            setActivePlayer(null);
-        } else {
-            setActivePlayer(player);
-            setExpandedDetails(false);
-            setIsMessaging(false);
-        }
-    };
-
     const getFilteredPlayers = () => {
         let filtered = players;
 
@@ -189,8 +217,6 @@ export const PlayersView = ({ tournamentID, bracket, user, setActiveTab }: { set
                 return rankA - rankB;
             });
         }
-
-        console.log(filtered)
 
         return filtered;
     };
@@ -238,16 +264,26 @@ export const PlayersView = ({ tournamentID, bracket, user, setActiveTab }: { set
             }`;
     };
 
+
+
     return (
         <div>
-            {isAdding && tournament ? (
+            {addingPlayer && tournament ? (
                 <TournamentBracket
                     user={user}
                     bracketViewType={BracketViewType.AddPlayer}
                     tournamentID={Number(tournament.id)}
                     bracket={bracket}
-                    newPlayer={activePlayer as unknown as BracketPlayer}
-                    onClose={addPlayerSuccess}
+                    newPlayer={addingPlayer as unknown as BracketPlayer}
+                    onClose={() => {
+                        console.log('[DEBUG] TournamentBracket onClose called', {
+                            addingPlayer: addingPlayer ? {
+                                id: addingPlayer.id,
+                                name: addingPlayer.player_name
+                            } : null
+                        });
+                        setAddingPlayer(null);
+                    }}
                 />
             ) : (
                 <motion.div
@@ -265,9 +301,11 @@ export const PlayersView = ({ tournamentID, bracket, user, setActiveTab }: { set
                         <div className="flex flex-col items-center justify-center">
                             <div className="relative px-6 pt-8 md:px-10">
                                 <div className="flex items-center justify-center mb-4">
-                                    <h1 className="text-[#7458da] font-bold text-3xl md:text-4xl text-center group">
-                                        <FontAwesomeIcon icon={faUserClock} className="mr-3 transform group-hover:rotate-12 transition-transform duration-300" />
-                                        Tournament Players
+                                    <h1 className="text-center group">
+                                        <FontAwesomeIcon icon={faUserClock} className="mr-3 transform group-hover:rotate-12 transition-transform duration-300 text-[#7458da] text-3xl md:text-4xl" />
+                                        <span className="bg-gradient-to-r from-purple-200 to-indigo-300 bg-clip-text text-transparent font-bold text-3xl md:text-4xl">
+                                            Tournament Players
+                                        </span>
                                     </h1>
                                 </div>
                             </div>
@@ -373,251 +411,262 @@ export const PlayersView = ({ tournamentID, bracket, user, setActiveTab }: { set
                                                 </thead>
                                                 <tbody>
                                                     {getFilteredPlayers().map((player, index) => (
-                                                        <motion.tr
-                                                            key={player.id}
-                                                            onClick={() => handlePlayerClick(player)}
-                                                            className={`
-                                                                ${activePlayer && activePlayer.id === player.id ? "bg-[#342373]" : "bg-[#22154F]"} 
-                                                                transition-all duration-200 ${user.permission_level !== "player" && user.permission_level !== "viewer" ? "cursor-pointer" : ""}
-                                                                hover:bg-[#2a1b5f] hover:shadow-md
-                                                            `}
-                                                            transition={{ duration: 0.2 }}
-                                                        >
-                                                            <td className={`p-4 text-lg border-b border-[#3a2b7d] ${player.is_anonymous ? "text-white font-medium" : "text-[#d8d8d8] font-medium"}`}>
-                                                                <div className="flex items-center">
-                                                                    {rankingMap.get(player.member_uuid) == undefined ? "-  " : `${rankingMap.get(player.member_uuid)! + 1}.`}
-                                                                    <div className="w-8 h-8 ml-4 bg-[#3a2b7d] rounded-full flex items-center justify-center mr-3 flex-shrink-0">
-                                                                        <span className="text-sm font-bold text-white">
-                                                                            {player.player_name.charAt(0).toUpperCase()}
-                                                                        </span>
+                                                        <React.Fragment key={player.id}>
+                                                            <motion.tr
+                                                                onClick={(e) => {
+                                                                    e.preventDefault();
+                                                                    e.stopPropagation();
+                                                                    if (activePlayer?.id === player.id) {
+                                                                        setActivePlayer(null);
+                                                                    } else {
+                                                                        setActivePlayer(player);
+                                                                        setIsMessaging(false);
+                                                                    }
+                                                                }}
+                                                                className={`
+                                                                    ${activePlayer && activePlayer.id === player.id ? "bg-[#342373]" : "bg-[#22154F]"} 
+                                                                    transition-all duration-200 ${user.permission_level !== "player" && user.permission_level !== "viewer" ? "cursor-pointer" : ""}
+                                                                    hover:bg-[#2a1b5f] hover:shadow-md
+                                                                `}
+                                                                transition={{ duration: 0.2 }}
+                                                            >
+                                                                <td className={`p-4 text-lg border-b border-[#3a2b7d] ${player.is_anonymous ? "text-white font-medium" : "text-[#d8d8d8] font-medium"}`}>
+                                                                    <div className="flex items-center">
+                                                                        {rankingMap.get(player.member_uuid) == undefined ? "-  " : `${rankingMap.get(player.member_uuid)! + 1}.`}
+                                                                        <div className="w-8 h-8 ml-4 bg-[#3a2b7d] rounded-full flex items-center justify-center mr-3 flex-shrink-0">
+                                                                            <span className="text-sm font-bold text-white">
+                                                                                {player.player_name.charAt(0).toUpperCase()}
+                                                                            </span>
+                                                                        </div>
+                                                                        {player.player_name}
                                                                     </div>
-                                                                    {player.player_name}
-                                                                </div>
-                                                            </td>
-                                                            {(tournament?.tournament_type == "robin" || tournament?.tournament_type == "swiss") && roundRobinRanked && (
-                                                                <td className="border-b border-[#3a2b7d]">
-                                                                    {(index >= players.length) ? (
-                                                                        ((player as any).type != "waitlist") ? (<div className="text-gray-300 text-center">0/0/0</div>) : (<div className="text-gray-300 text-center">-/-/-</div>)
-                                                                    ) : (
-                                                                        <h1 className="text-center text-white">
-                                                                            {roundRobinRanked[index] != undefined && (
-                                                                                <div><span className="text-green-500">{roundRobinRanked[index].wins.length}</span> / <span className="text-red-300">{roundRobinRanked[index].losses.length}</span> / <span className="text-blue-300">{roundRobinRanked[index].ties.length}</span></div>
-                                                                            )}
-                                                                        </h1>
-                                                                    )}
                                                                 </td>
-                                                            )}
-                                                            {tournament?.skill_fields?.map((skill, index) => (
-                                                                <td
-                                                                    key={index}
-                                                                    className="p-4 text-lg border-b border-[#3a2b7d] text-[#b8b8b8]"
-                                                                >
-                                                                    {player.skills && player.skills.findIndex(s => s.name === skill.name) !== -1 ? (
-                                                                        <div className="flex items-center">
-                                                                            <div className="w-2 h-2 rounded-full bg-[#7458da] mr-2"></div>
-                                                                            {player.skills[index].type === "numeric" ? player.skills[index].value : player.skills[index].category_type}
-                                                                        </div>
-                                                                    ) : "—"}
-                                                                </td>
-                                                            ))}
-                                                            <td className="p-4 text-center border-b border-[#3a2b7d]">
-                                                                <div className="flex justify-center">
-                                                                    {getStatusChip((player as any).type || "unknown")}
-                                                                </div>
-                                                            </td>
-                                                            <td className="p-4 border-b border-[#3a2b7d] relative">
-                                                                {(user.permission_level === "admin" || user.permission_level === "owner") &&
-                                                                    (['waitlist', 'inactive'].includes((player as any).type)) && (
-                                                                        <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
-                                                                            <div
-                                                                                className="relative"
-                                                                                ref={(el) => {
-                                                                                    if (contextMenuRef.current) {
-                                                                                        contextMenuRef.current[player.member_uuid] = el;
-                                                                                    }
-                                                                                }}
-                                                                            >
-                                                                                <button
-                                                                                    onClick={(e) => {
-                                                                                        e.stopPropagation();
-                                                                                        setActiveContextPlayer(player)
-
-                                                                                        setContextMenu({
-                                                                                            x: e.pageX,
-                                                                                            y: e.pageY - 100,
-                                                                                            player,
-                                                                                        });
-                                                                                    }}
-                                                                                    className="text-[#a899e0] hover:text-white p-2 rounded-full hover:bg-[#342575] transition-colors"
-                                                                                >
-                                                                                    <FontAwesomeIcon icon={faEllipsisV} />
-                                                                                </button>
+                                                                {(tournament?.tournament_type == "robin" || tournament?.tournament_type == "swiss") && roundRobinRanked && (
+                                                                    <td className="border-b border-[#3a2b7d]">
+                                                                        {(index >= players.length) ? (
+                                                                            ((player as any).type != "waitlist") ? (<div className="text-gray-300 text-center">0/0/0</div>) : (<div className="text-gray-300 text-center">-/-/-</div>)
+                                                                        ) : (
+                                                                            <h1 className="text-center text-white">
+                                                                                {roundRobinRanked[index] != undefined && (
+                                                                                    <div><span className="text-green-500">{roundRobinRanked[index].wins.length}</span> / <span className="text-red-300">{roundRobinRanked[index].losses.length}</span> / <span className="text-blue-300">{roundRobinRanked[index].ties.length}</span></div>
+                                                                                )}
+                                                                            </h1>
+                                                                        )}
+                                                                    </td>
+                                                                )}
+                                                                {tournament?.skill_fields?.map((skill, index) => (
+                                                                    <td
+                                                                        key={index}
+                                                                        className="p-4 text-lg border-b border-[#3a2b7d] text-[#b8b8b8]"
+                                                                    >
+                                                                        {player.skills && player.skills.findIndex(s => s.name === skill.name) !== -1 ? (
+                                                                            <div className="flex items-center">
+                                                                                <div className="w-2 h-2 rounded-full bg-[#7458da] mr-2"></div>
+                                                                                {player.skills[index].type === "numeric" ? player.skills[index].value : player.skills[index].category_type}
                                                                             </div>
-                                                                        </div>
-                                                                    )}
-                                                            </td>
-                                                        </motion.tr>
+                                                                        ) : "—"}
+                                                                    </td>
+                                                                ))}
+                                                                <td className="p-4 text-center border-b border-[#3a2b7d]">
+                                                                    <div className="flex justify-center">
+                                                                        {getStatusChip((player as any).type || "unknown")}
+                                                                    </div>
+                                                                </td>
+                                                                <td className="p-4 border-b border-[#3a2b7d] relative">
+                                                                    {(user.permission_level === "admin" || user.permission_level === "owner") &&
+                                                                        (['waitlist', 'inactive'].includes((player as any).type)) && (
+                                                                            <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
+                                                                                <div
+                                                                                    className="relative"
+                                                                                    ref={(el) => {
+                                                                                        if (contextMenuRef.current) {
+                                                                                            contextMenuRef.current[player.member_uuid] = el;
+                                                                                        }
+                                                                                    }}
+                                                                                >
+                                                                                    <button
+                                                                                        onClick={(e) => {
+                                                                                            e.stopPropagation();
+                                                                                            setActiveContextPlayer(player)
+
+                                                                                            setContextMenu({
+                                                                                                x: e.pageX,
+                                                                                                y: e.pageY - 100,
+                                                                                                player,
+                                                                                            });
+                                                                                        }}
+                                                                                        className="text-[#a899e0] hover:text-white p-2 rounded-full hover:bg-[#342575] transition-colors"
+                                                                                    >
+                                                                                        <FontAwesomeIcon icon={faEllipsisV} />
+                                                                                    </button>
+                                                                                </div>
+                                                                            </div>
+                                                                        )}
+                                                                </td>
+                                                            </motion.tr>
+                                                            {activePlayer && activePlayer.id === player.id && (
+                                                                <motion.tr>
+                                                                    <td colSpan={tournament?.skill_fields?.length ? tournament.skill_fields.length + 3 : 3} className="p-0">
+                                                                        <motion.div
+                                                                            className="bg-[#2a1a66] player-details-popup rounded-lg shadow-xl overflow-hidden"
+                                                                            initial={{ opacity: 0, height: 0 }}
+                                                                            animate={{ opacity: 1, height: 'auto' }}
+                                                                            exit={{ opacity: 0, height: 0 }}
+                                                                            transition={{ duration: 0.3 }}
+                                                                        >
+                                                                            <div className="p-6 border-b border-[#3a2b7d]">
+                                                                                <div className="flex items-start justify-between">
+                                                                                    <div className="flex items-center">
+                                                                                        <div className="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-[#3a2b7d] to-[#7458da] rounded-full flex items-center justify-center shadow-lg">
+                                                                                            <span className="text-xl font-bold text-white">
+                                                                                                {activePlayer.player_name.charAt(0).toUpperCase()}
+                                                                                            </span>
+                                                                                        </div>
+                                                                                        <div className="ml-4">
+                                                                                            <h3 className="text-xl font-bold text-white flex items-center">
+                                                                                                {activePlayer.player_name}
+                                                                                                {(activePlayer as any).account_type !== "generated" && !activePlayer.is_anonymous && !((activePlayer as any).placeholder_player) && (
+                                                                                                    <span className="ml-2 text-xs bg-[#7458da] text-white px-2 py-1 rounded">Verified</span>
+                                                                                                )}
+                                                                                            </h3>
+                                                                                            <div className="mt-1 flex items-center flex-wrap gap-2">
+                                                                                                {getStatusChip((activePlayer as any).type || "unknown")}
+                                                                                                {(activePlayer as any).type === "waitlist" && (
+                                                                                                    <span className="text-[#b8b8b8] text-sm">
+                                                                                                        Position: #{players.filter(p => (p as any).type === "waitlist").findIndex(p => p.id === activePlayer.id) + 1}
+                                                                                                    </span>
+                                                                                                )}
+
+                                                                                                {(activePlayer as any).account_type !== "generated" && (
+                                                                                                    <span className="text-[#b8b8b8] text-sm bg-[#342575] px-2 py-1 rounded">
+                                                                                                        {!activePlayer.is_anonymous && !((activePlayer as any).placeholder_player) ? "Logged In User" : !(activePlayer as any).placeholder_player ? "Anonymous User" : "Generated User"}
+                                                                                                    </span>
+                                                                                                )}
+                                                                                            </div>
+                                                                                        </div>
+                                                                                    </div>
+
+                                                                                    <button
+                                                                                        className="text-[#7458da] hover:text-white p-2 rounded-full hover:bg-[#342575] transition-colors"
+                                                                                        onClick={() => setActivePlayer(null)}
+                                                                                    >
+                                                                                        <FontAwesomeIcon icon={faTimes} />
+                                                                                    </button>
+                                                                                </div>
+
+                                                                                <div className="mt-6 mb-2">
+                                                                                    <h4 className="text-[#a899e0] font-medium">Player Skills</h4>
+                                                                                </div>
+
+                                                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                                                    {tournament?.skill_fields?.map((skill, index) => (
+                                                                                        activePlayer.skills && activePlayer.skills[index] && (
+                                                                                            <motion.div
+                                                                                                key={index}
+                                                                                                className="bg-[#342575] p-3 rounded-md shadow-md"
+                                                                                                whileHover={{ scale: 1.02 }}
+                                                                                                transition={{ duration: 0.2 }}
+                                                                                            >
+                                                                                                <p className="text-[#a899e0] text-sm">{skill.name}</p>
+                                                                                                <p className="text-white font-medium">
+                                                                                                    {activePlayer.skills[index].type === "numeric" ?
+                                                                                                        activePlayer.skills[index].value
+                                                                                                        : activePlayer.skills[index].category_type}
+                                                                                                </p>
+                                                                                            </motion.div>
+                                                                                        )
+                                                                                    ))}
+                                                                                </div>
+
+                                                                                <div className="mt-6 flex flex-wrap gap-3">
+                                                                                    {(['waitlist', 'inactive'].includes((activePlayer as any).type) && (user.permission_level === "admin" || user.permission_level === "owner")) && (
+                                                                                        <motion.button
+                                                                                            className="px-4 py-2 bg-gradient-to-r from-[#7458da] to-[#634bc1] hover:from-[#634bc1] hover:to-[#523aad] text-white rounded-md transition-all flex items-center shadow-md"
+                                                                                            onClick={() => {
+                                                                                                console.log('[DEBUG] Move to Roster button clicked', {
+                                                                                                    activePlayer: activePlayer ? {
+                                                                                                        id: activePlayer.id,
+                                                                                                        name: activePlayer.player_name
+                                                                                                    } : null
+                                                                                                });
+                                                                                                setAddingPlayer(activePlayer);
+                                                                                            }}
+                                                                                            whileHover={{ scale: 1.05 }}
+                                                                                            whileTap={{ scale: 0.98 }}
+                                                                                        >
+                                                                                            <FontAwesomeIcon icon={faUserPlus} className="mr-2" />
+                                                                                            Move to Roster
+                                                                                        </motion.button>
+                                                                                    )}
+
+                                                                                    {!((activePlayer as any).placeholder_player) && (["owner", "admin"].includes(user.permission_level)) && (
+                                                                                        <motion.button
+                                                                                            className="px-4 py-2 bg-[#342575] hover:bg-[#3a2b7d] text-white rounded-md transition-colors flex items-center shadow-md"
+                                                                                            onClick={() => setIsMessaging(!isMessaging)}
+                                                                                            whileHover={{ scale: 1.05 }}
+                                                                                            whileTap={{ scale: 0.98 }}
+                                                                                        >
+                                                                                            <FontAwesomeIcon icon={faEnvelope} className="mr-2" />
+                                                                                            Message Player
+                                                                                        </motion.button>
+                                                                                    )}
+                                                                                </div>
+
+                                                                                <AnimatePresence>
+                                                                                    {isMessaging && (
+                                                                                        <motion.div
+                                                                                            className="mt-6 bg-[#221655] p-5 rounded-lg border border-[#3a2b7d] shadow-inner"
+                                                                                            initial={{ opacity: 0, y: -10 }}
+                                                                                            animate={{ opacity: 1, y: 0 }}
+                                                                                            exit={{ opacity: 0, y: -10 }}
+                                                                                        >
+                                                                                            <h4 className="text-white font-medium mb-3 flex items-center">
+                                                                                                <FontAwesomeIcon icon={faEnvelope} className="text-[#7458da] mr-2" />
+                                                                                                Message to {activePlayer.player_name}
+                                                                                            </h4>
+                                                                                            <textarea
+                                                                                                className="w-full p-3 rounded bg-[#1b113d] text-white border border-[#3a2b7d] focus:border-[#7458da] focus:outline-none transition-colors shadow-inner"
+                                                                                                rows={4}
+                                                                                                placeholder="Type your message here..."
+                                                                                                value={messageText}
+                                                                                                onChange={(e) => setMessageText(e.target.value)}
+                                                                                            ></textarea>
+                                                                                            <div className="flex justify-end mt-3 gap-2">
+                                                                                                <motion.button
+                                                                                                    className="px-4 py-2 bg-[#221655] hover:bg-[#1b113d] text-white rounded-md transition-colors"
+                                                                                                    onClick={() => setIsMessaging(false)}
+                                                                                                    whileHover={{ scale: 1.05 }}
+                                                                                                    whileTap={{ scale: 0.95 }}
+                                                                                                >
+                                                                                                    Cancel
+                                                                                                </motion.button>
+                                                                                                <motion.button
+                                                                                                    className={`px-4 py-2 rounded-md transition-colors flex items-center shadow-md ${messageText.trim()
+                                                                                                        ? "bg-gradient-to-r from-[#7458da] to-[#634bc1] hover:from-[#634bc1] hover:to-[#523aad] text-white"
+                                                                                                        : "bg-[#342575] text-[#a899e0] cursor-not-allowed"
+                                                                                                        }`}
+                                                                                                    onClick={sendMessageSuccess}
+                                                                                                    disabled={!messageText.trim()}
+                                                                                                    whileHover={messageText.trim() ? { scale: 1.05 } : {}}
+                                                                                                    whileTap={messageText.trim() ? { scale: 0.95 } : {}}
+                                                                                                >
+                                                                                                    Send Message
+                                                                                                </motion.button>
+                                                                                            </div>
+                                                                                        </motion.div>
+                                                                                    )}
+                                                                                </AnimatePresence>
+                                                                            </div>
+                                                                        </motion.div>
+                                                                    </td>
+                                                                </motion.tr>
+                                                            )}
+                                                        </React.Fragment>
                                                     ))}
                                                 </tbody>
                                             </table>
                                         </div>
                                     </div>
-
-                                    {/* Player Detail View */}
-                                    <AnimatePresence>
-                                        {activePlayer && (
-                                            <motion.div
-                                                className="mt-6 bg-[#2a1a66] rounded-lg shadow-xl overflow-hidden"
-                                                initial={{ opacity: 0, height: 0 }}
-                                                animate={{ opacity: 1, height: 'auto' }}
-                                                exit={{ opacity: 0, height: 0 }}
-                                                transition={{ duration: 0.3 }}
-                                            >
-                                                <div className="p-6 border-b border-[#3a2b7d]">
-                                                    <div className="flex items-start justify-between">
-                                                        <div className="flex items-center">
-                                                            <div className="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-[#3a2b7d] to-[#7458da] rounded-full flex items-center justify-center shadow-lg">
-                                                                <span className="text-xl font-bold text-white">
-                                                                    {activePlayer.player_name.charAt(0).toUpperCase()}
-                                                                </span>
-                                                            </div>
-                                                            <div className="ml-4">
-                                                                <h3 className="text-xl font-bold text-white flex items-center">
-                                                                    {activePlayer.player_name}
-                                                                    {(activePlayer as any).account_type !== "generated" && !activePlayer.is_anonymous && !((activePlayer as any).placeholder_player) && (
-                                                                        <span className="ml-2 text-xs bg-[#7458da] text-white px-2 py-1 rounded">Verified</span>
-                                                                    )}
-                                                                </h3>
-                                                                <div className="mt-1 flex items-center flex-wrap gap-2">
-                                                                    {getStatusChip((activePlayer as any).type || "unknown")}
-                                                                    {(activePlayer as any).type === "waitlist" && (
-                                                                        <span className="text-[#b8b8b8] text-sm">
-                                                                            Position: #{players.filter(p => (p as any).type === "waitlist").findIndex(p => p.id === activePlayer.id) + 1}
-                                                                        </span>
-                                                                    )}
-
-                                                                    {(activePlayer as any).account_type !== "generated" && (
-                                                                        <span className="text-[#b8b8b8] text-sm bg-[#342575] px-2 py-1 rounded">
-                                                                            {!activePlayer.is_anonymous && !((activePlayer as any).placeholder_player) ? "Logged In User" : !(activePlayer as any).placeholder_player ? "Anonymous User" : "Generated User"}
-                                                                        </span>
-                                                                    )}
-                                                                </div>
-                                                            </div>
-                                                        </div>
-
-                                                        <button
-                                                            className="text-[#7458da] hover:text-white p-2 rounded-full hover:bg-[#342575] transition-colors"
-                                                            onClick={() => setActivePlayer(null)}
-                                                        >
-                                                            <FontAwesomeIcon icon={faTimes} />
-                                                        </button>
-                                                    </div>
-
-                                                    <div className="mt-6 mb-2 flex justify-between items-center">
-                                                        <h4 className="text-[#a899e0] font-medium">Player Skills</h4>
-                                                        <button
-                                                            className="text-[#7458da] hover:text-white flex items-center gap-1 text-sm"
-                                                            onClick={() => setExpandedDetails(!expandedDetails)}
-                                                        >
-                                                            {expandedDetails ? "Show Less" : "Show More"}
-                                                            <FontAwesomeIcon icon={expandedDetails ? faChevronUp : faChevronDown} className="ml-1" />
-                                                        </button>
-                                                    </div>
-
-                                                    <div className={`grid grid-cols-1 md:grid-cols-${expandedDetails ? "3" : "2"} gap-4 transition-all duration-300`}>
-                                                        {tournament?.skill_fields?.map((skill, index) => (
-                                                            activePlayer.skills && activePlayer.skills[index] && (
-                                                                <motion.div
-                                                                    key={index}
-                                                                    className="bg-[#342575] p-3 rounded-md shadow-md"
-                                                                    whileHover={{ scale: 1.02 }}
-                                                                    transition={{ duration: 0.2 }}
-                                                                >
-                                                                    <p className="text-[#a899e0] text-sm">{skill.name}</p>
-                                                                    <p className="text-white font-medium">
-                                                                        {activePlayer.skills[index].type === "numeric" ?
-                                                                            activePlayer.skills[index].value
-                                                                            : activePlayer.skills[index].category_type}
-                                                                    </p>
-                                                                </motion.div>
-                                                            )
-                                                        ))}
-                                                    </div>
-
-                                                    <div className="mt-6 flex flex-wrap gap-3">
-                                                        {(['waitlist', 'inactive'].includes((activePlayer as any).type) && (user.permission_level === "admin" || user.permission_level === "owner")) && (
-                                                            <motion.button
-                                                                className="px-4 py-2 bg-gradient-to-r from-[#7458da] to-[#634bc1] hover:from-[#634bc1] hover:to-[#523aad] text-white rounded-md transition-all flex items-center shadow-md"
-                                                                onClick={() => setIsAdding(true)}
-                                                                whileHover={{ scale: 1.05 }}
-                                                                whileTap={{ scale: 0.98 }}
-                                                            >
-                                                                <FontAwesomeIcon icon={faUserPlus} className="mr-2" />
-                                                                Move to Roster
-                                                            </motion.button>
-                                                        )}
-
-                                                        {!((activePlayer as any).placeholder_player) && (["owner", "admin"].includes(user.permission_level)) && (
-                                                            <motion.button
-                                                                className="px-4 py-2 bg-[#342575] hover:bg-[#3a2b7d] text-white rounded-md transition-colors flex items-center shadow-md"
-                                                                onClick={() => setIsMessaging(!isMessaging)}
-                                                                whileHover={{ scale: 1.05 }}
-                                                                whileTap={{ scale: 0.98 }}
-                                                            >
-                                                                <FontAwesomeIcon icon={faEnvelope} className="mr-2" />
-                                                                Message Player
-                                                            </motion.button>
-                                                        )}
-                                                    </div>
-
-                                                    <AnimatePresence>
-                                                        {isMessaging && (
-                                                            <motion.div
-                                                                className="mt-6 bg-[#221655] p-5 rounded-lg border border-[#3a2b7d] shadow-inner"
-                                                                initial={{ opacity: 0, y: -10 }}
-                                                                animate={{ opacity: 1, y: 0 }}
-                                                                exit={{ opacity: 0, y: -10 }}
-                                                            >
-                                                                <h4 className="text-white font-medium mb-3 flex items-center">
-                                                                    <FontAwesomeIcon icon={faEnvelope} className="text-[#7458da] mr-2" />
-                                                                    Message to {activePlayer.player_name}
-                                                                </h4>
-                                                                <textarea
-                                                                    className="w-full p-3 rounded bg-[#1b113d] text-white border border-[#3a2b7d] focus:border-[#7458da] focus:outline-none transition-colors shadow-inner"
-                                                                    rows={4}
-                                                                    placeholder="Type your message here..."
-                                                                    value={messageText}
-                                                                    onChange={(e) => setMessageText(e.target.value)}
-                                                                ></textarea>
-                                                                <div className="flex justify-end mt-3 gap-2">
-                                                                    <motion.button
-                                                                        className="px-4 py-2 bg-[#221655] hover:bg-[#1b113d] text-white rounded-md transition-colors"
-                                                                        onClick={() => setIsMessaging(false)}
-                                                                        whileHover={{ scale: 1.05 }}
-                                                                        whileTap={{ scale: 0.95 }}
-                                                                    >
-                                                                        Cancel
-                                                                    </motion.button>
-                                                                    <motion.button
-                                                                        className={`px-4 py-2 rounded-md transition-colors flex items-center shadow-md ${messageText.trim()
-                                                                            ? "bg-gradient-to-r from-[#7458da] to-[#634bc1] hover:from-[#634bc1] hover:to-[#523aad] text-white"
-                                                                            : "bg-[#342575] text-[#a899e0] cursor-not-allowed"
-                                                                            }`}
-                                                                        onClick={sendMessageSuccess}
-                                                                        disabled={!messageText.trim()}
-                                                                        whileHover={messageText.trim() ? { scale: 1.05 } : {}}
-                                                                        whileTap={messageText.trim() ? { scale: 0.95 } : {}}
-                                                                    >
-                                                                        Send Message
-                                                                    </motion.button>
-                                                                </div>
-                                                            </motion.div>
-                                                        )}
-                                                    </AnimatePresence>
-                                                </div>
-                                            </motion.div>
-                                        )}
-                                    </AnimatePresence>
                                 </motion.div>
                             ) : (
                                 <motion.div
@@ -699,7 +748,7 @@ export const PlayersView = ({ tournamentID, bracket, user, setActiveTab }: { set
                             onClick={(e) => {
                                 e.stopPropagation();
                                 setActivePlayer(activeContextPlayer)
-                                setIsAdding(true)
+                                setAddingPlayer(activeContextPlayer)
                             }}
                             className="w-full text-left px-4 py-2 text-white hover:bg-[#3a2b7d] flex items-center"
                         >

@@ -269,12 +269,12 @@ export const AnnouncementSystem = ({ tournamentID, user }: { tournamentID: numbe
     }
 
     return (
-        <div className="relative min-h-screen py-10 px-4 md:px-8" style={{ backgroundColor: "#160A3A" }}>
-            <div className="max-w-6xl mx-auto bg-[#1F1346] rounded-2xl shadow-2xl overflow-hidden">
+        <div className="relative min-h-screen py-10 px-4 md:px-8">
+            <div className="max-w-6xl mx-auto bg-[#201644] rounded-2xl shadow-2xl overflow-hidden">
                 <div className="relative px-6 pt-8 md:px-10">
                     <div className="flex items-center justify-center mb-6">
-                        <h1 className="text-[#7458da] font-bold text-3xl md:text-4xl text-center">
-                            <FontAwesomeIcon icon={faBullhorn} className="mr-3" />
+                        <h1 className="bg-gradient-to-r from-purple-200 to-indigo-300 bg-clip-text text-transparent font-bold text-3xl md:text-4xl text-center pb-1">
+                            <FontAwesomeIcon icon={faBullhorn} className="mr-3 text-purple-200" />
                             Announcements
                         </h1>
                     </div>
@@ -283,27 +283,27 @@ export const AnnouncementSystem = ({ tournamentID, user }: { tournamentID: numbe
                 <div className="p-6 md:p-8">
                     {["owner", "admin"].includes(user.permission_level.toLowerCase()) && (
                         <div className="bg-[#2a1a66] rounded-xl p-6 shadow-md mb-8">
-                            <h2 className="text-[#7458da] font-bold text-2xl mb-4">Create New Announcement</h2>
-                            <div className="space-y-4">
+                            <h2 className="text-white font-bold text-2xl mb-4">Create New Announcement</h2>
+                            <div className="space-y-4"> 
                                 <input
                                     type="text"
+                                    autoCorrect='false'
                                     placeholder="Title"
                                     value={newAnnouncement.title}
                                     onChange={(e) => setNewAnnouncement({ ...newAnnouncement, title: e.target.value })}
-                                    className="w-full p-3 rounded-lg bg-[#201644] text-white focus:outline-none focus:ring-2 focus:ring-[#7458da]"
+                                    className="w-full p-3 rounded-lg bg-[#201644] text-white border border-[#7458da]/30 focus:outline-none focus:ring-2 focus:ring-[#7458da]"
                                 />
                                 <textarea
                                     placeholder="Content"
                                     value={newAnnouncement.content}
                                     onChange={(e) => setNewAnnouncement({ ...newAnnouncement, content: e.target.value })}
-                                    className="w-full p-3 rounded-lg bg-[#201644] text-white focus:outline-none focus:ring-2 focus:ring-[#7458da]"
+                                    className="w-full p-3 rounded-lg bg-[#201644] text-white border border-[#7458da]/30 focus:outline-none focus:ring-2 focus:ring-[#7458da]"
                                     rows={4}
                                 />
                                 <button
                                     onClick={addAnnouncement}
                                     disabled={isUpdating}
-                                    className={`w-full bg-[#7458da] text-white px-4 py-3 rounded-lg hover:bg-[#604BAC] transition-colors flex items-center justify-center ${isUpdating ? 'opacity-70 cursor-not-allowed' : ''
-                                        }`}
+                                    className={`w-full bg-[#7458da] hover:bg-[#634bc1] text-white px-4 py-3 rounded-lg transition-all duration-200 shadow-lg hover:shadow-indigo-700/30 hover:translate-y-[-2px] flex items-center justify-center ${isUpdating ? 'opacity-70 cursor-not-allowed' : ''}`}
                                 >
                                     {isUpdating ? (
                                         <span className="inline-block h-4 w-4 mr-2 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
@@ -318,13 +318,13 @@ export const AnnouncementSystem = ({ tournamentID, user }: { tournamentID: numbe
 
                     <div className="mb-6">
                         <div className="flex flex-col md:flex-row md:items-center justify-between">
-                            <h2 className="text-[#7458da] font-bold text-xl mb-3 md:mb-0">Sort Announcements</h2>
+                            <h2 className="text-white font-bold text-xl mb-3 md:mb-0">Sort Announcements</h2>
                             <div className="flex space-x-2">
                                 <button
                                     onClick={() => handleSortChange('newest')}
-                                    className={`px-4 py-2 rounded-lg flex items-center transition-colors ${sortOption === 'newest'
-                                            ? 'bg-[#7458da] text-white'
-                                            : 'bg-[#2a1a66] text-gray-300 hover:bg-[#3b2682]'
+                                    className={`px-4 py-2 rounded-lg flex items-center transition-all duration-200 ${sortOption === 'newest'
+                                            ? 'bg-[#7458da] text-white shadow-lg shadow-indigo-700/30'
+                                            : 'bg-[#2a1a66] text-white hover:bg-[#3b2682]'
                                         }`}
                                 >
                                     <FontAwesomeIcon icon={faSortDown} className="mr-2" />
@@ -332,9 +332,9 @@ export const AnnouncementSystem = ({ tournamentID, user }: { tournamentID: numbe
                                 </button>
                                 <button
                                     onClick={() => handleSortChange('oldest')}
-                                    className={`px-4 py-2 rounded-lg flex items-center transition-colors ${sortOption === 'oldest'
-                                            ? 'bg-[#7458da] text-white'
-                                            : 'bg-[#2a1a66] text-gray-300 hover:bg-[#3b2682]'
+                                    className={`px-4 py-2 rounded-lg flex items-center transition-all duration-200 ${sortOption === 'oldest'
+                                            ? 'bg-[#7458da] text-white shadow-lg shadow-indigo-700/30'
+                                            : 'bg-[#2a1a66] text-white hover:bg-[#3b2682]'
                                         }`}
                                 >
                                     <FontAwesomeIcon icon={faSortUp} className="mr-2" />
@@ -342,9 +342,9 @@ export const AnnouncementSystem = ({ tournamentID, user }: { tournamentID: numbe
                                 </button>
                                 <button
                                     onClick={() => handleSortChange('unread')}
-                                    className={`px-4 py-2 rounded-lg flex items-center transition-colors ${sortOption === 'unread'
-                                            ? 'bg-[#7458da] text-white'
-                                            : 'bg-[#2a1a66] text-gray-300 hover:bg-[#3b2682]'
+                                    className={`px-4 py-2 rounded-lg flex items-center transition-all duration-200 ${sortOption === 'unread'
+                                            ? 'bg-[#7458da] text-white shadow-lg shadow-indigo-700/30'
+                                            : 'bg-[#2a1a66] text-white hover:bg-[#3b2682]'
                                         }`}
                                 >
                                     <FontAwesomeIcon icon={faCircle} className="mr-2" size="xs" />
@@ -371,8 +371,7 @@ export const AnnouncementSystem = ({ tournamentID, user }: { tournamentID: numbe
                                         damping: 30,
                                         layoutDependency: announcement.isRead
                                     }}
-                                    className={`p-6 rounded-xl cursor-pointer shadow-md ${announcement.isRead ? 'bg-[#2a1a66]' : 'bg-[#3b2682]'
-                                        }`}
+                                    className={`p-6 rounded-xl cursor-pointer shadow-md ${announcement.isRead ? 'bg-[#2a1a66]' : 'bg-[#3b2682]'} hover:shadow-lg hover:shadow-indigo-700/30 transition-all duration-200`}
                                     onClick={() => toggleReadStatus(announcement.id)}
                                 >
                                     <div className="flex justify-between items-start">

@@ -315,7 +315,25 @@ const TournamentBracket = ({
   const [selectedMatch, setSelectedMatch] = useState<Matchup | null>(null);
   const [isMatchupModalOpen, setIsMatchupModalOpen] = useState<boolean>(false);
 
+  useEffect(() => {
+    console.log('[DEBUG] TournamentBracket: Component mounted/updated', {
+      viewType,
+      hasNewPlayer: !!newPlayer,
+      tournamentID,
+      bracketViewType
+    });
+  }, [viewType, newPlayer, tournamentID, bracketViewType]);
+
   const handleMovePlayer: OnMovePlayer = (player) => {
+    console.log('[DEBUG] handleMovePlayer:', {
+      player: player ? {
+        name: player.player.name,
+        fromRound: player.fromRound,
+        fromMatch: player.fromMatch
+      } : null,
+      currentViewType: viewType
+    });
+
     if (player === null) {
       setMovingPlayer(null);
       setViewType(BracketViewType.Normal);
@@ -338,7 +356,7 @@ const TournamentBracket = ({
       <motion.div 
         initial={{ y: 50, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        className="fixed top-6 left-1/2 transform -translate-x-1/2 bg-[#1e153e] text-white px-6 py-3 rounded-lg shadow-xl 
+        className="fixed top-20 left-1/2 transform -translate-x-1/2 bg-[#1e153e] text-white px-6 py-3 rounded-lg shadow-xl 
                   border border-[#947ed7]/40 z-20 flex items-center gap-4"
       >
         <div>
@@ -357,13 +375,25 @@ const TournamentBracket = ({
 
   useEffect(() => {
     const getTournament = async () => {
+      console.log('[DEBUG] getTournament: Fetching tournament data', {
+        tournamentID
+      });
+
       const supabase = createClient();
       const { data, error } = await supabase.from("tournaments").select("*").eq("id", tournamentID).single();
 
       if (error) {
-        console.error("Error fetching tournament data");
+        console.error('[DEBUG] getTournament: Error fetching tournament data', {
+          error,
+          tournamentID
+        });
         return;
       }
+
+      console.log('[DEBUG] getTournament: Successfully fetched tournament data', {
+        tournamentId: data.id,
+        tournamentName: data.name
+      });
 
       setTournament(data);
     };
@@ -374,6 +404,7 @@ const TournamentBracket = ({
   }, [tournamentID]);
 
   if (!bracket || !bracket.rounds || bracket.rounds.length === 0) {
+    console.log('[DEBUG] TournamentBracket: No bracket data available');
     return (
       <div className="flex justify-center items-center h-full min-h-[60vh] bg-[#160a3a]/50 rounded-lg p-8">
         <div className="text-center">

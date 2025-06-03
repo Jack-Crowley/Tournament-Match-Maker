@@ -409,7 +409,7 @@ export default function Initialization({ refreshTournament, user }: { user: User
                             {tournament.name}
                         </h1>
 
-                        {(user.permission_level === "owner" || user.permission_level === "admin") && (
+                        {(user.permission_level.toLowerCase() === "owner" || user.permission_level.toLowerCase() === "admin") && (
                             <button
                                 onClick={() => setIsTournamentEditModalOpen(true)}
                                 className="bg-white/10 hover:bg-white/15 transition-colors p-2 rounded-lg flex items-center justify-center gap-2 px-4 text-purple-200 border border-white/10 shadow-md"
@@ -434,7 +434,7 @@ export default function Initialization({ refreshTournament, user }: { user: User
                 <TournamentInfo tournament={tournament} />
 
                 {/* Registration Section */}
-                {(user.permission_level === "owner" || user.permission_level === "admin") && (
+                {(user.permission_level.toLowerCase() === "owner" || user.permission_level.toLowerCase() === "admin") && (
                     <TournamentJoining
                         tournament={tournament}
                         joinLink={joinLink}
@@ -473,7 +473,7 @@ export default function Initialization({ refreshTournament, user }: { user: User
                 )}
 
                 {/* Action Buttons */}
-                {(user.permission_level === "owner" || user.permission_level === "admin") && (
+                {(user.permission_level.toLowerCase() === "owner" || user.permission_level.toLowerCase() === "admin") && (
                     <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-6">
                         <button
                             onClick={() => setIsPlaceholderPlayersModalOpen(true)}
@@ -483,14 +483,21 @@ export default function Initialization({ refreshTournament, user }: { user: User
                             <span>Add Placeholder Players</span>
                         </button>
 
-                        <button
-                            onClick={handleStartTournament}
-                            disabled={starting}
-                            className={`w-full sm:w-auto bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-medium py-3 px-6 rounded-lg transition duration-200 flex items-center justify-center gap-2 shadow-lg hover:shadow-indigo-700/30 ${starting ? 'opacity-75' : 'hover:translate-y-[-2px]'}`}
-                        >
-                            <FontAwesomeIcon icon={faPlay} />
-                            <span>{starting ? "Starting..." : "Start Tournament"}</span>
-                        </button>
+                        {user.permission_level.toLowerCase() === "owner" ? (
+                            <button
+                                onClick={handleStartTournament}
+                                disabled={starting}
+                                className={`w-full sm:w-auto bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-medium py-3 px-6 rounded-lg transition duration-200 flex items-center justify-center gap-2 shadow-lg hover:shadow-indigo-700/30 ${starting ? 'opacity-75' : 'hover:translate-y-[-2px]'}`}
+                            >
+                                <FontAwesomeIcon icon={faPlay} />
+                                <span>{starting ? "Starting..." : "Start Tournament"}</span>
+                            </button>
+                        ) : user.permission_level.toLowerCase() === "admin" ? (
+                            <div className="w-full sm:w-auto bg-gray-600/80 text-white font-medium py-3 px-6 rounded-lg flex items-center justify-center gap-2">
+                                <FontAwesomeIcon icon={faInfoCircle} />
+                                <span>Contact tournament owner to start</span>
+                            </div>
+                        ) : null}
                     </div>
                 )}
             </div>

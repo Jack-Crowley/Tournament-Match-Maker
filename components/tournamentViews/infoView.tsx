@@ -5,6 +5,7 @@ import {
     faGear,
     faInfoCircle,
     faTrophy,
+    faDownload,
 } from "@fortawesome/free-solid-svg-icons";
 import { Tournament } from "@/types/tournamentTypes";
 import { useMessage } from "@/context/messageContext";
@@ -52,6 +53,36 @@ export const TournamentInfoView = ({
         }
     };
 
+    const handleDownloadMatches = async () => {
+        if (!tournament) return;
+
+        try {
+            const { data: matches, error } = await supabase
+                .from('tournament_matches')
+                .select('*')
+                .eq('tournament_id', tournament.id);
+
+            if (error) {
+                triggerMessage("Error downloading matches: " + error.message, "red");
+                return;
+            }
+
+            // Create a blob with the matches data
+            const blob = new Blob([JSON.stringify(matches, null, 2)], { type: 'application/json' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${tournament.name}_matches.json`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+            triggerMessage("Matches downloaded successfully!", "green");
+        } catch {
+            triggerMessage("An error occurred while downloading matches", "red");
+        }
+    };
+
     if (!tournament) {
         return (
             <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-b from-[#160A3A] to-[#2A1A5E] text-white p-4">
@@ -74,7 +105,7 @@ export const TournamentInfoView = ({
                 {/* Header */}
                 <div className="mb-8">
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                        <h1 className="text-4xl font-bold text-center md:text-left bg-clip-text text-transparent bg-gradient-to-r from-purple-200 to-indigo-300">
+                        <h1 className="text-4xl font-bold text-center md:text-left bg-clip-text text-transparent bg-gradient-to-r from-purple-200 to-indigo-300 leading-tight pb-1">
                             {tournament.name}
                         </h1>
 
@@ -103,13 +134,26 @@ export const TournamentInfoView = ({
                 <TournamentInfo tournament={tournament} />
 
                 {/* Registration Section */}
-                {(user.permission_level === "owner" || user.permission_level === "admin") && (
+                {(user.permission_level.toLowerCase() === "owner" || user.permission_level.toLowerCase() === "admin") && (
                     <TournamentJoining
                         tournament={tournament}
                         joinLink={joinLink}
                         onAllowJoinToggle={handleAllowJoinToggle}
                         onCopyUrl={handleCopyUrl}
                     />
+                )}
+
+                {/* Download Section */}
+                {(user.permission_level.toLowerCase() === "owner" || user.permission_level.toLowerCase() === "admin") && (
+                    <div className="mt-8 flex justify-center">
+                        <button
+                            onClick={handleDownloadMatches}
+                            className="bg-white/10 hover:bg-white/15 transition-colors p-3 rounded-lg flex items-center justify-center gap-2 px-6 text-purple-200 border border-white/10 shadow-md"
+                        >
+                            <span>Download Matches</span>
+                            <FontAwesomeIcon icon={faDownload} />
+                        </button>
+                    </div>
                 )}
             </div>
 

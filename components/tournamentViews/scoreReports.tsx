@@ -555,7 +555,7 @@ export function ScoreReports({ tournamentID, bracket, user, tournament }: {
             >
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 border-b border-purple-800/30 pb-4">
                     <div className="mb-4 md:mb-0">
-                        <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-[#a993ff] to-[#5e44c9] bg-clip-text text-transparent">
+                        <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-[#a993ff] to-[#5e44c9] bg-clip-text text-transparent pb-1">
                             Score Reports
                         </h1>
                         <p className="text-purple-300 mt-1">
